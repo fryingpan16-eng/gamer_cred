@@ -247,6 +247,19 @@ export type Database = {
         Args: { candidate: string };
         Returns: boolean;
       };
+      set_main_platform: {
+        /** null clears the Main platform. */
+        Args: { p_platform_id: number | null };
+        Returns: undefined;
+      };
+      set_favorite: {
+        Args: { p_rank: FavoriteRank; p_game_id: number };
+        Returns: undefined;
+      };
+      swap_favorite_ranks: {
+        Args: { p_rank_a: FavoriteRank; p_rank_b: FavoriteRank };
+        Returns: undefined;
+      };
     };
     Enums: {
       friendship_status: 'pending' | 'accepted' | 'rejected';

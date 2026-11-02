@@ -19,6 +19,8 @@ type GamePickerModalProps = {
   onPick: (game: IgdbGameResult) => void;
   /** Games that cannot be picked, with the reason shown (e.g. "In slot 2"). */
   unavailable?: ReadonlyMap<number, string>;
+  /** Informational badges that do NOT block picking (e.g. "Rank 2 — moves here"). */
+  annotations?: ReadonlyMap<number, string>;
   /** Shown as a badge on the current game when swapping. */
   currentGameId?: number | null;
 };
@@ -39,7 +41,12 @@ export function GamePickerModal({ visible, title, onClose, ...bodyProps }: GameP
   );
 }
 
-function PickerBody({ onPick, unavailable, currentGameId }: Pick<GamePickerModalProps, 'onPick' | 'unavailable' | 'currentGameId'>) {
+function PickerBody({
+  onPick,
+  unavailable,
+  annotations,
+  currentGameId,
+}: Pick<GamePickerModalProps, 'onPick' | 'unavailable' | 'annotations' | 'currentGameId'>) {
   const queryClient = useQueryClient();
   const [term, setTerm] = useState('');
   const debounced = useDebouncedValue(term, 350);
@@ -93,6 +100,7 @@ function PickerBody({ onPick, unavailable, currentGameId }: Pick<GamePickerModal
             renderItem={({ item }) => {
               const blockedReason = unavailable?.get(item.id);
               const isCurrent = currentGameId === item.id;
+              const note = annotations?.get(item.id);
               return (
                 <Pressable
                   accessibilityRole="button"
@@ -123,6 +131,7 @@ function PickerBody({ onPick, unavailable, currentGameId }: Pick<GamePickerModal
                         <View className="flex-row gap-1">
                           {isCurrent ? <SteamBadge label="Current" variant="nowPlaying" /> : null}
                           {blockedReason ? <SteamBadge label={blockedReason} variant="draft" /> : null}
+                          {note && !isCurrent ? <SteamBadge label={note} /> : null}
                         </View>
                       </View>
                     </>

@@ -107,7 +107,10 @@ export function useFriendAction() {
           if (vars.action !== 'send' && 'friendshipId' in row.relation && row.relation.friendshipId === vars.friendshipId) {
             return {
               ...row,
-              relation: { state: vars.action === 'accept' ? 'friends' : 'declined', friendshipId: vars.friendshipId },
+              relation:
+                vars.action === 'accept'
+                  ? { state: 'friends', friendshipId: vars.friendshipId }
+                  : { state: 'declined', friendshipId: vars.friendshipId, direction: 'incoming' },
             };
           }
           return row;

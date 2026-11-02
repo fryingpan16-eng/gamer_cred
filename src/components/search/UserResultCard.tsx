@@ -25,9 +25,11 @@ export function UserResultCard({ user, pending, onSendRequest, onRespond }: User
           {user.username}
         </Text>
         {relation.state === 'friends' ? <SteamBadge label="Friends" variant="main" /> : null}
-        {relation.state === 'outgoing' ? <SteamBadge label="Request Sent" variant="draft" /> : null}
+        {relation.state === 'outgoing' || (relation.state === 'declined' && relation.direction === 'outgoing') ? (
+          // A declined outgoing request is shown as still pending: declines stay private.
+          <SteamBadge label="Request Sent" variant="draft" />
+        ) : null}
         {relation.state === 'incoming' ? <SteamBadge label="Wants to be friends" variant="nowPlaying" /> : null}
-        {relation.state === 'declined' ? <SteamBadge label="Declined" variant="draft" /> : null}
         <View className="flex-row flex-wrap justify-end gap-2 pt-1">
           <SteamButton
             label="View Profile"
@@ -39,6 +41,15 @@ export function UserResultCard({ user, pending, onSendRequest, onRespond }: User
               variant="primary"
               loading={pending}
               onPress={() => onSendRequest(user.id)}
+            />
+          ) : null}
+          {relation.state === 'declined' && relation.direction === 'incoming' ? (
+            // I declined them earlier: re-adding accepts their original request (unique pair index).
+            <SteamButton
+              label="Add Friend"
+              variant="primary"
+              loading={pending}
+              onPress={() => onRespond(relation.friendshipId, true)}
             />
           ) : null}
           {relation.state === 'incoming' ? (

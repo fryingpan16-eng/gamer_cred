@@ -10,7 +10,8 @@ export type FriendRelation =
   | { state: 'friends'; friendshipId: string }
   | { state: 'outgoing'; friendshipId: string } // I sent a pending request
   | { state: 'incoming'; friendshipId: string } // they sent me a pending request
-  | { state: 'declined'; friendshipId: string };
+  /** `outgoing`: they declined my request. `incoming`: I declined theirs. */
+  | { state: 'declined'; friendshipId: string; direction: 'outgoing' | 'incoming' };
 
 export type UserSearchResult = Pick<Profile, 'id' | 'username' | 'avatar_url'> & { relation: FriendRelation };
 
@@ -36,13 +37,15 @@ function escapeLike(term: string): string {
   return term.replace(/[\\%_]/g, (c) => `\\${c}`);
 }
 
-function relationFor(viewerId: string, otherId: string, rows: Friendship[]): FriendRelation {
+export function relationFor(viewerId: string, otherId: string, rows: readonly Friendship[]): FriendRelation {
   const row = rows.find(
     (f) => (f.user_id === viewerId && f.friend_id === otherId) || (f.user_id === otherId && f.friend_id === viewerId),
   );
   if (!row) return { state: 'none' };
   if (row.status === 'accepted') return { state: 'friends', friendshipId: row.id };
-  if (row.status === 'rejected') return { state: 'declined', friendshipId: row.id };
+  if (row.status === 'rejected') {
+    return { state: 'declined', friendshipId: row.id, direction: row.user_id === viewerId ? 'outgoing' : 'incoming' };
+  }
   return row.user_id === viewerId
     ? { state: 'outgoing', friendshipId: row.id }
     : { state: 'incoming', friendshipId: row.id };
@@ -106,6 +109,12 @@ export async function sendFriendRequest(viewerId: string, friendId: string): Pro
   // 23505 = unique violation: a request already exists in one direction or the other.
   if (error.code === '23505') throw new UserServiceError('A friend request already exists with this player.', error.code);
   fail(error, 'Could not send friend request.');
+}
+
+/** Cancel a pending request or unfriend. RLS: either party may delete. */
+export async function removeFriendship(friendshipId: string): Promise<void> {
+  const { error } = await supabase.from('friendships').delete().eq('id', friendshipId);
+  if (error) fail(error, 'Could not update the friendship.');
 }
 
 /** RLS: only the recipient may update the row. */

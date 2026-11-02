@@ -34,6 +34,7 @@ export const queryKeys = {
       [...queryKeys.reviews.all(), 'mine', userId, status ?? 'all'] as const,
     mineForGame: (userId: string, gameId: number) => [...queryKeys.reviews.all(), 'mine', userId, 'game', gameId] as const,
     byGame: (gameId: number) => [...queryKeys.reviews.all(), 'game', gameId] as const,
+    /** Published reviews on a profile. */
     byUser: (userId: string) => [...queryKeys.reviews.all(), 'user', userId] as const,
     detail: (reviewId: string) => [...queryKeys.reviews.all(), 'detail', reviewId] as const,
   },
@@ -42,6 +43,10 @@ export const queryKeys = {
     all: () => [...queryKeys.all, 'friendships'] as const,
     byUser: (userId: string) => [...queryKeys.friendships.all(), userId] as const,
     pending: (userId: string) => [...queryKeys.friendships.all(), userId, 'pending'] as const,
+    /** Viewer's relationship to another player (direction-aware). */
+    relation: (viewerId: string, otherId: string) =>
+      [...queryKeys.friendships.all(), viewerId, 'relation', otherId] as const,
+    count: (userId: string) => [...queryKeys.friendships.all(), 'count', userId] as const,
   },
 
   feed: {
