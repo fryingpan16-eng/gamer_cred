@@ -8,5 +8,5 @@ const SECTIONS = [
 ] as const;
 
 export default function HomeScreen() {
-  return <ScreenPlaceholder title="Home" subtitle="Community activity & friend feed" sections={SECTIONS} />;
+  return <ScreenPlaceholder subtitle="Community activity & friend feed" sections={SECTIONS} />;
 }

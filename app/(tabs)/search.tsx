@@ -1,40 +1,53 @@
+import { Feather } from '@expo/vector-icons';
 import { useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Text } from 'react-native';
 
 import { ScreenPlaceholder } from '@/components/ScreenPlaceholder';
+import { SteamInput, SteamPanel, SteamTabs, type SteamTabItem } from '@/components/ui';
+import { steamColors } from '@/constants/theme';
 import type { SearchEntity } from '@/utils/queryKeys';
 
-const ENTITY_TABS: readonly { key: SearchEntity; label: string; description: string }[] = [
-  { key: 'games', label: 'Games', description: 'Search titles by name, genre, and platform (IGDB via Edge Function).' },
-  { key: 'studios', label: 'Studios & Directors', description: 'Developers, publishers, and key creators (IGDB via Edge Function).' },
-  { key: 'users', label: 'Users / Friends', description: 'Find community profiles by username and send friend requests.' },
+const ENTITY_TABS: readonly SteamTabItem<SearchEntity>[] = [
+  { key: 'games', label: 'Games' },
+  { key: 'studios', label: 'Studios & Directors' },
+  { key: 'users', label: 'Users / Friends' },
 ];
 
+const DESCRIPTIONS: Record<SearchEntity, { placeholder: string; description: string }> = {
+  games: {
+    placeholder: 'Search games by title, genre, platform…',
+    description: 'Title, genre, and platform search (IGDB via Edge Function cache).',
+  },
+  studios: {
+    placeholder: 'Search studios, publishers, directors…',
+    description: 'Developers, publishers, and key creators (IGDB via Edge Function cache).',
+  },
+  users: {
+    placeholder: 'Search players by username…',
+    description: 'Find community profiles and send friend requests.',
+  },
+};
+
 export default function SearchScreen() {
-  const [active, setActive] = useState<SearchEntity>('games');
-  const current = ENTITY_TABS.find((t) => t.key === active) ?? ENTITY_TABS[0]!;
+  const [entity, setEntity] = useState<SearchEntity>('games');
+  const [term, setTerm] = useState('');
+  const current = DESCRIPTIONS[entity];
 
   return (
-    <ScreenPlaceholder
-      title="Search"
-      subtitle="Games · Studios & Directors · Users"
-      sections={[{ title: current.label, description: current.description }]}
-    >
-      <View className="flex-row flex-wrap gap-1 border-b border-steam-accent">
-        {ENTITY_TABS.map((tab) => (
-          <Pressable
-            key={tab.key}
-            accessibilityRole="tab"
-            accessibilityState={{ selected: tab.key === active }}
-            onPress={() => setActive(tab.key)}
-            className={tab.key === active ? 'steam-tab-active' : 'steam-tab'}
-          >
-            <Text className={tab.key === active ? 'text-steam-text-bright text-steam-sm' : 'text-steam-text-muted text-steam-sm'}>
-              {tab.label}
-            </Text>
-          </Pressable>
-        ))}
-      </View>
+    <ScreenPlaceholder>
+      <SteamTabs items={ENTITY_TABS} value={entity} onChange={setEntity} />
+      <SteamInput
+        value={term}
+        onChangeText={setTerm}
+        placeholder={current.placeholder}
+        autoCapitalize="none"
+        returnKeyType="search"
+        accessibilityLabel={`Search ${entity}`}
+        icon={<Feather name="search" size={12} color={steamColors.textMuted} />}
+      />
+      <SteamPanel title="Results">
+        <Text className="text-steam-base text-steam-text">{current.description}</Text>
+      </SteamPanel>
     </ScreenPlaceholder>
   );
 }

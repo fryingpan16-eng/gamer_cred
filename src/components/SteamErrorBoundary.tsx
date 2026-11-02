@@ -1,7 +1,7 @@
 import type { ErrorBoundaryProps } from 'expo-router';
 import { Text, View } from 'react-native';
 
-import { SteamButton } from './SteamButton';
+import { SteamButton } from './ui/SteamButton';
 
 /** Retro Steam "fatal error" dialog used as the Expo Router error boundary. */
 export function SteamErrorBoundary({ error, retry }: ErrorBoundaryProps) {

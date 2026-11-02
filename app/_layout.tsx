@@ -5,8 +5,10 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
+import { steamStackHeader } from '@/components/navigation/steamStackHeader';
 import { SteamErrorBoundary } from '@/components/SteamErrorBoundary';
 import { SteamWindowFrame } from '@/components/SteamWindowFrame';
+import { steamColors } from '@/constants/theme';
 import { queryClient } from '@/services/queryClient';
 
 // Global error boundary. Expo Router has no `+error.tsx` file convention (it
@@ -19,8 +21,6 @@ export const unstable_settings = {
   screenErrorBoundary: SteamErrorBoundary,
 };
 
-const STEAM_DARK = '#3a3d36';
-
 export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
@@ -30,14 +30,17 @@ export default function RootLayout() {
           <SteamWindowFrame>
             <Stack
               screenOptions={{
-                headerShown: false,
-                contentStyle: { backgroundColor: STEAM_DARK },
+                header: steamStackHeader,
+                // iOS 26 defaults Stack headers to transparent (Liquid Glass); keep ours opaque.
+                headerTransparent: false,
+                contentStyle: { backgroundColor: steamColors.dark },
               }}
             >
-              <Stack.Screen name="(tabs)" />
-              <Stack.Screen name="(auth)" />
-              <Stack.Screen name="game/[id]" />
-              <Stack.Screen name="user/[id]" />
+              {/* Groups render their own navigator chrome. */}
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+              <Stack.Screen name="game/[id]" options={{ title: 'Game' }} />
+              <Stack.Screen name="user/[id]" options={{ title: 'Player' }} />
             </Stack>
           </SteamWindowFrame>
         </SafeAreaView>

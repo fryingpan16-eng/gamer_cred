@@ -20,6 +20,7 @@ module.exports = {
         // Bevel edge tones (light top/left, dark bottom/right)
         'steam-bevel-light': '#8a9278',
         'steam-bevel-dark': '#262823',
+        'steam-error': '#c45a3c',
       },
       fontSize: {
         // Compact, high-density retro type scale
