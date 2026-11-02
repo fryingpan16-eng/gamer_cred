@@ -12,3 +12,4 @@ export {
 export { SteamPanel, type SteamPanelProps } from './SteamPanel';
 export { SteamTabs, type SteamTabItem, type SteamTabsProps } from './SteamTabs';
 export { SteamSpinner, type SteamSpinnerProps } from './SteamSpinner';
+export { SteamScoreMeter, type SteamScoreMeterProps } from './SteamScoreMeter';

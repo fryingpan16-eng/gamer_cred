@@ -29,6 +29,10 @@ export const queryKeys = {
 
   reviews: {
     all: () => [...queryKeys.all, 'reviews'] as const,
+    /** The signed-in user's own reviews (drafts included), optionally filtered by status. */
+    mine: (userId: string, status?: 'draft' | 'published') =>
+      [...queryKeys.reviews.all(), 'mine', userId, status ?? 'all'] as const,
+    mineForGame: (userId: string, gameId: number) => [...queryKeys.reviews.all(), 'mine', userId, 'game', gameId] as const,
     byGame: (gameId: number) => [...queryKeys.reviews.all(), 'game', gameId] as const,
     byUser: (userId: string) => [...queryKeys.reviews.all(), 'user', userId] as const,
     detail: (reviewId: string) => [...queryKeys.reviews.all(), 'detail', reviewId] as const,
@@ -49,6 +53,9 @@ export const queryKeys = {
   games: {
     all: () => [...queryKeys.all, 'games'] as const,
     detail: (gameId: number) => [...queryKeys.games.all(), 'detail', gameId] as const,
+    /** Batch lookup; ids are sorted so [2,1] and [1,2] share a cache entry. */
+    lookup: (gameIds: readonly number[]) =>
+      [...queryKeys.games.all(), 'lookup', [...new Set(gameIds)].sort((a, b) => a - b).join(',')] as const,
   },
 
   search: {

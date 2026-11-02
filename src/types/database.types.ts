@@ -91,6 +91,9 @@ export type Database = {
           content: string | null;
           status: Database['public']['Enums']['review_status'];
           created_at: Timestamp;
+          updated_at: Timestamp;
+          /** Set by trigger when status first becomes 'published'; null for drafts. */
+          published_at: Timestamp | null;
         };
         Insert: {
           id?: string;
@@ -100,6 +103,8 @@ export type Database = {
           content?: string | null;
           status?: Database['public']['Enums']['review_status'];
           created_at?: Timestamp;
+          updated_at?: Timestamp;
+          published_at?: Timestamp | null;
         };
         Update: {
           id?: string;
@@ -109,6 +114,8 @@ export type Database = {
           content?: string | null;
           status?: Database['public']['Enums']['review_status'];
           created_at?: Timestamp;
+          updated_at?: Timestamp;
+          published_at?: Timestamp | null;
         };
         Relationships: [
           {

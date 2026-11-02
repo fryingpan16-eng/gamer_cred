@@ -6,7 +6,10 @@
  *   GET  /functions/v1/igdb-proxy?entity_type=games&query=half-life&limit=20
  *   POST /functions/v1/igdb-proxy   { "entity_type": "games", "query": "half-life" }
  *
- * Response: ApiEnvelope<IgdbSearchResponse>  ({ success, data?, error? })
+ *   POST … { "action": "lookup", "entity_type": "games", "ids": [1942, 7346] }
+ *   GET  …?action=lookup&entity_type=games&ids=1942,7346
+ *
+ * Response: ApiEnvelope<IgdbSearchResponse | IgdbLookupResponse>  ({ success, data?, error? })
  *
  * Secrets (supabase secrets set …): IGDB_CLIENT_ID, IGDB_CLIENT_SECRET, RAWG_API_KEY
  * Auto-injected by Supabase:        SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
@@ -19,6 +22,7 @@ import { createClient } from '@supabase/supabase-js';
 
 import {
   IGDB_ENTITY_TYPES,
+  IGDB_LOOKUP_MAX_IDS,
   IGDB_SEARCH_LIMITS,
   normalizeSearchQuery,
   SEARCH_PROVIDER,
@@ -26,6 +30,7 @@ import {
   type IgdbCompanyResult,
   type IgdbEntityType,
   type IgdbGameResult,
+  type IgdbLookupResponse,
   type IgdbSearchResponse,
 } from '../_shared/igdb-contract.ts';
 
@@ -43,6 +48,8 @@ const CACHE_TTL_MS: Record<IgdbEntityType, number> = {
   creators: 14 * 24 * HOUR_MS,
 };
 const STALE_MAX_MS = 60 * 24 * HOUR_MS; // serve stale up to 60d if the upstream is down
+/** Individual game records (titles, covers) barely change. */
+const GAME_RECORD_TTL_MS = 7 * 24 * HOUR_MS;
 const UPSTREAM_TIMEOUT_MS = 8000;
 const CACHE_VERSION = 'v1'; // bump when result shapes change
 
@@ -78,7 +85,9 @@ function requireEnv(name: string): string {
 // Request parsing & validation
 // -----------------------------------------------------------------------------
 
-type ParsedRequest = { entityType: IgdbEntityType; query: string; limit: number };
+type ParsedSearch = { action: 'search'; entityType: IgdbEntityType; query: string; limit: number };
+type ParsedLookup = { action: 'lookup'; ids: number[] };
+type ParsedRequest = ParsedSearch | ParsedLookup;
 
 function isEntityType(value: unknown): value is IgdbEntityType {
   return typeof value === 'string' && (IGDB_ENTITY_TYPES as readonly string[]).includes(value);
@@ -100,6 +109,10 @@ async function parseRequest(req: Request): Promise<ParsedRequest> {
     throw new HttpError(405, `Method ${req.method} not allowed`);
   }
 
+  const action = raw.action ?? 'search';
+  if (action === 'lookup') return parseLookup(raw);
+  if (action !== 'search') throw new HttpError(400, "action must be 'search' or 'lookup'");
+
   if (!isEntityType(raw.entity_type)) {
     throw new HttpError(400, `entity_type must be one of: ${IGDB_ENTITY_TYPES.join(', ')}`);
   }
@@ -118,7 +131,18 @@ async function parseRequest(req: Request): Promise<ParsedRequest> {
     throw new HttpError(400, `limit must be an integer between 1 and ${IGDB_SEARCH_LIMITS.maxLimit}`);
   }
 
-  return { entityType: raw.entity_type, query, limit: limitRaw };
+  return { action: 'search', entityType: raw.entity_type, query, limit: limitRaw };
+}
+
+function parseLookup(raw: Record<string, unknown>): ParsedLookup {
+  if (raw.entity_type !== 'games') throw new HttpError(400, "lookup supports entity_type 'games' only");
+  // GET passes "1,2,3"; POST passes [1,2,3].
+  const list: unknown[] = typeof raw.ids === 'string' ? raw.ids.split(',') : Array.isArray(raw.ids) ? raw.ids : [];
+  const ids = [...new Set(list.filter((v) => v !== '').map((v) => Number(v)))];
+  if (ids.length === 0) throw new HttpError(400, 'ids must be a non-empty list of IGDB game ids');
+  if (ids.length > IGDB_LOOKUP_MAX_IDS) throw new HttpError(400, `ids may contain at most ${IGDB_LOOKUP_MAX_IDS} entries`);
+  if (!ids.every((id) => Number.isSafeInteger(id) && id > 0)) throw new HttpError(400, 'ids must be positive integers');
+  return { action: 'lookup', ids };
 }
 
 // -----------------------------------------------------------------------------
@@ -222,20 +246,32 @@ function compact(values: (string | undefined)[]): string[] {
   return [...new Set(values.filter((v): v is string => typeof v === 'string' && v.length > 0))];
 }
 
+const GAME_FIELDS = [
+  'fields name,slug,cover.image_id,first_release_date,total_rating,',
+  'platforms.abbreviation,platforms.name,genres.name,',
+  'involved_companies.developer,involved_companies.company.name;',
+].join(' ');
+
 async function searchGames(query: string, limit: number): Promise<IgdbGameResult[]> {
   const q = apicalypseLiteral(query);
   const raw = await igdbRequest<RawGame[]>(
     'games',
     [
       `search "${q}";`,
-      'fields name,slug,cover.image_id,first_release_date,total_rating,',
-      'platforms.abbreviation,platforms.name,genres.name,',
-      'involved_companies.developer,involved_companies.company.name;',
+      GAME_FIELDS,
       'where version_parent = null;', // hide editions/bundles of the same game
       `limit ${limit};`,
     ].join(' '),
   );
+  return mapGames(raw);
+}
 
+async function fetchGamesByIds(ids: number[]): Promise<IgdbGameResult[]> {
+  const raw = await igdbRequest<RawGame[]>('games', `${GAME_FIELDS} where id = (${ids.join(',')}); limit ${ids.length};`);
+  return mapGames(raw);
+}
+
+function mapGames(raw: RawGame[]): IgdbGameResult[] {
   return raw
     .filter((g) => typeof g.name === 'string')
     .map((g) => ({
@@ -372,8 +408,76 @@ function fetchAndCacheOnce(
 // Handler
 // -----------------------------------------------------------------------------
 
+function gameCacheKey(id: number): string {
+  return `game:${CACHE_VERSION}:igdb:${id}`;
+}
+
+async function cacheGameRecords(
+  db: ReturnType<typeof cacheClient>,
+  games: IgdbGameResult[],
+  fetchedAt: string,
+): Promise<void> {
+  if (games.length === 0) return;
+  const { error } = await db.from('igdb_cache').upsert(
+    games.map((game) => ({ cache_key: gameCacheKey(game.id), data: { results: [game], fetchedAt }, updated_at: fetchedAt })),
+    { onConflict: 'cache_key' },
+  );
+  if (error) console.error('[igdb-proxy] game record cache write failed', error.message);
+}
+
+/**
+ * Batch game lookup: serve every fresh per-game cache row, fetch only the
+ * misses from IGDB in one request, and cache each game individually.
+ */
+async function handleLookup(ids: number[]): Promise<Response> {
+  const db = cacheClient();
+  const { data: rows, error } = await db
+    .from('igdb_cache')
+    .select('cache_key, data, updated_at')
+    .in('cache_key', ids.map(gameCacheKey));
+  if (error) console.error('[igdb-proxy] lookup cache read failed', error.message);
+
+  const fresh = new Map<number, IgdbGameResult>();
+  const stale = new Map<number, IgdbGameResult>();
+  for (const row of rows ?? []) {
+    const game = (row.data as CachedPayload | null)?.results?.[0] as IgdbGameResult | undefined;
+    if (!game) continue;
+    const age = Date.now() - new Date(row.updated_at as string).getTime();
+    (age < GAME_RECORD_TTL_MS ? fresh : stale).set(game.id, game);
+  }
+
+  const toFetch = ids.filter((id) => !fresh.has(id));
+  const fetched = new Map<number, IgdbGameResult>();
+  if (toFetch.length > 0) {
+    try {
+      const games = await fetchGamesByIds(toFetch);
+      const fetchedAt = new Date().toISOString();
+      for (const game of games) fetched.set(game.id, game);
+      await cacheGameRecords(db, games, fetchedAt);
+    } catch (upstreamError) {
+      // Fall back to stale rows; only fail if we have nothing at all to show.
+      if (stale.size === 0 && fresh.size === 0) throw upstreamError;
+      console.warn('[igdb-proxy] lookup serving stale', upstreamError instanceof Error ? upstreamError.message : upstreamError);
+      for (const [id, game] of stale) fetched.set(id, game);
+    }
+  }
+
+  const results: IgdbGameResult[] = [];
+  const missing: number[] = [];
+  for (const id of ids) {
+    const game = fresh.get(id) ?? fetched.get(id);
+    if (game) results.push(game);
+    else missing.push(id);
+  }
+
+  const data: IgdbLookupResponse = { entity_type: 'games', results, missing, cachedCount: fresh.size };
+  return respond(200, { success: true, data }, { 'X-Cache': toFetch.length === 0 ? 'HIT' : fresh.size > 0 ? 'PARTIAL' : 'MISS' });
+}
+
 async function handle(req: Request): Promise<Response> {
-  const { entityType, query, limit } = await parseRequest(req);
+  const parsed = await parseRequest(req);
+  if (parsed.action === 'lookup') return handleLookup(parsed.ids);
+  const { entityType, query, limit } = parsed;
 
   const db = cacheClient();
   const cacheKey = `search:${CACHE_VERSION}:${SEARCH_PROVIDER[entityType]}:${entityType}:${limit}:${query}`;
@@ -392,7 +496,12 @@ async function handle(req: Request): Promise<Response> {
   }
 
   try {
-    const payload = await fetchAndCacheOnce(db, cacheKey, () => fetchUpstream(entityType, query, limit));
+    const payload = await fetchAndCacheOnce(db, cacheKey, async () => {
+      const results = await fetchUpstream(entityType, query, limit);
+      // Search hits double as per-game records, so later lookups (Now Playing, reviews) are free.
+      if (entityType === 'games') await cacheGameRecords(db, results as IgdbGameResult[], new Date().toISOString());
+      return results;
+    });
     return respond(200, { success: true, data: build(payload, false) }, { 'X-Cache': cached ? 'REFRESH' : 'MISS' });
   } catch (error) {
     // Upstream trouble: fall back to stale cache rather than failing the search.

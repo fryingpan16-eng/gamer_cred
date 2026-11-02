@@ -46,7 +46,8 @@ export function SteamInput({
       ) : null}
       <View
         className={cn(
-          'min-h-[26px] flex-row items-center gap-2 border bg-steam-dark px-2',
+          'min-h-[26px] flex-row gap-2 border bg-steam-dark px-2',
+          rest.multiline ? 'items-start py-1' : 'items-center',
           hasError
             ? 'border-steam-error'
             : focused
@@ -72,7 +73,11 @@ export function SteamInput({
             setFocused(false);
             rest.onBlur?.(e);
           }}
-          className="flex-1 py-1 text-steam-base text-steam-text outline-none"
+          textAlignVertical={rest.multiline ? 'top' : 'center'}
+          className={cn(
+            'flex-1 py-1 text-steam-base text-steam-text outline-none',
+            rest.multiline && 'min-h-[96px]',
+          )}
         />
         {trailing}
       </View>

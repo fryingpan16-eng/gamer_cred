@@ -26,9 +26,32 @@ export const IGDB_SEARCH_LIMITS = {
 } as const;
 
 export type IgdbSearchRequest = {
+  /** Defaults to 'search'. */
+  action?: 'search';
   entity_type: IgdbEntityType;
   query: string;
   limit?: number;
+};
+
+/**
+ * Batch lookup of games by IGDB id (Now Playing slots, reviews, game pages).
+ * Each game is cached individually, so repeated lookups rarely reach IGDB.
+ */
+export type IgdbLookupRequest = {
+  action: 'lookup';
+  entity_type: 'games';
+  ids: number[];
+};
+
+export const IGDB_LOOKUP_MAX_IDS = 50;
+
+export type IgdbLookupResponse = {
+  entity_type: 'games';
+  results: IgdbGameResult[];
+  /** Requested ids IGDB does not know (deleted/merged games). */
+  missing: number[];
+  /** How many of the results were served from igdb_cache. */
+  cachedCount: number;
 };
 
 export type IgdbGameResult = {

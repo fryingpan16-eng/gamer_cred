@@ -2,8 +2,11 @@ import { FunctionsFetchError, FunctionsHttpError, FunctionsRelayError } from '@s
 
 import type { ApiEnvelope } from '@/types/api';
 import {
+  IGDB_LOOKUP_MAX_IDS,
   IGDB_SEARCH_LIMITS,
   normalizeSearchQuery,
+  type IgdbLookupRequest,
+  type IgdbLookupResponse,
   type IgdbSearchRequest,
   type IgdbSearchResponse,
 } from '@/types/igdb';
@@ -39,6 +42,48 @@ async function readEnvelopeError(response: unknown): Promise<string | null> {
  * Calls the `igdb-proxy` Edge Function. The client NEVER talks to IGDB/Twitch or
  * RAWG directly (CLAUDE.md); the proxy holds the credentials and the igdb_cache.
  */
+async function invokeProxy<T>(body: IgdbSearchRequest | IgdbLookupRequest, signal?: AbortSignal): Promise<T> {
+  const { data, error } = await supabase.functions.invoke<ApiEnvelope<T>>('igdb-proxy', { body, signal });
+
+  if (error) {
+    if (error instanceof FunctionsHttpError) {
+      const response = error.context as Response;
+      const status = response.status;
+      const message = (await readEnvelopeError(response)) ?? `Request failed (${status}).`;
+      // 4xx (bad input / unsupported) won't improve on retry; 429/5xx might.
+      throw new SearchServiceError(message, status, status === 429 || status >= 500);
+    }
+    if (error instanceof FunctionsFetchError || error instanceof FunctionsRelayError) {
+      throw new SearchServiceError('Cannot reach the game database. Check your connection.', null, true);
+    }
+    throw new SearchServiceError(error instanceof Error ? error.message : 'Request failed.', null, true);
+  }
+
+  if (!data || !data.success) {
+    throw new SearchServiceError(data?.error ?? 'The game database returned an invalid response.', null, false);
+  }
+  return data.data;
+}
+
+/** Batch-resolves IGDB game ids to display records (title, cover…). Chunked to the proxy's max. */
+export async function lookupGames(ids: readonly number[], signal?: AbortSignal): Promise<IgdbLookupResponse> {
+  const unique = [...new Set(ids)];
+  const chunks: number[][] = [];
+  for (let i = 0; i < unique.length; i += IGDB_LOOKUP_MAX_IDS) chunks.push(unique.slice(i, i + IGDB_LOOKUP_MAX_IDS));
+
+  const responses = await Promise.all(
+    chunks.map((chunk) =>
+      invokeProxy<IgdbLookupResponse>({ action: 'lookup', entity_type: 'games', ids: chunk }, signal),
+    ),
+  );
+  return {
+    entity_type: 'games',
+    results: responses.flatMap((r) => r.results),
+    missing: responses.flatMap((r) => r.missing),
+    cachedCount: responses.reduce((n, r) => n + r.cachedCount, 0),
+  };
+}
+
 export async function searchIgdb<E extends IgdbSearchableEntity>(
   entityType: E,
   rawQuery: string,
@@ -49,28 +94,8 @@ export async function searchIgdb<E extends IgdbSearchableEntity>(
     throw new SearchServiceError(`Type at least ${IGDB_SEARCH_LIMITS.minQueryLength} characters.`, 400, false);
   }
 
-  const body: IgdbSearchRequest = { entity_type: entityType, query, limit: options.limit };
-  const { data, error } = await supabase.functions.invoke<ApiEnvelope<IgdbSearchResponse<E>>>('igdb-proxy', {
-    body,
-    signal: options.signal,
-  });
-
-  if (error) {
-    if (error instanceof FunctionsHttpError) {
-      const response = error.context as Response;
-      const status = response.status;
-      const message = (await readEnvelopeError(response)) ?? `Search failed (${status}).`;
-      // 4xx (bad input / unsupported) won't improve on retry; 429/5xx might.
-      throw new SearchServiceError(message, status, status === 429 || status >= 500);
-    }
-    if (error instanceof FunctionsFetchError || error instanceof FunctionsRelayError) {
-      throw new SearchServiceError('Cannot reach the search service. Check your connection.', null, true);
-    }
-    throw new SearchServiceError(error instanceof Error ? error.message : 'Search failed.', null, true);
-  }
-
-  if (!data || !data.success) {
-    throw new SearchServiceError(data?.error ?? 'Search returned an invalid response.', null, false);
-  }
-  return data.data;
+  return invokeProxy<IgdbSearchResponse<E>>(
+    { action: 'search', entity_type: entityType, query, limit: options.limit },
+    options.signal,
+  );
 }

@@ -3,6 +3,7 @@
  * client and server can never drift apart.
  */
 export {
+  IGDB_LOOKUP_MAX_IDS,
   IGDB_SEARCH_LIMITS,
   igdbImageUrl,
   normalizeSearchQuery,
@@ -12,6 +13,8 @@ export {
   type IgdbEntityType,
   type IgdbGameResult,
   type IgdbImageSize,
+  type IgdbLookupRequest,
+  type IgdbLookupResponse,
   type IgdbResultFor,
   type IgdbSearchRequest,
   type IgdbSearchResponse,
