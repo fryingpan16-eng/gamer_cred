@@ -1,0 +1,108 @@
+node -e '
+const fs = require("fs");
+const md = `# GAMER_CRED — PROJECT RULES & ARCHITECTURE
+
+## 🎯 ROLE & OBJECTIVE
+Universal cross-platform video game social review app built with Expo Router and TypeScript (\`gamer_cred\`).
+
+## 🖥️ TARGET DEVICES & RESPONSIVE LAYOUT SCALING
+The app MUST target **iOS, Android, and Desktop (Web/Electron wrappers)**. 
+- **Responsive Architecture**: The UI must automatically scale and adapt layout structures based on target viewports using responsive utilities (Tailwind's \`md:\`, \`lg:\` breakpoints).
+- **Desktop/Tablet Mode**: Mimics a native 2004 Steam desktop client window (fixed-width constrained centered shells, multi-column master-detail views, and permanent sidebar navigation).
+- **Mobile Mode**: Collapses into single-column flows with standard bottom navigation bars.
+
+## 📱 BOTTOM NAVIGATION & CORE WORKFLOWS
+The core app features a bottom navigation bar (migrating to a desktop sidebar on wider viewports) with four specific tabs:
+1. **Home (\`app/(tabs)/index.tsx\`)**: Dashboard with featured games, latest community activity, friend feed, and trending lists.
+2. **Search (\`app/(tabs)/search.tsx\`)**: Unified search interface with tabs/filters for:
+   - **Games**: Title, genre, and platform database search (via IGDB Edge Function cache).
+   - **Studios & Directors**: Developers, publishers, and key game creators (via IGDB Edge Function cache).
+   - **Users / Friends**: Search community profiles by username to view profiles and send friend requests.
+3. **Post / Review Studio (\`app/(tabs)/post.tsx\`)**: 
+   - **Now Playing Grid**: 4 active slots. Empty slots allow adding a game. Filled slots allow removal (with confirmation modal), running notes, and preliminary scoring.
+   - **Publishing**: Convert a Now Playing draft into a published community review.
+   - **Standalone Quick Review**: Rate/review any game directly without occupying a Now Playing slot.
+4. **Profile (\`app/(tabs)/profile.tsx\`)**:
+   - **Public & Private View**: Displays active Now Playing 4-game grid and friend status.
+   - **Top 4 Favorites**: Showcase section for top 4 favorite games of all time.
+   - **Hardware & Platform Roster**: Grid of owned consoles/platforms with PC spec entry and 1 highlighted "Main" platform badge.
+
+## 🎨 VISUAL THEME & UX SPECIFICATION (2004 STEAM AESTHETIC)
+The application MUST strictly adhere to a **2004 Valve Steam UI** aesthetic.
+- **Color Palette**:
+  - \`steam-dark\`: \`#3a3d36\` (Primary dark background / window chrome)
+  - \`steam-card\`: \`#4c5046\` (Container / panel background)
+  - \`steam-panel\`: \`#595e52\` (Elevated card / header background)
+  - \`steam-accent\`: \`#6a725e\` (Borders, tabs, container dividers)
+  - \`steam-highlight\`: \`#9da789\` (Active items, selected tab state, hover effects)
+  - \`steam-text\`: \`#c4cdb4\` (Primary readable text)
+  - \`steam-text-bright\`: \`#e6ebd6\` (Headings, key metric values)
+  - \`steam-text-muted\`: \`#889177\` (Subtext, meta information)
+  - \`steam-button\`: \`#52584a\` (Interactive button surfaces)
+  - \`steam-button-border\`: \`#737b67\` (Beveled button borders)
+  - \`steam-active\`: \`#79846b\` (Primary focus / action green)
+- **UI & Bevel Guidelines**:
+  - **Skeuomorphic Borders**: Sharp, tactile bevel borders (\`border-t\`, \`border-l\` lighter highlights, \`border-b\`, \`border-r\` darker inset shadows).
+  - **Typography**: Compact, high-density retro layout (sans-serif, tight line heights, crisp monospace numbers/ratings).
+
+## 🚫 CRITICAL RESTRICTION: THE NO-JS LAW
+UNDER NO CIRCUMSTANCES create, modify, or output \`.js\` or \`.jsx\` source files (excluding config files like \`babel.config.js\`, \`tailwind.config.js\`, \`metro.config.js\`).
+- All React UI components and screens MUST use \`.tsx\`.
+- All non-UI logic, services, types, and constants MUST use \`.ts\`.
+- Maintain strict TypeScript mode with no unhandled \`any\` types.
+
+## 🛠️ TECHNOLOGY STACK
+- **Framework**: React Native + Expo (Managed Workflow, Expo Router v3+)
+- **Language**: TypeScript (Strict mode enabled)
+- **State & Data**: TanStack Query (React Query) v5, Zustand
+- **Backend & Types**: Supabase client (\`@supabase/supabase-js\`)
+- **UI & Styling**: NativeWind v4 (TailwindCSS for React Native)
+- **Validation**: Zod (for runtime type safety and form validation)
+
+## 📁 STRICT FOLDER STRUCTURE
+- \`app/\` (Expo Router file-based routes ONLY)
+  - \`app/(auth)/\`: Login, Register
+  - \`app/(tabs)/\`: Index (Home), Search, Post, Profile
+  - \`app/game/[id].tsx\`: Dynamic game detail view
+  - \`app/user/[id].tsx\`: Dynamic public user profile view
+  - \`app/+error.tsx\`: Global error boundary
+- \`src/components/\`: Reusable UI components
+- \`src/services/\`: Supabase client & Edge Function wrappers
+- \`src/hooks/\`: Custom React hooks wrapping TanStack Query
+- \`src/types/\`: TypeScript interfaces & database.types.ts
+- \`src/utils/\`: Helper functions
+- \`supabase/functions/\`: Supabase Edge Functions
+- \`supabase/migrations/\`: PostgreSQL initial migrations
+
+## 🗄️ BACKEND & CACHING RULES
+- **No Direct IGDB Client Calls**: Client NEVER directly calls IGDB/Twitch APIs.
+- **Supabase Edge Functions**: IGDB search (games, companies, creators) routes through Supabase Edge Functions.
+- **PostgreSQL Caching**: IGDB responses cached in an \`igdb_cache\` table (\`cache_key\` primary key, \`data\` JSONB, \`updated_at\`).
+
+## ⚡ QUERY CACHING & QUERY KEYS
+- **Centralized Query Keys**: All TanStack Query calls MUST use a single query key factory defined in \`src/utils/queryKeys.ts\`.
+
+## 🗄️ DATABASE INDEXING RULES
+- **Indexes**: Migrations MUST include indexes for: \`reviews\`, \`favorites\`, \`igdb_cache\`, \`now_playing\`, \`user_platforms\`, \`user_favorites\`, and \`friendships(user_id, friend_id, status)\`.
+
+## 🌐 EDGE FUNCTION CONTRACT & ENVIRONMENT TYPING
+- **Standard API Envelope**: Edge Functions return responses formatted as \`{ success: boolean, data?: T, error?: string }\`.
+- **Strict Environment Types**: Require \`src/types/env.d.ts\` declaring types for Supabase environment keys.
+
+## 🔒 SECURITY & STABILITY HARDENING
+- **Secure Auth Storage**: Supabase client MUST use \`expo-secure-store\` for session persistence.
+- **Database RLS**: Every table created in migrations MUST enable Row Level Security with explicit read/write policies.
+- **Global Error Boundary**: Implement \`app/+error.tsx\` at the root.
+- **Typed Routes**: Enable Expo Router's typed routes in \`app.json\`.
+- **Input Validation**: Use Zod schemas for all user-submitted data.
+
+## 🎨 RETRO ICONOGRAPHY & MICRO-INTERACTIONS
+- **Icons**: Use \`@expo/vector-icons\` (sharp linear sets like \`MaterialCommunityIcons\` or \`Feather\`).
+
+## 🎨 NATIVEWIND V4 RULES
+- Require \`global.css\` at project root defining 2004 Steam colors and bevel utility classes.
+- Require import of \`../global.css\` in \`app/_layout.tsx\`.
+- Require \`nativewind-env.d.ts\` at root with content: \`/// <reference types="nativewind/types" />\`.
+`;
+fs.writeFileSync("CLAUDE.md", md);
+'
