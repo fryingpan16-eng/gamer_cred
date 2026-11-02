@@ -2,10 +2,11 @@ import { router } from 'expo-router';
 import { Text, View } from 'react-native';
 
 import { Thumbnail } from '@/components/search/Thumbnail';
-import { SteamAlert, SteamCard, SteamPanel, SteamScoreMeter, SteamSpinner } from '@/components/ui';
+import { SteamAlert, SteamCard, SteamPanel, SteamRating, SteamSpinner } from '@/components/ui';
 import { useGameLookup } from '@/hooks/useGames';
 import { usePublishedReviews } from '@/hooks/useProfile';
 import { igdbImageUrl } from '@/types/igdb';
+import { reviewRating } from '@/utils/ratingColumns';
 
 function formatDate(iso: string | null): string {
   return iso ? new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '';
@@ -47,7 +48,7 @@ export function PublishedReviews({ userId, isOwner }: { userId: string; isOwner:
                   <Text className="text-steam-base font-bold text-steam-text-bright" numberOfLines={1}>
                     {game?.name ?? `Game #${review.game_id}`}
                   </Text>
-                  <SteamScoreMeter value={review.rating} size="compact" />
+                  <SteamRating rating={reviewRating(review)} size="compact" />
                   {review.content ? (
                     <Text className="text-steam-xs text-steam-text" numberOfLines={3}>
                       {review.content}

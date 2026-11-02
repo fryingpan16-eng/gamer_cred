@@ -11,6 +11,7 @@ import { NOW_PLAYING_SLOTS } from '@/services/nowPlaying';
 import type { NowPlayingSlot } from '@/types/database.types';
 import type { IgdbGameResult } from '@/types/igdb';
 import { cn } from '@/utils/cn';
+import { slotRating } from '@/utils/ratingColumns';
 
 type SlotChooserProps = { visible: boolean; game: IgdbGameResult; onClose: () => void; onAssigned: (slot: NowPlayingSlot) => void };
 
@@ -93,7 +94,7 @@ export function GameActions({ game }: { game: IgdbGameResult }) {
       gameId: game.id,
       fromSlot: inSlot?.slot_index,
       // Seed from Now Playing notes only when there is no saved review to resume.
-      seed: !review && inSlot ? { rating: inSlot.preliminary_score, content: inSlot.notes ?? '' } : undefined,
+      seed: !review && inSlot ? { rating: slotRating(inSlot), content: inSlot.notes ?? '' } : undefined,
     });
     router.push('/post');
   };

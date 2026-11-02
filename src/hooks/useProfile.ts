@@ -14,6 +14,7 @@ import {
   setMainPlatform,
   swapFavoriteRanks,
   updatePcSpecs,
+  updatePrimaryRatingScale,
   updateProfile,
 } from '@/services/profile';
 import {
@@ -23,6 +24,7 @@ import {
   type FriendRelation,
 } from '@/services/users';
 import type { FavoriteRank, Profile, UserFavorite, UserPlatform } from '@/types/database.types';
+import type { RatingScale } from '@/constants/ratingRubric';
 import type { ProfileSettingsValues } from '@/utils/profileSchemas';
 import { queryKeys } from '@/utils/queryKeys';
 
@@ -84,6 +86,30 @@ export function useUpdateProfile() {
       useAuthStore.setState({ profile });
     },
     onSettled: () => void queryClient.invalidateQueries({ queryKey: queryKeys.search.entity('users') }),
+  });
+}
+
+/** Switch the viewer's primary rating scale — optimistic on the auth snapshot. */
+export function useUpdatePrimaryRatingScale() {
+  const queryClient = useQueryClient();
+  const viewerId = useViewerId();
+  return useMutation({
+    mutationFn: (scale: RatingScale) => {
+      if (!viewerId) throw new Error('You must be signed in.');
+      return updatePrimaryRatingScale(viewerId, scale);
+    },
+    onMutate: (scale) => {
+      const previous = useAuthStore.getState().profile;
+      if (previous) useAuthStore.setState({ profile: { ...previous, primary_rating_scale: scale } });
+      return { previous };
+    },
+    onError: (_e, _scale, ctx) => {
+      if (ctx?.previous) useAuthStore.setState({ profile: ctx.previous });
+    },
+    onSuccess: (profile) => {
+      useAuthStore.setState({ profile });
+      queryClient.setQueryData(queryKeys.profiles.detail(profile.id), profile);
+    },
   });
 }
 

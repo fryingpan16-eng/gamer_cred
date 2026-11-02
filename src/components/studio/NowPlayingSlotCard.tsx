@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { Image, Pressable, Text, View } from 'react-native';
 
-import { SteamBadge, SteamButton, SteamScoreMeter, SteamSpinner } from '@/components/ui';
+import { SteamBadge, SteamButton, SteamRating, SteamSpinner } from '@/components/ui';
 import type { NowPlaying, NowPlayingSlot } from '@/types/database.types';
 import { igdbImageUrl, type IgdbGameResult } from '@/types/igdb';
 import { cn } from '@/utils/cn';
+import { slotRating } from '@/utils/ratingColumns';
 
 type NowPlayingSlotCardProps = {
   slot: NowPlayingSlot;
@@ -41,11 +42,7 @@ export function NowPlayingSlotCard({
     <View className={cn('steam-bevel gap-1.5 bg-steam-card p-1.5', selected && 'border-steam-highlight')}>
       <View className="flex-row items-center justify-between">
         <Text className="font-mono text-steam-xs text-steam-text-muted">SLOT {slot}</Text>
-        {filled && row.preliminary_score !== null ? (
-          <SteamBadge label={`${row.preliminary_score}/10`} variant="nowPlaying" />
-        ) : filled ? (
-          <SteamBadge label="Unscored" variant="draft" />
-        ) : null}
+        {filled && row.preliminary_score === null ? <SteamBadge label="Unrated" variant="draft" /> : null}
       </View>
 
       <Pressable
@@ -83,7 +80,7 @@ export function NowPlayingSlotCard({
           <Text className="text-steam-sm font-bold text-steam-text-bright" numberOfLines={1}>
             {title}
           </Text>
-          <SteamScoreMeter value={row.preliminary_score} size="compact" />
+          {row.preliminary_score !== null ? <SteamRating rating={slotRating(row)} size="compact" suffix="so far" /> : null}
           <Text className="min-h-[28px] text-steam-xs text-steam-text-muted" numberOfLines={2}>
             {row.notes?.trim() ? row.notes : 'No running notes yet.'}
           </Text>

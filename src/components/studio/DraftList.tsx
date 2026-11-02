@@ -1,9 +1,10 @@
 import { Text, View } from 'react-native';
 
-import { SteamAlert, SteamButton, SteamCard, SteamPanel, SteamSpinner } from '@/components/ui';
+import { SteamAlert, SteamButton, SteamCard, SteamPanel, SteamRating, SteamSpinner } from '@/components/ui';
 import { useGameLookup } from '@/hooks/useGames';
 import { useMyReviews } from '@/hooks/useReviews';
 import { useStudioStore } from '@/hooks/useStudioStore';
+import { reviewRating } from '@/utils/ratingColumns';
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
@@ -36,9 +37,7 @@ export function DraftList() {
                   <Text className="flex-1 text-steam-base font-bold text-steam-text-bright" numberOfLines={1}>
                     {game?.name ?? `Game #${draft.game_id}`}
                   </Text>
-                  <Text className="font-mono text-steam-xs text-steam-text-muted">
-                    {draft.rating !== null ? `${draft.rating}/10` : '--/10'}
-                  </Text>
+                  <SteamRating rating={reviewRating(draft)} size="compact" />
                 </View>
                 {draft.content ? (
                   <Text className="text-steam-xs text-steam-text" numberOfLines={2}>

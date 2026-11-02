@@ -7,6 +7,7 @@
     "noFallthroughCasesInSwitch": true,
     "forceConsistentCasingInFileNames": true,
     "allowJs": false,
+    "types": ["jest"],
     "paths": {
       "@/*": ["./src/*", "./app/*"]
     }

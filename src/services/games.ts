@@ -30,7 +30,7 @@ export function fetchGameDetail(gameId: number, signal?: AbortSignal): Promise<I
 }
 
 const REVIEW_WITH_AUTHOR = `
-  id, user_id, game_id, rating, content, published_at, updated_at,
+  id, user_id, game_id, rating, rating_input_scale, rating_input, content, published_at, updated_at,
   author:profiles!reviews_user_id_fkey ( id, username, avatar_url )
 ` as const;
 
@@ -57,6 +57,7 @@ export async function fetchGameReviews(gameId: number, page: number): Promise<Ga
   return { reviews: data, nextPage: data.length === GAME_REVIEWS_PAGE_SIZE ? page + 1 : null };
 }
 
+/** `average` is on the canonical 1–100 scale; `distribution` has one count per score 1..100. */
 export type GameReviewStats = { count: number; average: number | null; distribution: number[] };
 
 /** Aggregate community score (migration 000006 RPC). */
@@ -67,6 +68,6 @@ export async function fetchGameReviewStats(gameId: number): Promise<GameReviewSt
   return {
     count: row?.review_count ?? 0,
     average: row?.average_rating === null || row?.average_rating === undefined ? null : Number(row.average_rating),
-    distribution: row?.distribution ?? Array.from({ length: 10 }, () => 0),
+    distribution: row?.distribution ?? Array.from({ length: 100 }, () => 0),
   };
 }

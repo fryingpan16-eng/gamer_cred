@@ -25,18 +25,22 @@ export type Database = {
           id: string;
           username: string;
           avatar_url: string | null;
+          /** Scale the user enters ratings in (migration 000007). */
+          primary_rating_scale: Database['public']['Enums']['rating_scale'];
           updated_at: Timestamp;
         };
         Insert: {
           id: string;
           username: string;
           avatar_url?: string | null;
+          primary_rating_scale?: Database['public']['Enums']['rating_scale'];
           updated_at?: Timestamp;
         };
         Update: {
           id?: string;
           username?: string;
           avatar_url?: string | null;
+          primary_rating_scale?: Database['public']['Enums']['rating_scale'];
           updated_at?: Timestamp;
         };
         Relationships: [];
@@ -87,7 +91,14 @@ export type Database = {
           id: string;
           user_id: string;
           game_id: number;
+          /** Canonical numeric score 1–100 (migration 000007). */
           rating: number | null;
+          /** Scale the rating was entered in; null when unrated. */
+          rating_input_scale: Database['public']['Enums']['rating_scale'] | null;
+          /** Raw input exactly as entered, e.g. "A+", "4.5", "NOT GOOD". */
+          rating_input: string | null;
+          /** Pre-000007 1–10 score, preserved for audit. */
+          legacy_rating_10: number | null;
           content: string | null;
           status: Database['public']['Enums']['review_status'];
           created_at: Timestamp;
@@ -100,6 +111,9 @@ export type Database = {
           user_id: string;
           game_id: number;
           rating?: number | null;
+          rating_input_scale?: Database['public']['Enums']['rating_scale'] | null;
+          rating_input?: string | null;
+          legacy_rating_10?: number | null;
           content?: string | null;
           status?: Database['public']['Enums']['review_status'];
           created_at?: Timestamp;
@@ -111,6 +125,9 @@ export type Database = {
           user_id?: string;
           game_id?: number;
           rating?: number | null;
+          rating_input_scale?: Database['public']['Enums']['rating_scale'] | null;
+          rating_input?: string | null;
+          legacy_rating_10?: number | null;
           content?: string | null;
           status?: Database['public']['Enums']['review_status'];
           created_at?: Timestamp;
@@ -134,7 +151,11 @@ export type Database = {
           slot_index: NowPlayingSlot;
           game_id: number;
           notes: string | null;
+          /** Canonical numeric score 1–100 (migration 000007). */
           preliminary_score: number | null;
+          preliminary_input_scale: Database['public']['Enums']['rating_scale'] | null;
+          preliminary_input: string | null;
+          legacy_preliminary_score_10: number | null;
           updated_at: Timestamp;
         };
         Insert: {
@@ -143,6 +164,9 @@ export type Database = {
           game_id: number;
           notes?: string | null;
           preliminary_score?: number | null;
+          preliminary_input_scale?: Database['public']['Enums']['rating_scale'] | null;
+          preliminary_input?: string | null;
+          legacy_preliminary_score_10?: number | null;
           updated_at?: Timestamp;
         };
         Update: {
@@ -151,6 +175,9 @@ export type Database = {
           game_id?: number;
           notes?: string | null;
           preliminary_score?: number | null;
+          preliminary_input_scale?: Database['public']['Enums']['rating_scale'] | null;
+          preliminary_input?: string | null;
+          legacy_preliminary_score_10?: number | null;
           updated_at?: Timestamp;
         };
         Relationships: [
@@ -265,7 +292,7 @@ export type Database = {
         Returns: {
           review_count: number;
           average_rating: number | null;
-          /** Counts for scores 1..10 (index 0 = score 1). */
+          /** Counts per numeric score 1..100 (index 0 = score 1); bucket into tiers via the rubric. */
           distribution: number[];
         }[];
       };
@@ -282,6 +309,7 @@ export type Database = {
     Enums: {
       friendship_status: 'pending' | 'accepted' | 'rejected';
       review_status: 'draft' | 'published';
+      rating_scale: 'numeric' | 'tier' | 'stars' | 'rounded';
     };
     CompositeTypes: { [_ in never]: never };
   };
@@ -298,10 +326,16 @@ export type ActivityFeedRow = {
   game_id: number;
   review_id: string | null;
   rating: number | null;
+  rating_input_scale: RatingScaleValue | null;
+  rating_input: string | null;
   excerpt: string | null;
   slot_index: NowPlayingSlot | null;
   preliminary_score: number | null;
+  preliminary_input_scale: RatingScaleValue | null;
+  preliminary_input: string | null;
 };
+
+type RatingScaleValue = 'numeric' | 'tier' | 'stars' | 'rounded';
 
 /** Slot range enforced by `check (slot_index between 1 and 4)`. */
 export type NowPlayingSlot = 1 | 2 | 3 | 4;
@@ -329,3 +363,4 @@ export type IgdbCacheEntry = Tables<'igdb_cache'>;
 
 export type FriendshipStatus = Enums<'friendship_status'>;
 export type ReviewStatus = Enums<'review_status'>;
+export type RatingScaleEnum = Enums<'rating_scale'>;

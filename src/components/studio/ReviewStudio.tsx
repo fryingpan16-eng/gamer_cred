@@ -9,17 +9,20 @@ import {
   SteamConfirmModal,
   SteamInput,
   SteamPanel,
-  SteamScoreMeter,
+  SteamRatingInput,
   SteamSpinner,
   SteamTabs,
   type SteamTabItem,
 } from '@/components/ui';
 import { useGameLookup } from '@/hooks/useGames';
+import { usePrimaryRatingScale } from '@/hooks/useAuth';
 import { useDeleteReview, useMyReviewForGame, useSaveReview } from '@/hooks/useReviews';
 import { useStudioStore, type StudioTarget } from '@/hooks/useStudioStore';
 import type { Review, ReviewStatus } from '@/types/database.types';
 import { igdbImageUrl } from '@/types/igdb';
 import { cn } from '@/utils/cn';
+import type { StoredRating } from '@/utils/rating';
+import { reviewRating } from '@/utils/ratingColumns';
 import { REVIEW_MAX_LENGTH, reviewFormSchema, type ReviewFormValues } from '@/utils/reviewSchemas';
 
 import { GamePickerModal } from './GamePickerModal';
@@ -55,7 +58,9 @@ function ReviewEditor({ target, existing }: EditorProps) {
   const save = useSaveReview();
   const remove = useDeleteReview();
 
-  const [rating, setRating] = useState<number | null>(existing?.rating ?? target.seed?.rating ?? null);
+  const primaryScale = usePrimaryRatingScale();
+  // Untouched ratings are saved back exactly as stored; a new input replaces the old one entirely.
+  const [rating, setRating] = useState<StoredRating | null>((existing ? reviewRating(existing) : null) ?? target.seed?.rating ?? null);
   const [content, setContent] = useState(existing?.content ?? target.seed?.content ?? '');
   const [status, setStatus] = useState<ReviewStatus>(existing?.status ?? 'draft');
   const [freeSlot, setFreeSlot] = useState(true);
@@ -102,8 +107,9 @@ function ReviewEditor({ target, existing }: EditorProps) {
         />
       ) : null}
 
-      <SteamScoreMeter
-        label={status === 'published' ? 'Score (required to publish)' : 'Score'}
+      <SteamRatingInput
+        label={status === 'published' ? 'Rating (required to publish)' : 'Rating'}
+        scale={primaryScale}
         value={rating}
         onChange={(v) => {
           setRating(v);
@@ -123,7 +129,7 @@ function ReviewEditor({ target, existing }: EditorProps) {
         maxLength={REVIEW_MAX_LENGTH}
         placeholder={status === 'published' ? 'What worked, what didn’t, who should play it…' : 'Quick thoughts to come back to…'}
         error={fieldErrors.content}
-        hint={`${content.length.toLocaleString()} / ${REVIEW_MAX_LENGTH.toLocaleString()} · score-only quick reviews are fine`}
+        hint={`${content.length.toLocaleString()} / ${REVIEW_MAX_LENGTH.toLocaleString()} · rating-only quick reviews are fine`}
         editable={!save.isPending}
       />
 

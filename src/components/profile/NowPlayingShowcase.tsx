@@ -1,10 +1,11 @@
 import { Link } from 'expo-router';
 import { Text, View } from 'react-native';
 
-import { SteamAlert, SteamBadge, SteamPanel, SteamSpinner } from '@/components/ui';
+import { SteamAlert, SteamPanel, SteamRating, SteamSpinner } from '@/components/ui';
 import { useGameLookup } from '@/hooks/useGames';
 import { useNowPlaying } from '@/hooks/useNowPlaying';
 import { NOW_PLAYING_SLOTS } from '@/services/nowPlaying';
+import { slotRating } from '@/utils/ratingColumns';
 
 import { CoverTile } from './CoverTile';
 
@@ -50,9 +51,7 @@ export function NowPlayingShowcase({ userId, isOwner }: NowPlayingShowcaseProps)
                     <Text className="text-steam-xs font-bold text-steam-text-bright" numberOfLines={1}>
                       {game?.name ?? '…'}
                     </Text>
-                    {row.preliminary_score !== null ? (
-                      <SteamBadge label={`${row.preliminary_score}/10 so far`} variant="nowPlaying" />
-                    ) : null}
+                    {row.preliminary_score !== null ? <SteamRating rating={slotRating(row)} size="compact" suffix="so far" /> : null}
                   </>
                 ) : null}
               </View>

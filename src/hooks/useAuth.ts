@@ -3,6 +3,7 @@ import { create } from 'zustand';
 
 import { queryClient } from '@/services/queryClient';
 import { bindAuthAutoRefreshToAppState, supabase } from '@/services/supabase';
+import { DEFAULT_RATING_SCALE, type RatingScale } from '@/constants/ratingRubric';
 import type { Profile } from '@/types/database.types';
 
 export type AuthStatus = 'loading' | 'signedOut' | 'signedIn';
@@ -76,6 +77,11 @@ export const useAuthStore = create<AuthState>()((set, get) => {
     },
   };
 });
+
+/** The viewer's primary rating scale (entry control + prominent display); Numeric by default. */
+export function usePrimaryRatingScale(): RatingScale {
+  return useAuthStore((s) => s.profile?.primary_rating_scale ?? DEFAULT_RATING_SCALE);
+}
 
 /** Convenience hook for screens: current auth snapshot. */
 export function useAuth() {

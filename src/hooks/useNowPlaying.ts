@@ -8,6 +8,7 @@ import {
   type SlotDetails,
 } from '@/services/nowPlaying';
 import type { NowPlaying, NowPlayingSlot } from '@/types/database.types';
+import { slotRatingColumns } from '@/utils/ratingColumns';
 import { queryKeys } from '@/utils/queryKeys';
 
 import { useAuthStore } from './useAuth';
@@ -62,10 +63,28 @@ export function useUpdateNowPlayingSlot() {
         if ('gameId' in vars) {
           return sortSlots([
             ...others,
-            { user_id: viewerId, slot_index: vars.slot, game_id: vars.gameId, notes: null, preliminary_score: null, updated_at: now },
+            {
+              user_id: viewerId,
+              slot_index: vars.slot,
+              game_id: vars.gameId,
+              notes: null,
+              ...slotRatingColumns(null),
+              legacy_preliminary_score_10: null,
+              updated_at: now,
+            },
           ]);
         }
-        return current ? sortSlots([...others, { ...current, ...vars.details, updated_at: now }]) : rows;
+        if (!current) return rows;
+        const { notes, preliminary } = vars.details;
+        return sortSlots([
+          ...others,
+          {
+            ...current,
+            ...(notes !== undefined ? { notes } : {}),
+            ...(preliminary !== undefined ? slotRatingColumns(preliminary) : {}),
+            updated_at: now,
+          },
+        ]);
       });
       return { previous };
     },

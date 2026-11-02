@@ -1,6 +1,7 @@
 import type { PostgrestError } from '@supabase/supabase-js';
 
 import type { FavoriteRank, Friendship, Profile, Review, UserFavorite, UserPlatform } from '@/types/database.types';
+import type { RatingScale } from '@/constants/ratingRubric';
 import type { ProfileSettingsValues } from '@/utils/profileSchemas';
 
 import { isUsernameAvailable } from './auth';
@@ -47,6 +48,18 @@ export async function updateProfile(userId: string, current: Profile, values: Pr
     if (error.code === '23505') throw new ProfileError('That username is already taken.', error.code);
     fail(error, 'Could not save your profile.');
   }
+  return data;
+}
+
+/** Primary rating input scale. Existing ratings are untouched; only entry/display changes. */
+export async function updatePrimaryRatingScale(userId: string, scale: RatingScale): Promise<Profile> {
+  const { data, error } = await supabase
+    .from('profiles')
+    .update({ primary_rating_scale: scale })
+    .eq('id', userId)
+    .select()
+    .single();
+  if (error) fail(error, 'Could not save your rating scale.');
   return data;
 }
 

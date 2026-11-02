@@ -7,6 +7,7 @@ import { useNowPlaying, useRemoveNowPlayingSlot, useUpdateNowPlayingSlot } from 
 import { useStudioStore } from '@/hooks/useStudioStore';
 import { NOW_PLAYING_SLOTS } from '@/services/nowPlaying';
 import type { NowPlaying, NowPlayingSlot } from '@/types/database.types';
+import { slotRating } from '@/utils/ratingColumns';
 
 import { GamePickerModal } from './GamePickerModal';
 import { NowPlayingSlotCard } from './NowPlayingSlotCard';
@@ -79,7 +80,7 @@ export function NowPlayingGrid() {
                       startReview({
                         gameId: row.game_id,
                         fromSlot: slot,
-                        seed: { rating: row.preliminary_score, content: row.notes ?? '' },
+                        seed: { rating: slotRating(row), content: row.notes ?? '' },
                       })
                     }
                   />
@@ -120,7 +121,7 @@ export function NowPlayingGrid() {
       <SteamConfirmModal
         visible={modal.kind === 'remove'}
         title="Remove from Now Playing"
-        message={`Remove ${modalSlot ? titleFor(modalSlot) : 'this game'} from slot ${modalSlot ?? ''}? Its running notes and preliminary score will be discarded. Write a review first if you want to keep them.`}
+        message={`Remove ${modalSlot ? titleFor(modalSlot) : 'this game'} from slot ${modalSlot ?? ''}? Its running notes and preliminary rating will be discarded. Write a review first if you want to keep them.`}
         confirmLabel="Remove"
         destructive
         busy={removeSlot.isPending}

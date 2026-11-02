@@ -17,7 +17,8 @@ function firstRelease(game: IgdbGameDetail): string | null {
 export function GameHero({ game, stats }: GameHeroProps) {
   const backdrop = game.artworkIds[0] ?? game.screenshotIds[0] ?? null;
   const release = firstRelease(game);
-  const community = stats && stats.count > 0 && stats.average !== null ? Math.round(stats.average * 10) : null;
+  // Community average is on the canonical 1–100 scale.
+  const community = stats && stats.count > 0 && stats.average !== null ? Math.round(stats.average) : null;
 
   return (
     <View className="steam-window overflow-hidden">

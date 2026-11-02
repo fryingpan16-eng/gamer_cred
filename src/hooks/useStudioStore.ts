@@ -2,6 +2,7 @@ import { create } from 'zustand';
 
 import type { IgdbGameResult } from '@/types/igdb';
 import type { NowPlayingSlot } from '@/types/database.types';
+import type { StoredRating } from '@/utils/rating';
 
 /**
  * Review Studio UI state: which slot is selected and which modal is open.
@@ -24,7 +25,7 @@ export type StudioTarget = {
   /** Present when the review started from a Now Playing slot. */
   fromSlot?: NowPlayingSlot;
   /** Prefill values (from the slot's notes / preliminary score). */
-  seed?: { rating: number | null; content: string };
+  seed?: { rating: StoredRating | null; content: string };
 };
 
 type StudioState = {

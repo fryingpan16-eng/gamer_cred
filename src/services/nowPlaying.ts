@@ -1,6 +1,8 @@
 import type { PostgrestError } from '@supabase/supabase-js';
 
 import type { NowPlaying, NowPlayingSlot } from '@/types/database.types';
+import type { StoredRating } from '@/utils/rating';
+import { slotRatingColumns } from '@/utils/ratingColumns';
 
 import { supabase } from './supabase';
 
@@ -41,7 +43,7 @@ export async function assignGameToSlot(userId: string, slot: NowPlayingSlot, gam
   const { data, error } = await supabase
     .from('now_playing')
     .upsert(
-      { user_id: userId, slot_index: slot, game_id: gameId, notes: null, preliminary_score: null },
+      { user_id: userId, slot_index: slot, game_id: gameId, notes: null, ...slotRatingColumns(null) },
       { onConflict: 'user_id,slot_index' },
     )
     .select()
@@ -50,13 +52,16 @@ export async function assignGameToSlot(userId: string, slot: NowPlayingSlot, gam
   return data;
 }
 
-export type SlotDetails = { notes?: string | null; preliminary_score?: number | null };
+export type SlotDetails = { notes?: string | null; preliminary?: StoredRating | null };
 
 /** Running notes / preliminary score for an occupied slot. */
 export async function updateSlotDetails(userId: string, slot: NowPlayingSlot, details: SlotDetails): Promise<NowPlaying> {
   const { data, error } = await supabase
     .from('now_playing')
-    .update(details)
+    .update({
+      ...(details.notes !== undefined ? { notes: details.notes } : {}),
+      ...(details.preliminary !== undefined ? slotRatingColumns(details.preliminary) : {}),
+    })
     .eq('user_id', userId)
     .eq('slot_index', slot)
     .select()

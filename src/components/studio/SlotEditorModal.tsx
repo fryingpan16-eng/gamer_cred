@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { View } from 'react-native';
 
-import { SteamAlert, SteamButton, SteamInput, SteamModal, SteamScoreMeter } from '@/components/ui';
+import { SteamAlert, SteamButton, SteamInput, SteamModal, SteamRatingInput } from '@/components/ui';
+import { usePrimaryRatingScale } from '@/hooks/useAuth';
 import type { NowPlaying } from '@/types/database.types';
+import type { StoredRating } from '@/utils/rating';
+import { slotRating } from '@/utils/ratingColumns';
 import { NOTES_MAX_LENGTH, slotDetailsSchema } from '@/utils/reviewSchemas';
 
-type SlotDetailsPayload = { notes: string | null; preliminary_score: number | null };
+type SlotDetailsPayload = { notes: string | null; preliminary: StoredRating | null };
 
 type SlotEditorModalProps = {
   visible: boolean;
@@ -29,7 +32,8 @@ export function SlotEditorModal({ visible, row, gameTitle, saving, error, onClos
 
 function SlotEditorForm({ row, saving, error, onClose, onSave }: Omit<SlotEditorModalProps, 'visible' | 'gameTitle'>) {
   const [notes, setNotes] = useState(row?.notes ?? '');
-  const [score, setScore] = useState<number | null>(row?.preliminary_score ?? null);
+  const primaryScale = usePrimaryRatingScale();
+  const [score, setScore] = useState<StoredRating | null>(row ? slotRating(row) : null);
   const [fieldErrors, setFieldErrors] = useState<{ notes?: string; preliminaryScore?: string }>({});
 
   const submit = () => {
@@ -45,14 +49,20 @@ function SlotEditorForm({ row, saving, error, onClose, onSave }: Omit<SlotEditor
     }
     onSave({
       notes: parsed.data.notes.length > 0 ? parsed.data.notes : null,
-      preliminary_score: parsed.data.preliminaryScore,
+      preliminary: parsed.data.preliminaryScore,
     });
   };
 
   return (
     <View className="gap-3">
       {error ? <SteamAlert message={error} /> : null}
-      <SteamScoreMeter label="Preliminary score" value={score} onChange={setScore} error={fieldErrors.preliminaryScore} />
+      <SteamRatingInput
+        label="Preliminary rating"
+        scale={primaryScale}
+        value={score}
+        onChange={setScore}
+        error={fieldErrors.preliminaryScore}
+      />
       <SteamInput
         label="Running notes"
         value={notes}

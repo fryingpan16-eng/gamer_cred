@@ -1,6 +1,7 @@
 import type { PostgrestError } from '@supabase/supabase-js';
 
 import type { Review, ReviewStatus } from '@/types/database.types';
+import { reviewRatingColumns } from '@/utils/ratingColumns';
 import type { ReviewFormValues } from '@/utils/reviewSchemas';
 
 import { supabase } from './supabase';
@@ -16,7 +17,7 @@ export class ReviewError extends Error {
 }
 
 function fail(error: PostgrestError, fallback: string): never {
-  if (error.code === '23514') throw new ReviewError('Published reviews need a score.', error.code); // check violation
+  if (error.code === '23514') throw new ReviewError('Published reviews need a valid rating.', error.code); // check violation
   throw new ReviewError(error.message || fallback, error.code ?? null);
 }
 
@@ -44,6 +45,8 @@ export async function fetchMyReviewForGame(userId: string, gameId: number): Prom
 /**
  * Saves a draft or publishes. Upserts on (user_id, game_id), so publishing a
  * draft promotes it in place and re-publishing edits the existing review.
+ * The rating is written as canonical numeric + input scale + raw input; a new
+ * input fully replaces the old one (derived scales are recomputed on read).
  */
 export async function saveReview(userId: string, values: ReviewFormValues): Promise<Review> {
   const { data, error } = await supabase
@@ -52,7 +55,7 @@ export async function saveReview(userId: string, values: ReviewFormValues): Prom
       {
         user_id: userId,
         game_id: values.gameId,
-        rating: values.rating,
+        ...reviewRatingColumns(values.rating),
         content: values.content.length > 0 ? values.content : null,
         status: values.status,
       },

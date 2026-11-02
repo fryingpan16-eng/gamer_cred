@@ -3,31 +3,49 @@ import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import { Thumbnail } from '@/components/search/Thumbnail';
-import { SteamAlert, SteamBadge, SteamButton, SteamCard, SteamPanel, SteamSpinner, SteamStarRating } from '@/components/ui';
+import { SteamAlert, SteamBadge, SteamButton, SteamCard, SteamPanel, SteamRating, SteamSpinner } from '@/components/ui';
 import { useAuthStore } from '@/hooks/useAuth';
 import { useGameReviews, useGameReviewStats } from '@/hooks/useGameDetail';
 import type { GameReview, GameReviewStats } from '@/services/games';
+import { bucketByTier, tierDefinition, type StoredRating } from '@/utils/rating';
+import { reviewRating } from '@/utils/ratingColumns';
 
 function formatDate(iso: string | null): string {
   return iso ? new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '';
 }
 
-/** 10-bar histogram of community scores. */
+/** Tier histogram (F → S**), bars in the rubric's tier colours. */
 function Distribution({ stats }: { stats: GameReviewStats }) {
-  const max = Math.max(1, ...stats.distribution);
+  const buckets = bucketByTier(stats.distribution).reverse();
+  const max = Math.max(1, ...buckets.map((b) => b.count));
   return (
-    <View className="h-12 flex-1 flex-row items-end gap-px" accessibilityLabel="Score distribution">
-      {stats.distribution.map((count, i) => (
-        <View key={i} className="flex-1 items-center justify-end">
+    <View
+      className="h-14 flex-1 flex-row items-end gap-px"
+      accessibilityLabel={`Tier distribution: ${buckets.map((b) => `${b.tier} ${b.count}`).join(', ')}`}
+    >
+      {buckets.map(({ tier, count }) => (
+        <View key={tier} className="flex-1 items-center justify-end">
+          <Text className="font-mono text-[8px] leading-[10px] text-steam-text-muted">{count > 0 ? count : ''}</Text>
           <View
-            className={i >= 7 ? 'w-full bg-steam-highlight' : 'w-full bg-steam-active'}
-            style={{ height: `${Math.max(4, (count / max) * 100)}%`, opacity: count === 0 ? 0.25 : 1 }}
+            className="w-full"
+            style={{
+              height: `${Math.max(4, (count / max) * 70)}%`,
+              backgroundColor: tierDefinition(tier).color,
+              opacity: count === 0 ? 0.25 : 1,
+            }}
           />
-          <Text className="font-mono text-[8px] leading-[10px] text-steam-text-muted">{i + 1}</Text>
+          <Text className="font-mono text-[9px] leading-[11px] text-steam-text-muted">{tier}</Text>
         </View>
       ))}
     </View>
   );
+}
+
+/** The aggregate shown like a rating (rounded to the canonical integer scale). */
+function averageAsRating(stats: GameReviewStats): StoredRating | null {
+  if (stats.average === null) return null;
+  const numeric = Math.min(100, Math.max(1, Math.round(stats.average)));
+  return { numeric, inputScale: 'numeric', input: String(numeric) };
 }
 
 function ReviewCard({ review, isMine }: { review: GameReview; isMine: boolean }) {
@@ -49,7 +67,7 @@ function ReviewCard({ review, isMine }: { review: GameReview; isMine: boolean })
             </Text>
             {isMine ? <SteamBadge label="You" variant="nowPlaying" /> : null}
           </View>
-          <SteamStarRating rating={review.rating} />
+          <SteamRating rating={reviewRating(review)} size="compact" />
           <Text className="text-steam-xs text-steam-text-muted">{formatDate(review.published_at)}</Text>
         </View>
       </View>
@@ -65,7 +83,7 @@ function ReviewCard({ review, isMine }: { review: GameReview; isMine: boolean })
           ) : null}
         </>
       ) : (
-        <Text className="text-steam-xs italic text-steam-text-muted">Score-only quick review.</Text>
+        <Text className="text-steam-xs italic text-steam-text-muted">Rating-only quick review.</Text>
       )}
     </SteamCard>
   );
@@ -83,11 +101,9 @@ export function CommunityReviews({ gameId }: { gameId: number }) {
       <View className="gap-3">
         {stats.data && stats.data.count > 0 ? (
           <View className="steam-bevel-inset flex-row items-center gap-3 bg-steam-dark p-2">
-            <View className="items-center gap-1">
-              <Text className="font-mono text-[28px] font-bold leading-[30px] text-steam-text-bright">
-                {stats.data.average?.toFixed(1) ?? '--'}
-              </Text>
-              <SteamStarRating rating={stats.data.average} showValue={false} />
+            <View className="max-w-[45%] gap-1">
+              <Text className="steam-label">Community average</Text>
+              <SteamRating rating={averageAsRating(stats.data)} prefix="Avg" />
             </View>
             <Distribution stats={stats.data} />
           </View>

@@ -2,9 +2,10 @@ import { router } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
 
 import { Thumbnail } from '@/components/search/Thumbnail';
-import { SteamBadge, SteamCard, SteamStarRating } from '@/components/ui';
+import { SteamBadge, SteamCard, SteamRating } from '@/components/ui';
 import type { ActivityFeedRow } from '@/types/database.types';
 import { igdbImageUrl, type IgdbGameResult } from '@/types/igdb';
+import { reviewRating, slotRating } from '@/utils/ratingColumns';
 import { timeAgo } from '@/utils/time';
 
 type FeedItemCardProps = {
@@ -41,11 +42,11 @@ export function FeedItemCard({ item, game, viewerId }: FeedItemCardProps) {
         </Text>
 
         {item.kind === 'review' ? (
-          <SteamStarRating rating={item.rating} />
+          <SteamRating rating={reviewRating(item)} size="compact" />
         ) : (
           <View className="flex-row flex-wrap gap-1">
             <SteamBadge label={`Now Playing · Slot ${item.slot_index ?? '?'}`} variant="nowPlaying" />
-            {item.preliminary_score !== null ? <SteamBadge label={`${item.preliminary_score}/10 so far`} /> : null}
+            {item.preliminary_score !== null ? <SteamRating rating={slotRating(item)} size="compact" suffix="so far" /> : null}
           </View>
         )}
 
