@@ -1,0 +1,76 @@
+import { FunctionsFetchError, FunctionsHttpError, FunctionsRelayError } from '@supabase/supabase-js';
+
+import type { ApiEnvelope } from '@/types/api';
+import {
+  IGDB_SEARCH_LIMITS,
+  normalizeSearchQuery,
+  type IgdbSearchRequest,
+  type IgdbSearchResponse,
+} from '@/types/igdb';
+
+import { supabase } from './supabase';
+
+/** Entities searched through the proxy (games/companies → IGDB, creators → RAWG). */
+export type IgdbSearchableEntity = 'games' | 'companies' | 'creators';
+
+/** Error surfaced to the UI. `retryable` tells TanStack Query whether retrying can help. */
+export class SearchServiceError extends Error {
+  constructor(
+    message: string,
+    readonly status: number | null,
+    readonly retryable: boolean,
+  ) {
+    super(message);
+    this.name = 'SearchServiceError';
+  }
+}
+
+async function readEnvelopeError(response: unknown): Promise<string | null> {
+  if (!(response instanceof Response)) return null;
+  try {
+    const body = (await response.clone().json()) as Partial<ApiEnvelope<unknown>>;
+    return typeof body.error === 'string' ? body.error : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Calls the `igdb-proxy` Edge Function. The client NEVER talks to IGDB/Twitch or
+ * RAWG directly (CLAUDE.md); the proxy holds the credentials and the igdb_cache.
+ */
+export async function searchIgdb<E extends IgdbSearchableEntity>(
+  entityType: E,
+  rawQuery: string,
+  options: { limit?: number; signal?: AbortSignal } = {},
+): Promise<IgdbSearchResponse<E>> {
+  const query = normalizeSearchQuery(rawQuery);
+  if (query.length < IGDB_SEARCH_LIMITS.minQueryLength) {
+    throw new SearchServiceError(`Type at least ${IGDB_SEARCH_LIMITS.minQueryLength} characters.`, 400, false);
+  }
+
+  const body: IgdbSearchRequest = { entity_type: entityType, query, limit: options.limit };
+  const { data, error } = await supabase.functions.invoke<ApiEnvelope<IgdbSearchResponse<E>>>('igdb-proxy', {
+    body,
+    signal: options.signal,
+  });
+
+  if (error) {
+    if (error instanceof FunctionsHttpError) {
+      const response = error.context as Response;
+      const status = response.status;
+      const message = (await readEnvelopeError(response)) ?? `Search failed (${status}).`;
+      // 4xx (bad input / unsupported) won't improve on retry; 429/5xx might.
+      throw new SearchServiceError(message, status, status === 429 || status >= 500);
+    }
+    if (error instanceof FunctionsFetchError || error instanceof FunctionsRelayError) {
+      throw new SearchServiceError('Cannot reach the search service. Check your connection.', null, true);
+    }
+    throw new SearchServiceError(error instanceof Error ? error.message : 'Search failed.', null, true);
+  }
+
+  if (!data || !data.success) {
+    throw new SearchServiceError(data?.error ?? 'Search returned an invalid response.', null, false);
+  }
+  return data.data;
+}

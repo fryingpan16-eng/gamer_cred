@@ -1,8 +1,11 @@
+import { normalizeSearchQuery, type IgdbEntityType } from '@/types/igdb';
+
 /**
  * Centralized TanStack Query key factory.
  * Every useQuery/useMutation/invalidateQueries call MUST build its key here.
  */
-export type SearchEntity = 'games' | 'studios' | 'users';
+/** Search tabs: IGDB-backed `games` / `companies`, Supabase-backed `users`. */
+export type SearchEntity = 'games' | 'companies' | 'users';
 
 export const queryKeys = {
   all: ['gamercred'] as const,
@@ -50,7 +53,12 @@ export const queryKeys = {
 
   search: {
     all: () => [...queryKeys.all, 'search'] as const,
-    query: (entity: SearchEntity, term: string) =>
-      [...queryKeys.search.all(), entity, term.trim().toLowerCase()] as const,
+    entity: (entity: SearchEntity) => [...queryKeys.search.all(), entity] as const,
+    /** Proxy-backed catalogue search (IGDB games/companies, RAWG creators). Viewer-independent. */
+    igdb: (entity: IgdbEntityType, term: string) =>
+      [...queryKeys.search.all(), 'catalog', entity, normalizeSearchQuery(term)] as const,
+    /** User search embeds the viewer's friendship state, so it is keyed per viewer. */
+    users: (viewerId: string, term: string) =>
+      [...queryKeys.search.entity('users'), viewerId, term.trim().toLowerCase()] as const,
   },
 } as const;

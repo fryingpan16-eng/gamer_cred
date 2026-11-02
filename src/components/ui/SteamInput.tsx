@@ -12,6 +12,8 @@ export type SteamInputProps = Omit<TextInputProps, 'style' | 'placeholderTextCol
   hint?: string;
   /** Leading icon slot, e.g. <Feather name="search" />. */
   icon?: ReactNode;
+  /** Trailing slot, e.g. a clear button or inline spinner. */
+  trailing?: ReactNode;
   className?: string;
   ref?: Ref<ComponentRef<typeof TextInput>>;
 };
@@ -21,7 +23,17 @@ export type SteamInputProps = Omit<TextInputProps, 'style' | 'placeholderTextCol
  * States: idle → inset bevel; focused → highlight frame; error → error frame + message.
  * The 1px border width is identical in every state so focus never shifts layout.
  */
-export function SteamInput({ label, error, hint, icon, className, editable = true, ref, ...rest }: SteamInputProps) {
+export function SteamInput({
+  label,
+  error,
+  hint,
+  icon,
+  trailing,
+  className,
+  editable = true,
+  ref,
+  ...rest
+}: SteamInputProps) {
   const [focused, setFocused] = useState(false);
   const hasError = Boolean(error);
 
@@ -62,6 +74,7 @@ export function SteamInput({ label, error, hint, icon, className, editable = tru
           }}
           className="flex-1 py-1 text-steam-base text-steam-text outline-none"
         />
+        {trailing}
       </View>
       {hasError ? (
         <Text className="text-steam-xs text-steam-error" accessibilityLiveRegion="polite">
