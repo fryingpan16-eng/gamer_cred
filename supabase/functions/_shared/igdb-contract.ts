@@ -45,6 +45,59 @@ export type IgdbLookupRequest = {
 
 export const IGDB_LOOKUP_MAX_IDS = 50;
 
+/** Full game page record (IGDB metadata + RAWG PC requirements when available). */
+export type IgdbDetailRequest = {
+  action: 'detail';
+  entity_type: 'games';
+  id: number;
+};
+
+export type GameReleaseDate = {
+  platform: string;
+  /** ISO date, or null when only a vague date ("Q3 2026", "TBD") is known. */
+  date: string | null;
+  /** IGDB's human-readable form, e.g. "Nov 16, 2004" or "TBD". */
+  human: string;
+};
+
+/** One requirement row; `label` is null for free-form lines. */
+export type SystemRequirementLine = { label: string | null; value: string };
+
+export type SystemRequirements = {
+  minimum: SystemRequirementLine[];
+  recommended: SystemRequirementLine[];
+  source: 'rawg';
+  /** RAWG page used, for attribution links. */
+  sourceUrl: string;
+};
+
+export type IgdbGameDetail = IgdbGameResult & {
+  summary: string | null;
+  storyline: string | null;
+  screenshotIds: string[];
+  artworkIds: string[];
+  themes: string[];
+  gameModes: string[];
+  perspectives: string[];
+  publishers: string[];
+  engines: string[];
+  franchises: string[];
+  releaseDates: GameReleaseDate[];
+  /** Critic aggregate 0–100 and its source count. */
+  criticRating: number | null;
+  criticRatingCount: number;
+  /** IGDB user rating 0–100 and its vote count. */
+  userRating: number | null;
+  userRatingCount: number;
+  systemRequirements: SystemRequirements | null;
+};
+
+export type IgdbDetailResponse = {
+  game: IgdbGameDetail;
+  cached: boolean;
+  fetchedAt: string;
+};
+
 export type IgdbLookupResponse = {
   entity_type: 'games';
   results: IgdbGameResult[];
