@@ -58,6 +58,13 @@ export const queryKeys = {
   games: {
     all: () => [...queryKeys.all, 'games'] as const,
     detail: (gameId: number) => [...queryKeys.games.all(), 'detail', gameId] as const,
+    /** Full game page record (IGDB detail + RAWG requirements). */
+    fullDetail: (gameId: number) => [...queryKeys.games.all(), 'fullDetail', gameId] as const,
+    /** Published community reviews for a game (paginated) and their aggregate stats. */
+    reviewsAll: () => [...queryKeys.games.all(), 'reviews'] as const,
+    reviews: (gameId: number) => [...queryKeys.games.reviewsAll(), gameId] as const,
+    reviewStatsAll: () => [...queryKeys.games.all(), 'reviewStats'] as const,
+    reviewStats: (gameId: number) => [...queryKeys.games.reviewStatsAll(), gameId] as const,
     /** Batch lookup; ids are sorted so [2,1] and [1,2] share a cache entry. */
     lookup: (gameIds: readonly number[]) =>
       [...queryKeys.games.all(), 'lookup', [...new Set(gameIds)].sort((a, b) => a - b).join(',')] as const,

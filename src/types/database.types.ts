@@ -260,6 +260,24 @@ export type Database = {
         Args: { p_rank_a: FavoriteRank; p_rank_b: FavoriteRank };
         Returns: undefined;
       };
+      game_review_stats: {
+        Args: { p_game_id: number };
+        Returns: {
+          review_count: number;
+          average_rating: number | null;
+          /** Counts for scores 1..10 (index 0 = score 1). */
+          distribution: number[];
+        }[];
+      };
+      activity_feed: {
+        Args: {
+          p_scope?: 'friends' | 'community';
+          p_before?: string | null;
+          p_before_key?: string | null;
+          p_limit?: number;
+        };
+        Returns: ActivityFeedRow[];
+      };
     };
     Enums: {
       friendship_status: 'pending' | 'accepted' | 'rejected';
@@ -267,6 +285,22 @@ export type Database = {
     };
     CompositeTypes: { [_ in never]: never };
   };
+};
+
+/** Row returned by the activity_feed RPC (migration 000006). */
+export type ActivityFeedRow = {
+  item_key: string;
+  kind: 'review' | 'now_playing';
+  occurred_at: Timestamp;
+  actor_id: string;
+  actor_username: string;
+  actor_avatar_url: string | null;
+  game_id: number;
+  review_id: string | null;
+  rating: number | null;
+  excerpt: string | null;
+  slot_index: NowPlayingSlot | null;
+  preliminary_score: number | null;
 };
 
 /** Slot range enforced by `check (slot_index between 1 and 4)`. */

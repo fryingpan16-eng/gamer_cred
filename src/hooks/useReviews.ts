@@ -65,6 +65,8 @@ export function useSaveReview() {
       void queryClient.invalidateQueries({ queryKey: queryKeys.reviews.all() });
       void queryClient.invalidateQueries({ queryKey: queryKeys.nowPlaying.byUser(viewerId) });
       void queryClient.invalidateQueries({ queryKey: queryKeys.feed.all() });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.games.reviewsAll() });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.games.reviewStatsAll() });
     },
   });
 }
@@ -94,6 +96,11 @@ export function useDeleteReview() {
       if (!viewerId) throw new Error('You must be signed in.');
       return deleteReview(viewerId, reviewId);
     },
-    onSettled: () => void queryClient.invalidateQueries({ queryKey: queryKeys.reviews.all() }),
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.reviews.all() });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.feed.all() });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.games.reviewsAll() });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.games.reviewStatsAll() });
+    },
   });
 }

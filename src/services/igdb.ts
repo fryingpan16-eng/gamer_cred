@@ -5,6 +5,7 @@ import {
   IGDB_LOOKUP_MAX_IDS,
   IGDB_SEARCH_LIMITS,
   normalizeSearchQuery,
+  type IgdbDetailRequest,
   type IgdbLookupRequest,
   type IgdbLookupResponse,
   type IgdbSearchRequest,
@@ -42,7 +43,11 @@ async function readEnvelopeError(response: unknown): Promise<string | null> {
  * Calls the `igdb-proxy` Edge Function. The client NEVER talks to IGDB/Twitch or
  * RAWG directly (CLAUDE.md); the proxy holds the credentials and the igdb_cache.
  */
-async function invokeProxy<T>(body: IgdbSearchRequest | IgdbLookupRequest, signal?: AbortSignal): Promise<T> {
+/** Low-level proxy call with envelope unwrapping and retry-aware errors. */
+export async function invokeProxy<T>(
+  body: IgdbSearchRequest | IgdbLookupRequest | IgdbDetailRequest,
+  signal?: AbortSignal,
+): Promise<T> {
   const { data, error } = await supabase.functions.invoke<ApiEnvelope<T>>('igdb-proxy', { body, signal });
 
   if (error) {

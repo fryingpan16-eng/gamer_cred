@@ -9,7 +9,9 @@
  *   POST … { "action": "lookup", "entity_type": "games", "ids": [1942, 7346] }
  *   GET  …?action=lookup&entity_type=games&ids=1942,7346
  *
- * Response: ApiEnvelope<IgdbSearchResponse | IgdbLookupResponse>  ({ success, data?, error? })
+ *   POST … { "action": "detail", "entity_type": "games", "id": 1942 }
+ *
+ * Response: ApiEnvelope<IgdbSearchResponse | IgdbLookupResponse | IgdbDetailResponse>
  *
  * Secrets (supabase secrets set …): IGDB_CLIENT_ID, IGDB_CLIENT_SECRET, RAWG_API_KEY
  * Auto-injected by Supabase:        SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
@@ -29,12 +31,15 @@ import {
   type ApiEnvelope,
   type IgdbCompanyResult,
   type IgdbEntityType,
+  type GameReleaseDate,
+  type IgdbDetailResponse,
+  type IgdbGameDetail,
   type IgdbGameResult,
   type IgdbLookupResponse,
   type IgdbSearchResponse,
 } from '../_shared/igdb-contract.ts';
 
-import { RawgError, searchRawgCreators } from './rawg.ts';
+import { fetchRawgPcRequirements, RawgError, searchRawgCreators } from './rawg.ts';
 
 // -----------------------------------------------------------------------------
 // Config
@@ -87,7 +92,8 @@ function requireEnv(name: string): string {
 
 type ParsedSearch = { action: 'search'; entityType: IgdbEntityType; query: string; limit: number };
 type ParsedLookup = { action: 'lookup'; ids: number[] };
-type ParsedRequest = ParsedSearch | ParsedLookup;
+type ParsedDetail = { action: 'detail'; id: number };
+type ParsedRequest = ParsedSearch | ParsedLookup | ParsedDetail;
 
 function isEntityType(value: unknown): value is IgdbEntityType {
   return typeof value === 'string' && (IGDB_ENTITY_TYPES as readonly string[]).includes(value);
@@ -111,7 +117,8 @@ async function parseRequest(req: Request): Promise<ParsedRequest> {
 
   const action = raw.action ?? 'search';
   if (action === 'lookup') return parseLookup(raw);
-  if (action !== 'search') throw new HttpError(400, "action must be 'search' or 'lookup'");
+  if (action === 'detail') return parseDetail(raw);
+  if (action !== 'search') throw new HttpError(400, "action must be 'search', 'lookup' or 'detail'");
 
   if (!isEntityType(raw.entity_type)) {
     throw new HttpError(400, `entity_type must be one of: ${IGDB_ENTITY_TYPES.join(', ')}`);
@@ -132,6 +139,13 @@ async function parseRequest(req: Request): Promise<ParsedRequest> {
   }
 
   return { action: 'search', entityType: raw.entity_type, query, limit: limitRaw };
+}
+
+function parseDetail(raw: Record<string, unknown>): ParsedDetail {
+  if (raw.entity_type !== 'games') throw new HttpError(400, "detail supports entity_type 'games' only");
+  const id = Number(raw.id);
+  if (!Number.isSafeInteger(id) || id <= 0) throw new HttpError(400, 'id must be a positive IGDB game id');
+  return { action: 'detail', id };
 }
 
 function parseLookup(raw: Record<string, unknown>): ParsedLookup {
@@ -264,6 +278,88 @@ async function searchGames(query: string, limit: number): Promise<IgdbGameResult
     ].join(' '),
   );
   return mapGames(raw);
+}
+
+type RawGameDetail = Omit<RawGame, 'involved_companies'> & {
+  summary?: string;
+  storyline?: string;
+  screenshots?: { image_id?: string }[];
+  artworks?: { image_id?: string }[];
+  themes?: { name?: string }[];
+  game_modes?: { name?: string }[];
+  player_perspectives?: { name?: string }[];
+  game_engines?: { name?: string }[];
+  franchises?: { name?: string }[];
+  involved_companies?: { developer?: boolean; publisher?: boolean; company?: { name?: string } }[];
+  release_dates?: { date?: number; human?: string; platform?: { abbreviation?: string; name?: string } }[];
+  aggregated_rating?: number;
+  aggregated_rating_count?: number;
+  rating?: number;
+  rating_count?: number;
+};
+
+const DETAIL_FIELDS = [
+  GAME_FIELDS.replace(/;$/, ','),
+  'summary,storyline,screenshots.image_id,artworks.image_id,themes.name,game_modes.name,',
+  'player_perspectives.name,game_engines.name,franchises.name,involved_companies.publisher,',
+  'release_dates.date,release_dates.human,release_dates.platform.abbreviation,release_dates.platform.name,',
+  'aggregated_rating,aggregated_rating_count,rating,rating_count;',
+].join(' ');
+
+const PC_PLATFORM_NAMES = new Set(['PC', 'Mac', 'Linux', 'PC (Microsoft Windows)']);
+
+async function fetchGameDetail(id: number): Promise<IgdbGameDetail | null> {
+  const raw = await igdbRequest<RawGameDetail[]>('games', `${DETAIL_FIELDS} where id = ${id}; limit 1;`);
+  const g = raw[0];
+  if (!g) return null;
+  const [base] = mapGames([g]);
+  if (!base) return null;
+
+  const names = (list: { name?: string }[] | undefined) => compact((list ?? []).map((x) => x.name));
+  const images = (list: { image_id?: string }[] | undefined) => compact((list ?? []).map((x) => x.image_id));
+  const round = (n: number | undefined) => (typeof n === 'number' ? Math.round(n) : null);
+
+  const releaseDates: GameReleaseDate[] = (g.release_dates ?? [])
+    .filter((r) => r.human || r.date)
+    .map((r) => ({
+      platform: r.platform?.abbreviation ?? r.platform?.name ?? 'Unknown',
+      date: typeof r.date === 'number' ? new Date(r.date * 1000).toISOString().slice(0, 10) : null,
+      human: r.human ?? (typeof r.date === 'number' ? new Date(r.date * 1000).toISOString().slice(0, 10) : 'TBD'),
+    }))
+    .sort((a, b) => (a.date ?? '9999').localeCompare(b.date ?? '9999'));
+
+  const detail: IgdbGameDetail = {
+    ...base,
+    summary: g.summary ?? null,
+    storyline: g.storyline ?? null,
+    screenshotIds: images(g.screenshots).slice(0, 12),
+    artworkIds: images(g.artworks).slice(0, 6),
+    themes: names(g.themes),
+    gameModes: names(g.game_modes),
+    perspectives: names(g.player_perspectives),
+    publishers: compact((g.involved_companies ?? []).filter((ic) => ic.publisher).map((ic) => ic.company?.name)),
+    engines: names(g.game_engines),
+    franchises: names(g.franchises),
+    releaseDates,
+    criticRating: round(g.aggregated_rating),
+    criticRatingCount: g.aggregated_rating_count ?? 0,
+    userRating: round(g.rating),
+    userRatingCount: g.rating_count ?? 0,
+    systemRequirements: null,
+  };
+
+  // PC requirements are best-effort: a RAWG outage or missing key never breaks the page.
+  const apiKey = Deno.env.get('RAWG_API_KEY');
+  if (apiKey && detail.platforms.some((p) => PC_PLATFORM_NAMES.has(p))) {
+    try {
+      detail.systemRequirements = await fetchRawgPcRequirements(detail.slug, detail.name, apiKey, {
+        timeoutMs: UPSTREAM_TIMEOUT_MS,
+      });
+    } catch (error) {
+      console.warn('[igdb-proxy] RAWG requirements unavailable', error instanceof Error ? error.message : error);
+    }
+  }
+  return detail;
 }
 
 async function fetchGamesByIds(ids: number[]): Promise<IgdbGameResult[]> {
@@ -474,9 +570,41 @@ async function handleLookup(ids: number[]): Promise<Response> {
   return respond(200, { success: true, data }, { 'X-Cache': toFetch.length === 0 ? 'HIT' : fresh.size > 0 ? 'PARTIAL' : 'MISS' });
 }
 
+/** Full game page: cached 7 days as one record (IGDB detail + RAWG requirements). */
+async function handleDetail(id: number): Promise<Response> {
+  const db = cacheClient();
+  const cacheKey = `game-detail:${CACHE_VERSION}:igdb+rawg:${id}`;
+  const cached = await readCache(db, cacheKey);
+  const cachedGame = cached?.payload.results[0] as IgdbGameDetail | undefined;
+
+  if (cached && cachedGame && cached.ageMs < GAME_RECORD_TTL_MS) {
+    const data: IgdbDetailResponse = { game: cachedGame, cached: true, fetchedAt: cached.payload.fetchedAt };
+    return respond(200, { success: true, data }, { 'X-Cache': 'HIT' });
+  }
+
+  try {
+    const payload = await fetchAndCacheOnce(db, cacheKey, async () => {
+      const game = await fetchGameDetail(id);
+      if (!game) throw new HttpError(404, `No game with id ${id}`);
+      // The detail record also refreshes the lightweight per-game record used by lookups.
+      await cacheGameRecords(db, [game], new Date().toISOString());
+      return [game];
+    });
+    const data: IgdbDetailResponse = { game: payload.results[0] as IgdbGameDetail, cached: false, fetchedAt: payload.fetchedAt };
+    return respond(200, { success: true, data }, { 'X-Cache': cached ? 'REFRESH' : 'MISS' });
+  } catch (error) {
+    if (cached && cachedGame && cached.ageMs < STALE_MAX_MS && !(error instanceof HttpError && error.status === 404)) {
+      const data: IgdbDetailResponse = { game: cachedGame, cached: true, fetchedAt: cached.payload.fetchedAt };
+      return respond(200, { success: true, data }, { 'X-Cache': 'STALE' });
+    }
+    throw error;
+  }
+}
+
 async function handle(req: Request): Promise<Response> {
   const parsed = await parseRequest(req);
   if (parsed.action === 'lookup') return handleLookup(parsed.ids);
+  if (parsed.action === 'detail') return handleDetail(parsed.id);
   const { entityType, query, limit } = parsed;
 
   const db = cacheClient();
