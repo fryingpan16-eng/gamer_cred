@@ -235,7 +235,12 @@ export type Database = {
       };
     };
     Views: { [_ in never]: never };
-    Functions: { [_ in never]: never };
+    Functions: {
+      is_username_available: {
+        Args: { candidate: string };
+        Returns: boolean;
+      };
+    };
     Enums: {
       friendship_status: 'pending' | 'accepted' | 'rejected';
       review_status: 'draft' | 'published';

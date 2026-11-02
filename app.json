@@ -27,7 +27,8 @@
       "expo-router",
       "expo-status-bar",
       "expo-secure-store",
-      "expo-font"
+      "expo-font",
+      "expo-web-browser"
     ],
     "scheme": "gamercred",
     "backgroundColor": "#3a3d36",

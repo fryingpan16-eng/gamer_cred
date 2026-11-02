@@ -1,5 +1,7 @@
-import { useState } from 'react';
-import { Pressable, Text, type PressableProps } from 'react-native';
+import { useState, type ReactNode } from 'react';
+import { ActivityIndicator, Pressable, Text, View, type PressableProps } from 'react-native';
+
+import { steamColors } from '@/constants/theme';
 
 import { cn } from '@/utils/cn';
 
@@ -8,6 +10,10 @@ export type SteamButtonVariant = 'default' | 'primary' | 'danger';
 export type SteamButtonProps = Omit<PressableProps, 'children' | 'style'> & {
   label: string;
   variant?: SteamButtonVariant;
+  /** Leading icon element. */
+  icon?: ReactNode;
+  /** Shows a spinner in place of the icon and blocks presses. */
+  loading?: boolean;
   className?: string;
 };
 
@@ -21,14 +27,23 @@ const SURFACE: Record<SteamButtonVariant, string> = {
  * Raised bevel button. While pressed the bevel inverts (sunken). Border widths
  * never change between states, only colors, so pressing never shifts layout.
  */
-export function SteamButton({ label, variant = 'default', disabled, className, ...rest }: SteamButtonProps) {
+export function SteamButton({
+  label,
+  variant = 'default',
+  icon,
+  loading = false,
+  disabled: disabledProp,
+  className,
+  ...rest
+}: SteamButtonProps) {
+  const disabled = !!disabledProp || loading;
   const [pressed, setPressed] = useState(false);
   const [hovered, setHovered] = useState(false);
 
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityState={{ disabled: !!disabled }}
+      accessibilityState={{ disabled, busy: loading }}
       disabled={disabled}
       {...rest}
       onPressIn={(e) => {
@@ -48,7 +63,7 @@ export function SteamButton({ label, variant = 'default', disabled, className, .
         rest.onHoverOut?.(e);
       }}
       className={cn(
-        'min-h-[24px] items-center justify-center px-3 py-1',
+        'min-h-[26px] items-center justify-center px-3 py-1',
         pressed ? 'steam-bevel-inset bg-steam-dark' : 'steam-bevel',
         !pressed && SURFACE[variant],
         hovered && !pressed && !disabled && 'bg-steam-panel',
@@ -56,15 +71,17 @@ export function SteamButton({ label, variant = 'default', disabled, className, .
         className,
       )}
     >
-      <Text
-        className={cn(
-          'text-steam-base font-bold',
-          variant === 'danger' ? 'text-steam-error' : 'text-steam-text-bright',
-          pressed && 'translate-x-px translate-y-px',
-        )}
-      >
-        {label}
-      </Text>
+      <View className={cn('flex-row items-center gap-2', pressed && 'translate-x-px translate-y-px')}>
+        {loading ? <ActivityIndicator size="small" color={steamColors.textBright} /> : icon}
+        <Text
+          className={cn(
+            'text-steam-base font-bold',
+            variant === 'danger' ? 'text-steam-error' : 'text-steam-text-bright',
+          )}
+        >
+          {label}
+        </Text>
+      </View>
     </Pressable>
   );
 }
