@@ -1,0 +1,66 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * 2004 Steam client chrome.
+ * Bevels: light edge on top/left, dark inset shadow on bottom/right.
+ * Sunken variants invert the edges (input fields, pressed buttons).
+ */
+@layer components {
+  .steam-bevel {
+    @apply border border-t-steam-bevel-light border-l-steam-bevel-light border-b-steam-bevel-dark border-r-steam-bevel-dark;
+  }
+
+  .steam-bevel-inset {
+    @apply border border-t-steam-bevel-dark border-l-steam-bevel-dark border-b-steam-bevel-light border-r-steam-bevel-light;
+  }
+
+  .steam-window {
+    @apply steam-bevel bg-steam-dark;
+  }
+
+  .steam-titlebar {
+    @apply flex-row items-center justify-between bg-steam-panel border-b border-b-steam-bevel-dark px-2 py-1;
+  }
+
+  .steam-panel {
+    @apply steam-bevel bg-steam-card p-3;
+  }
+
+  .steam-panel-header {
+    @apply bg-steam-panel border-b border-b-steam-accent px-2 py-1;
+  }
+
+  .steam-button {
+    @apply steam-bevel bg-steam-button px-3 py-1 items-center justify-center;
+  }
+
+  .steam-button-pressed {
+    @apply steam-bevel-inset bg-steam-dark px-3 py-1 items-center justify-center;
+  }
+
+  .steam-input {
+    @apply steam-bevel-inset bg-steam-dark px-2 py-1 text-steam-text text-steam-base;
+  }
+
+  .steam-tab {
+    @apply bg-steam-button border border-steam-accent border-b-0 px-3 py-1;
+  }
+
+  .steam-tab-active {
+    @apply bg-steam-card border border-steam-highlight border-b-0 px-3 py-1;
+  }
+
+  .steam-divider {
+    @apply h-px bg-steam-accent;
+  }
+
+  .steam-heading {
+    @apply text-steam-text-bright text-steam-lg font-bold;
+  }
+
+  .steam-label {
+    @apply text-steam-text-muted text-steam-xs uppercase tracking-wider;
+  }
+}
