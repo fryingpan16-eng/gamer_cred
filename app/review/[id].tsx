@@ -12,6 +12,7 @@ import {
   RetroGamingPCRating,
   RetroGamingPCSpinner,
 } from '@/components/ui';
+import { ReportLink } from '@/components/safety/ReportLink';
 import { useAuthStore } from '@/hooks/useAuth';
 import { useGameLookup } from '@/hooks/useGames';
 import { useReview } from '@/hooks/useReviews';
@@ -99,6 +100,15 @@ export default function ReviewScreen() {
           <Text className="text-retrogamingpc-sm italic text-retrogamingpc-text-muted">Score-only review (no written text).</Text>
         )}
       </RetroGamingPCPanel>
+
+      {!isMine && author ? (
+        <View className="flex-row justify-end">
+          <ReportLink
+            label="Report review"
+            subject={{ targetType: 'review', targetId: data.id, targetUserId: data.user_id, label: 'this review', ownerName: author.username }}
+          />
+        </View>
+      ) : null}
 
       {isMine ? (
         <View className="flex-row justify-end">

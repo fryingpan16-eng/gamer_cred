@@ -65,6 +65,15 @@ export const queryKeys = {
     isAdmin: (userId: string) => [...queryKeys.lists.all(), 'isAdmin', userId] as const,
   },
 
+  /** Blocking, reports, moderation, terms (migration 000021). */
+  safety: {
+    all: () => [...queryKeys.all, 'safety'] as const,
+    blocked: (userId: string) => [...queryKeys.safety.all(), 'blocked', userId] as const,
+    blockState: (viewerId: string, otherId: string) => [...queryKeys.safety.all(), 'blockState', viewerId, otherId] as const,
+    reports: (status: string) => [...queryKeys.safety.all(), 'reports', status] as const,
+    terms: (userId: string, version: string) => [...queryKeys.safety.all(), 'terms', userId, version] as const,
+  },
+
   friendships: {
     all: () => [...queryKeys.all, 'friendships'] as const,
     byUser: (userId: string) => [...queryKeys.friendships.all(), userId] as const,

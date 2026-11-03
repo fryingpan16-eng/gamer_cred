@@ -109,6 +109,7 @@ function RootNavigator() {
         <Stack.Screen name="review/[id]" options={{ title: 'Review' }} />
         <Stack.Screen name="ratings/[userId]" options={{ title: 'Ratings' }} />
         <Stack.Screen name="list/[id]" options={{ title: 'List' }} />
+        <Stack.Screen name="admin/reports" options={{ title: 'Moderation' }} />
       </Stack.Protected>
 
       <Stack.Protected guard={!isSignedIn} redirectTo="/">
@@ -117,6 +118,9 @@ function RootNavigator() {
 
       {/* Reachable in both states: finishes OAuth / email-link redirects. */}
       <Stack.Screen name="auth/callback" options={{ headerShown: false }} />
+      {/* Public in both states: linked from sign-up, Settings and the store listings. */}
+      <Stack.Screen name="terms" options={{ title: 'Terms & Community Guidelines' }} />
+      <Stack.Screen name="delete-account" options={{ title: 'Delete your account' }} />
     </Stack>
   );
 }

@@ -95,6 +95,23 @@ Every chart shows the exact value when you tap a bar, and has a table view that 
 - Owned platforms, rating scale, Now Playing privacy, username and sign out.
 - Choices save automatically, with inline "Saving…" / "✓ Saved" feedback. Your username has its own Save button, and you're warned before leaving with an unsaved change.
 
+### Safety (app store requirements)
+- **Report:** **⚑ Report** on reviews (review page and game page), lists and player profiles.
+  - Pick a reason and add optional details. You can also block the person in the same step.
+  - Reports are private and reviewed within 24 hours.
+- **Block:** from a player's profile.
+  - Blocking removes any friendship and stops friend requests.
+  - It also hides both players from each other everywhere: profile, reviews, ratings, lists, Now Playing and search.
+  - Unblock in **Settings → Blocked Players**.
+- **Moderation:** admins get a **Moderation queue** in Settings. They can view, dismiss, remove the content, or remove the account.
+- **Text filter:** usernames, list titles and descriptions, reviews, Now Playing notes and device names are checked with an open-source slur and profanity filter before saving.
+- **Terms:** everyone accepts the **Terms of Use & Community Guidelines** (zero tolerance for objectionable content).
+  - Email sign-ups tick a box on Register.
+  - Everyone else gets a one-time prompt.
+- **Account deletion:** **Settings → Delete Account** permanently deletes the account and all its data straight away. You confirm by typing your username.
+  - The public page `/delete-account` explains how to request deletion without the app, as Google Play requires.
+- **Contact:** jjlabber16@gmail.com, set in `src/constants/legal.ts`.
+
 ### Authentication
 - Email and password sign-up with email confirmation, plus Google sign-in.
 - Sessions are stored with `expo-secure-store` on device.
@@ -216,7 +233,10 @@ Every table has row-level security with explicit read and write policies.
 | `user_platforms` | Owned platforms, Main platform, PC specs, devices |
 | `lists` | Game lists: title, description, ranked, public / private, Home pin position (admins only) |
 | `list_items` | The games on each list, in order (up to 250) |
-| `app_admins` | App admins, who can pin lists to Home. Each user can only see their own row. |
+| `app_admins` | App admins, who can pin lists to Home and moderate reports. Each user can only see their own row. |
+| `user_blocks` | Who blocked whom. Blocking hides both players from each other through extra row-level policies. |
+| `content_reports` | Reports on reviews, lists, ratings and players. Reporters see their own; admins resolve them. |
+| `terms_acceptances` | Which Terms version each user accepted |
 | `games` | A durable copy of IGDB metadata used by Stats and the ratings list |
 | `igdb_cache` | The proxy's response cache (`cache_key`, `data` JSONB, `updated_at`) |
 | `game_overrides` | Manual include/exclude overrides for catalogue curation |
@@ -229,6 +249,7 @@ There's also a public `avatars` storage bucket; each user can only write to thei
 - **Ratings list:** `user_ratings_table` returns a player's full ratings list with game details in one call.
 - **Lists:** `add_list_item`, `move_list_item` (renumbers 1..n), `set_list_pin` (admins only) and `is_app_admin`.
 - **Trending:** `trending_games` and `trending_posts` (last 14 days of ratings and published reviews).
+- **Safety:** `block_user`, `unblock_user`, `my_blocked_users`, `block_state`, `admin_reports` and `admin_resolve_reports` (admins only).
 - **Profiles:** atomic helpers for favourites and platforms.
 
 ### Migrations
@@ -246,6 +267,12 @@ There's also a public `avatars` storage bucket; each user can only write to thei
 | 000018 | Blue (Mega) as the default theme |
 | 000019 | Game lists, list items, app admins and Home pinning |
 | 000020 | Trending games and trending posts |
+| 000021 | Blocking, reports and moderation, terms acceptance |
+
+### account Edge Function
+- Handles `delete_self` (in-app account deletion) and `admin_delete_user` (moderation).
+- It removes the user's avatar files, then deletes the sign-in account. Every table cascades from it.
+- It uses the service-role key, which only ever exists inside the function.
 
 ### igdb-proxy Edge Function
 - **Actions:**
@@ -301,6 +328,7 @@ npx supabase link                                  # once, to your project
 npx supabase db push --remote                      # apply migrations
 npx supabase secrets set IGDB_CLIENT_ID=... IGDB_CLIENT_SECRET=... RAWG_API_KEY=...
 npx supabase functions deploy igdb-proxy --use-api
+npx supabase functions deploy account --use-api
 ```
 Run the `secrets set` command in your own terminal. Secrets never go in the repo or the app.
 
@@ -347,6 +375,7 @@ What the tests cover:
 npx supabase db push --remote --dry-run          # see what will be applied
 npx supabase db push --remote                    # apply new migrations
 npx supabase functions deploy igdb-proxy --use-api
+npx supabase functions deploy account --use-api
 ```
 Never edit a migration that has already been pushed. Add a new numbered migration instead.
 
@@ -387,6 +416,11 @@ Phases 1–9 are complete: setup, auth, search, Review Studio, profiles, game pa
 - Add rate limiting to the proxy.
 - Ratings don't appear in the activity feed yet; only reviews do.
 - Trending posts are ranked by how popular their game is, because the app has no likes or comments yet.
+- **Before store submission:**
+  - publish a privacy policy;
+  - have the Terms text reviewed;
+  - host the web build, so `/delete-account` has a public URL for Google Play;
+  - make sure reports get handled within 24 hours.
 - Lists: an "Add to list" button on game pages (today games are added from the list page).
 
 ---

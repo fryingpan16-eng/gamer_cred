@@ -1,10 +1,10 @@
 import { Feather } from '@expo/vector-icons';
-import { Link } from 'expo-router';
+import { Link, router } from 'expo-router';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
 
 import { GoogleSignInButton } from '@/components/GoogleSignInButton';
-import { RetroGamingPCAlert, RetroGamingPCButton, RetroGamingPCInput, RetroGamingPCPanel } from '@/components/ui';
+import { RetroGamingPCAlert, RetroGamingPCButton, RetroGamingPCCheckbox, RetroGamingPCInput, RetroGamingPCPanel } from '@/components/ui';
 import { useAuthAction } from '@/hooks/useAuthAction';
 import { signInWithGoogle, signUpWithEmail } from '@/services/auth';
 import { registerSchema, validate, type FieldErrors, type RegisterInput } from '@/utils/authSchemas';
@@ -13,6 +13,7 @@ import { useThemeColors } from '@/hooks/useTheme';
 export default function RegisterScreen() {
   const themeColors = useThemeColors();
   const [username, setUsername] = useState('');
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fieldErrors, setFieldErrors] = useState<FieldErrors<RegisterInput>>({});
@@ -24,7 +25,7 @@ export default function RegisterScreen() {
   const formError = google.error ?? signUp.error;
 
   const submit = async () => {
-    const parsed = validate(registerSchema, { username, email, password });
+    const parsed = validate(registerSchema, { username, email, password, acceptedTerms });
     if (!parsed.ok) {
       setFieldErrors(parsed.errors);
       return;
@@ -121,6 +122,20 @@ export default function RegisterScreen() {
               onSubmitEditing={() => void submit()}
               icon={<Feather name="lock" size={12} color={themeColors.textMuted} />}
             />
+
+            <View className="gap-1">
+              <RetroGamingPCCheckbox
+                checked={acceptedTerms}
+                onToggle={() => setAcceptedTerms((v) => !v)}
+                label="I agree to the Terms of Use and Community Guidelines"
+                description="Zero tolerance for objectionable content and abusive users."
+                disabled={busy}
+              />
+              <Text onPress={() => router.push('/terms')} className="pl-6 text-retrogamingpc-xs text-retrogamingpc-text-bright underline">
+                Read them
+              </Text>
+              {fieldErrors.acceptedTerms ? <Text className="pl-6 text-retrogamingpc-xs text-retrogamingpc-error">▲ {fieldErrors.acceptedTerms}</Text> : null}
+            </View>
 
             <View className="flex-row items-center justify-between pt-1">
               <Link href="/login" className="text-retrogamingpc-sm text-retrogamingpc-text-bright underline">

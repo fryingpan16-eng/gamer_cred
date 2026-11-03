@@ -385,6 +385,42 @@ export type Database = {
         ];
       };
 
+      /** Reports on user content (migration 000021). Reporter + admins read; admins resolve. */
+      content_reports: {
+        Row: {
+          id: string;
+          reporter_id: string | null;
+          target_type: ReportTarget;
+          target_id: string;
+          target_user_id: string;
+          reason: ReportReason;
+          details: string | null;
+          status: 'open' | 'actioned' | 'dismissed';
+          created_at: Timestamp;
+          resolved_at: Timestamp | null;
+          resolved_by: string | null;
+          resolution_note: string | null;
+        };
+        Insert: {
+          id?: string;
+          reporter_id: string;
+          target_type: ReportTarget;
+          target_id: string;
+          target_user_id: string;
+          reason: ReportReason;
+          details?: string | null;
+        };
+        Update: { status?: 'open' | 'actioned' | 'dismissed'; resolved_at?: Timestamp | null; resolved_by?: string | null; resolution_note?: string | null };
+        Relationships: [];
+      };
+
+      terms_acceptances: {
+        Row: { user_id: string; version: string; accepted_at: Timestamp };
+        Insert: { user_id: string; version: string; accepted_at?: Timestamp };
+        Update: { version?: string; accepted_at?: Timestamp };
+        Relationships: [];
+      };
+
       /** Durable IGDB metadata for Stats (migration 000014). Public read; Edge Function writes. */
       games: {
         Row: {
@@ -501,6 +537,33 @@ export type Database = {
         Returns: FriendReviewRow[];
       };
       is_app_admin: { Args: Record<string, never>; Returns: boolean };
+      /** Safety (migration 000021). */
+      block_user: { Args: { p_user: string }; Returns: undefined };
+      unblock_user: { Args: { p_user: string }; Returns: undefined };
+      my_blocked_users: { Args: Record<string, never>; Returns: { user_id: string; username: string; avatar_url: string | null; blocked_at: string }[] };
+      block_state: { Args: { p_user: string }; Returns: 'none' | 'blocked_by_me' | 'blocked_me' };
+      admin_reports: {
+        Args: { p_status?: 'open' | 'actioned' | 'dismissed'; p_limit?: number };
+        Returns: {
+          id: string;
+          created_at: string;
+          target_type: ReportTarget;
+          target_id: string;
+          target_user_id: string;
+          target_username: string | null;
+          reporter_username: string | null;
+          reason: ReportReason;
+          details: string | null;
+          preview: string | null;
+          content_exists: boolean;
+          status: 'open' | 'actioned' | 'dismissed';
+          open_reports_on_target: number;
+        }[];
+      };
+      admin_resolve_reports: {
+        Args: { p_target_type: ReportTarget; p_target_id: string; p_target_user: string; p_remove: boolean; p_note?: string | null };
+        Returns: number;
+      };
       /** Games most players rated or reviewed recently (migration 000020). */
       trending_games: {
         Args: { p_days?: number; p_limit?: number };
@@ -556,6 +619,9 @@ export type Database = {
 };
 
 /** Row returned by the friend_reviews_for_game RPC (migration 000012). */
+export type ReportTarget = 'review' | 'list' | 'rating' | 'user';
+export type ReportReason = 'spam' | 'harassment' | 'hate' | 'sexual' | 'violence' | 'self_harm' | 'impersonation' | 'spoilers' | 'other';
+
 export type FriendRatingRow = {
   user_id: string;
   username: string;

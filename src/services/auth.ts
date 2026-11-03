@@ -3,6 +3,7 @@ import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
 import { Platform } from 'react-native';
 
+import { TERMS_VERSION } from '@/constants/legal';
 import type { LoginInput, RegisterInput } from '@/utils/authSchemas';
 
 import { isSupabaseConfigured, supabase } from './supabase';
@@ -196,7 +197,8 @@ export async function signUpWithEmail({ username, email, password }: RegisterInp
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { username }, emailRedirectTo: getAuthRedirectUrl() },
+      // accepted_terms_version: the Terms are recorded on first sign-in (TermsGate).
+      options: { data: { username, accepted_terms_version: TERMS_VERSION }, emailRedirectTo: getAuthRedirectUrl() },
     });
     if (error) return { ok: false, error: toAuthErrorMessage(error) };
     // With "Confirm email" enabled Supabase returns a user but no session.

@@ -104,7 +104,12 @@ UNDER NO CIRCUMSTANCES create, modify, or output \`.js\` or \`.jsx\` source file
 - **Database RLS**: Every table created in migrations MUST enable Row Level Security with explicit read/write policies.
 - **Global Error Boundary**: Implement \`app/+error.tsx\` at the root.
 - **Typed Routes**: Enable Expo Router's typed routes in \`app.json\`.
-- **Input Validation**: Use Zod schemas for all user-submitted data.
+- **Input Validation**: Use Zod schemas for all user-submitted data. Text other users can read must also pass \`containsObjectionable\` (\`src/utils/contentFilter.ts\`).
+- **User-content safety (store requirements)**:
+  - Every new kind of public content needs a ⚑ Report entry point (\`ReportLink\`, a \`content_reports\` target).
+  - It also needs a restrictive \`… hide blocked\` select policy (migration 000021), so blocking hides it.
+  - Account deletion is the \`account\` Edge Function. New user tables must cascade from \`profiles\` / \`auth.users\`.
+  - Contact and terms live in \`src/constants/legal.ts\`. Bump \`TERMS_VERSION\` when the terms change.
 
 ## 🎨 RETRO ICONOGRAPHY & MICRO-INTERACTIONS
 - **Icons**: Use \`@expo/vector-icons\` (sharp linear sets like \`MaterialCommunityIcons\` or \`Feather\`).

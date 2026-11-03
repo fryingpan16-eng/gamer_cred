@@ -1,10 +1,13 @@
 import { z } from 'zod';
 
+import { containsObjectionable, OBJECTIONABLE_MESSAGE } from './contentFilter';
+
 /** Mirrors the DB check constraint on profiles.username. */
 export const usernameSchema = z
   .string()
   .trim()
-  .regex(/^[A-Za-z0-9_]{3,24}$/, '3–24 characters: letters, numbers, or underscore');
+  .regex(/^[A-Za-z0-9_]{3,24}$/, '3–24 characters: letters, numbers, or underscore')
+  .refine((v) => !containsObjectionable(v.replace(/_/g, ' ')), OBJECTIONABLE_MESSAGE);
 
 export const emailSchema = z.email('Enter a valid email address').trim().toLowerCase();
 
@@ -17,6 +20,8 @@ export const registerSchema = z.object({
   username: usernameSchema,
   email: emailSchema,
   password: z.string().min(8, 'Use at least 8 characters').max(72, 'Use at most 72 characters'),
+  /** Terms of Use + Community Guidelines (store requirement for apps with user content). */
+  acceptedTerms: z.literal(true, 'Please agree to the Terms of Use and Community Guidelines'),
 });
 
 export type LoginInput = z.infer<typeof loginSchema>;

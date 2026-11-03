@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
+import { ReportLink } from '@/components/safety/ReportLink';
 import { Thumbnail } from '@/components/search/Thumbnail';
 import { RetroGamingPCAlert, RetroGamingPCBadge, RetroGamingPCButton, RetroGamingPCCard, RetroGamingPCPanel, RetroGamingPCRating, RetroGamingPCSpinner } from '@/components/ui';
 import { useAuthStore } from '@/hooks/useAuth';
@@ -81,6 +82,11 @@ function ReviewCard({ review, isMine }: { review: GameReview; isMine: boolean })
       ) : (
         <Text className="text-retrogamingpc-xs italic text-retrogamingpc-text-muted">Score-only review (no written text).</Text>
       )}
+      {!isMine && author ? (
+        <View className="flex-row justify-end">
+          <ReportLink subject={{ targetType: 'review', targetId: review.id, targetUserId: review.user_id, label: `${author.username}'s review`, ownerName: author.username }} />
+        </View>
+      ) : null}
     </RetroGamingPCCard>
   );
 }

@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { containsObjectionable, OBJECTIONABLE_MESSAGE } from './contentFilter';
+
 import { PLATFORMS } from '@/constants/platforms';
 
 import { isConsistentStoredRating, type StoredRating } from './rating';
@@ -26,7 +28,11 @@ export const reviewFormSchema = z
   .object({
     gameId: z.number({ error: 'Pick a game to review' }).int().positive('Pick a game to review'),
     rating: storedRatingSchema.nullable(),
-    content: z.string().trim().max(REVIEW_MAX_LENGTH, `Keep it under ${REVIEW_MAX_LENGTH.toLocaleString()} characters`),
+    content: z
+      .string()
+      .trim()
+      .max(REVIEW_MAX_LENGTH, `Keep it under ${REVIEW_MAX_LENGTH.toLocaleString()} characters`)
+      .refine((v) => !containsObjectionable(v), OBJECTIONABLE_MESSAGE),
     status: z.enum(['draft', 'published']),
     /** Platform played on: a catalog id (src/constants/platforms.ts) or null. */
     platformId: z
@@ -50,7 +56,11 @@ export type ReviewFormInput = z.input<typeof reviewFormSchema>;
 export type ReviewFormValues = z.output<typeof reviewFormSchema>;
 
 export const slotDetailsSchema = z.object({
-  notes: z.string().trim().max(NOTES_MAX_LENGTH, `Keep notes under ${NOTES_MAX_LENGTH.toLocaleString()} characters`),
+  notes: z
+    .string()
+    .trim()
+    .max(NOTES_MAX_LENGTH, `Keep notes under ${NOTES_MAX_LENGTH.toLocaleString()} characters`)
+    .refine((v) => !containsObjectionable(v), OBJECTIONABLE_MESSAGE),
   preliminaryScore: storedRatingSchema.nullable(),
 });
 

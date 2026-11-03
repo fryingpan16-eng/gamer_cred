@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { FlatList, Pressable, Text, View } from 'react-native';
 
 import { ListEditorModal } from '@/components/lists/ListEditorModal';
+import { ReportLink } from '@/components/safety/ReportLink';
 import { Thumbnail } from '@/components/search/Thumbnail';
 import { GamePickerModal } from '@/components/studio/GamePickerModal';
 import {
@@ -199,6 +200,14 @@ export default function ListScreen() {
               <RetroGamingPCButton variant="create" label="Add Games" disabled={full} onPress={() => setAdding(true)} />
               <RetroGamingPCButton label="Edit Details" onPress={() => setEditing(true)} />
               <RetroGamingPCButton variant="danger" label="Delete List" onPress={() => setConfirmDelete(true)} />
+            </View>
+          ) : null}
+          {!isOwner && data.owner ? (
+            <View className="flex-row">
+              <ReportLink
+                label="Report list"
+                subject={{ targetType: 'list', targetId: data.id, targetUserId: data.userId, label: 'this list', ownerName: data.owner.username }}
+              />
             </View>
           ) : null}
           {full && isOwner ? <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted">Lists hold up to {LIST_MAX_GAMES} games.</Text> : null}

@@ -5,6 +5,7 @@ import type { ComponentProps } from 'react';
 import { RetroGamingPCHeaderBar } from '@/components/navigation/RetroGamingPCHeaderBar';
 import { RetroGamingPCTabBar } from '@/components/navigation/RetroGamingPCTabBar';
 import { useIsDesktop } from '@/hooks/useIsDesktop';
+import { TermsGate } from '@/components/safety/TermsGate';
 import { useApplyPendingRating } from '@/hooks/useRatings';
 import { useThemeColors } from '@/hooks/useTheme';
 
@@ -30,31 +31,35 @@ export default function TabsLayout() {
   const isDesktop = useIsDesktop();
 
   return (
-    <Tabs
-      tabBar={(props) => <RetroGamingPCTabBar {...props} variant={isDesktop ? 'sidebar' : 'bottom'} />}
-      screenOptions={{
-        tabBarPosition: isDesktop ? 'left' : 'bottom',
-        header: ({ options, route }) => <RetroGamingPCHeaderBar title={options.title ?? route.name} />,
-        sceneStyle: { backgroundColor: themeColors.dark },
-        animation: 'none',
-      }}
-    >
-      {TABS.map((tab) => (
-        <Tabs.Screen
-          key={tab.name}
-          name={tab.name}
-          options={{
-            title: tab.title,
-            tabBarIcon: ({ color, size }) => (
-              <MaterialCommunityIcons
-                name={tab.icon}
-                color={typeof color === 'string' ? color : themeColors.textMuted}
-                size={size}
-              />
-            ),
-          }}
-        />
-      ))}
-    </Tabs>
+    <>
+      <Tabs
+        tabBar={(props) => <RetroGamingPCTabBar {...props} variant={isDesktop ? 'sidebar' : 'bottom'} />}
+        screenOptions={{
+          tabBarPosition: isDesktop ? 'left' : 'bottom',
+          header: ({ options, route }) => <RetroGamingPCHeaderBar title={options.title ?? route.name} />,
+          sceneStyle: { backgroundColor: themeColors.dark },
+          animation: 'none',
+        }}
+      >
+        {TABS.map((tab) => (
+          <Tabs.Screen
+            key={tab.name}
+            name={tab.name}
+            options={{
+              title: tab.title,
+              tabBarIcon: ({ color, size }) => (
+                <MaterialCommunityIcons
+                  name={tab.icon}
+                  color={typeof color === 'string' ? color : themeColors.textMuted}
+                  size={size}
+                />
+              ),
+            }}
+          />
+        ))}
+      </Tabs>
+      {/* One-time Terms / Community Guidelines acceptance (store requirement). */}
+      <TermsGate />
+    </>
   );
 }

@@ -3,6 +3,9 @@ import { ScrollView, Text, View } from 'react-native';
 
 import { AccountSettings } from '@/components/settings/AccountSettings';
 import { AvatarSetting } from '@/components/settings/AvatarSetting';
+import { BlockedUsersSetting } from '@/components/settings/BlockedUsersSetting';
+import { DeleteAccountSetting } from '@/components/settings/DeleteAccountSetting';
+import { HelpSafetySetting } from '@/components/settings/HelpSafetySetting';
 import { PlatformSettings } from '@/components/settings/PlatformSettings';
 import { PrivacySetting } from '@/components/settings/PrivacySetting';
 import { RatingScaleSetting } from '@/components/settings/RatingScaleSetting';
@@ -48,6 +51,14 @@ export default function SettingsScreen() {
         <PrivacySetting />
       </RetroGamingPCPanel>
 
+      <RetroGamingPCPanel title="Blocked Players">
+        <BlockedUsersSetting />
+      </RetroGamingPCPanel>
+
+      <RetroGamingPCPanel title="Help & Safety">
+        <HelpSafetySetting />
+      </RetroGamingPCPanel>
+
       {profile.data ? (
         <AccountSettings profile={profile.data} />
       ) : profile.isError ? (
@@ -62,6 +73,12 @@ export default function SettingsScreen() {
       ) : (
         <RetroGamingPCSpinner label="Loading account…" />
       )}
+
+      {profile.data ? (
+        <RetroGamingPCPanel title="Delete Account">
+          <DeleteAccountSetting username={profile.data.username} />
+        </RetroGamingPCPanel>
+      ) : null}
     </ScrollView>
   );
 }

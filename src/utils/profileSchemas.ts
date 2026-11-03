@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { containsObjectionable, OBJECTIONABLE_MESSAGE } from './contentFilter';
+
 import { usernameSchema } from './authSchemas';
 
 /** Profile pictures are uploaded from the device (src/services/avatar.ts), not typed as URLs. */
@@ -21,7 +23,11 @@ export const PC_SPEC_FIELDS = [
 
 export type PcSpecKey = (typeof PC_SPEC_FIELDS)[number]['key'];
 
-const specField = z.string().trim().max(120, 'Keep it under 120 characters');
+const specField = z
+  .string()
+  .trim()
+  .max(120, 'Keep it under 120 characters')
+  .refine((v) => !containsObjectionable(v), OBJECTIONABLE_MESSAGE);
 
 export const pcSpecsSchema = z.object({
   os: specField,
@@ -48,7 +54,8 @@ export const platformDevicesSchema = z
     z
       .string()
       .transform((v) => v.trim().replace(/\s+/g, ' '))
-      .pipe(z.string().min(1, 'Device name can’t be empty').max(DEVICE_NAME_MAX, `Keep names under ${DEVICE_NAME_MAX} characters`)),
+      .pipe(z.string().min(1, 'Device name can’t be empty').max(DEVICE_NAME_MAX, `Keep names under ${DEVICE_NAME_MAX} characters`))
+      .refine((v) => !containsObjectionable(v), OBJECTIONABLE_MESSAGE),
   )
   .transform((names) => {
     const seen = new Set<string>();
