@@ -5,7 +5,7 @@ Server-side catalogue search for GamerCred: IGDB (games, studios) and RAWG
 calls IGDB or RAWG directly.
 
 Actions: `search` (games / companies / creators), `lookup` (games by id),
-`detail` (full game page). See `../_shared/igdb-contract.ts` for the contract.
+`detail` (full game page), `company` (studio page: the company + its curated games, cached 7 days). See `../_shared/igdb-contract.ts` for the contract.
 
 ## Curation: one entry per game
 

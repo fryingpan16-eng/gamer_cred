@@ -98,6 +98,35 @@ export type IgdbDetailResponse = {
   fetchedAt: string;
 };
 
+/** Studio page: one company plus every catalogue game it developed or published. */
+export type IgdbCompanyDetailRequest = {
+  action: 'company';
+  entity_type: 'companies';
+  id: number;
+};
+
+/** Most games a studio page lists (developed first, then published). */
+export const COMPANY_GAMES_MAX = 1000;
+
+export type CompanyGameRole = 'developer' | 'publisher';
+
+export type IgdbCompanyGame = IgdbGameResult & { roles: CompanyGameRole[] };
+
+export type IgdbCompanyDetail = IgdbCompanyResult & {
+  /** Parent company name (e.g. a publisher that owns the studio). */
+  parentName: string | null;
+  /** Newest first. */
+  games: IgdbCompanyGame[];
+  /** True when the company credits more than COMPANY_GAMES_MAX games. */
+  gamesTruncated: boolean;
+};
+
+export type IgdbCompanyDetailResponse = {
+  company: IgdbCompanyDetail;
+  cached: boolean;
+  fetchedAt: string;
+};
+
 export type IgdbLookupResponse = {
   entity_type: 'games';
   results: IgdbGameResult[];

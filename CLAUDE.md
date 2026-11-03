@@ -18,6 +18,7 @@ The app MUST target **iOS, Android, and Desktop (Web/Electron wrappers)**.
   - Scrolling screens with inputs set \`automaticallyAdjustKeyboardInsets\` + \`keyboardShouldPersistTaps="handled"\`.
   - Anything wider than ~300px either wraps (\`flex-wrap\`) or scrolls sideways.
   - Full-screen pages keep the bottom safe-area inset (set in \`app/_layout.tsx\`).
+  - Never toggle Tailwind classes that set CSS variables or animations (\`translate-*\`, \`rotate-*\`, \`scale-*\`, \`shadow-*\`, \`transition-*\`, \`animate-*\`) after the first render, e.g. on press. NativeWind crashes on native ("Could not find a LinkingContext"). Use a \`style\` transform instead.
 
 ## 📱 BOTTOM NAVIGATION & CORE WORKFLOWS
 The core app features a bottom navigation bar (migrating to a desktop sidebar on wider viewports) with five tabs (Stats sits between Post and Profile):
@@ -25,12 +26,13 @@ The core app features a bottom navigation bar (migrating to a desktop sidebar on
 2. **Search (\`app/(tabs)/search.tsx\`)**: Unified search interface with tabs/filters for:
    - **Games**: Title, genre, and platform database search (via IGDB Edge Function cache).
    - **Studios & Directors**: Developers, publishers, and key game creators (via IGDB Edge Function cache).
+     Tapping a studio opens \`app/studio/[id].tsx\`: the company plus every game it developed or published (proxy action \`company\`), each linking to its game page.
    - **Users / Friends**: Search community profiles by username to view profiles and send friend requests.
 3. **Now Playing tab — Post / Review Studio (\`app/(tabs)/post.tsx\`)**: 
    - **Now Playing Grid**: 4 active slots. Empty slots allow adding a game. Filled slots allow removal (with confirmation modal), running notes, and preliminary scoring.
    - **Publishing**: Convert a Now Playing draft into a published community review.
    - **Standalone Review**: Review any game directly without occupying a Now Playing slot.
-   - **Reviews are created ONLY here** (and via the game page's "Write a review" button, which opens the Studio). Quick ratings (\`game_ratings\`: score + played-on platform, public to read; search results + game page) are a separate action and must never create or open a review — see \`src/components/rating/README.md\`.
+   - **Reviews are created ONLY here** (and via the game page's "Write a review" button, which opens the Studio). Quick ratings (\`game_ratings\`: score + played-on platform, public to read; game page only; game lists such as search, studio pages and user lists show no scores and the whole card opens the game page) are a separate action and must never create or open a review — see \`src/components/rating/README.md\`.
 4. **Stats (\`app/(tabs)/stats.tsx\`)**: charts of the user's own logged games, computed in Postgres (\`stats_*\` functions, migration 000014). Menu driven by \`src/components/stats/statsConfig.ts\`; see \`src/components/stats/README.md\`.
 5. **Profile (\`app/(tabs)/profile.tsx\`)**:
    - **Public & Private View**: Displays active Now Playing 4-game grid and friend status.

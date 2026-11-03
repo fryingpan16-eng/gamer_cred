@@ -151,7 +151,7 @@ These are two separate actions with separate code paths:
 | | Quick rating | Full review |
 |---|---|---|
 | **What** | One score per game, in your scale, plus the platform you played on | A score plus a written review, saved as a draft or published |
-| **Where** | Search results and game pages | **Review Studio only**, also reached from the game page's **Write a review** button |
+| **Where** | The game page (lists of games show no scores; tapping one opens its page) | **Review Studio only**, also reached from the game page's **Write a review** button |
 | **Visibility** | Public: your profile's Ratings, Friends' Ratings and the Gamer Cred average | Published reviews are public; drafts are visible only to you |
 | **Code** | `services/ratings.ts` (`rateGame`, `clearGameRating`) | `services/reviews.ts` (`saveReview`) |
 

@@ -121,6 +121,12 @@ export const queryKeys = {
       [...queryKeys.games.all(), 'lookup', [...new Set(gameIds)].sort((a, b) => a - b).join(',')] as const,
   },
 
+  /** Studio pages (IGDB companies + their games). */
+  companies: {
+    all: () => [...queryKeys.all, 'companies'] as const,
+    detail: (companyId: number) => [...queryKeys.companies.all(), 'detail', companyId] as const,
+  },
+
   search: {
     all: () => [...queryKeys.all, 'search'] as const,
     entity: (entity: SearchEntity) => [...queryKeys.search.all(), entity] as const,

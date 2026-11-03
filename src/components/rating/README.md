@@ -5,9 +5,9 @@ GamerCred has two separate actions with separate code paths:
 | | Quick rating | Full review |
 |---|---|---|
 | What | One overall score per game, entered in **your chosen scale** (Settings): 1–100, Tier, Stars (½ steps) or Rounded /10 | Score + written review (draft or published), entered in the same chosen scale |
-| Where it's set | Stars on every **search result** and in the **game page** hero (`QuickRating`) | **Review Studio** only (Post tab) |
+| Where it's set | The **game page** hero only (`QuickRating`). Game lists (search, studio pages, user lists) show no ratings; tapping a game opens its page | **Review Studio** only (Post tab) |
 | Visibility | **Public** (migration 000016). Shown on the player's profile (**Ratings** panel), in **Friends' Ratings** on game pages, and in the **Gamer Cred score** average. Never in the profile's Reviews list or the activity feed: a rating is not a review. | Published reviews are public, as before. Drafts are author-only. |
-| Played on | Platform picker under the rating (game page + search rows). Defaults to the game's **earliest release platform** in the catalog. | The review form's platform picker. A new review starts on the rating's platform. |
+| Played on | Platform picker under the rating (game page). Defaults to the game's **earliest release platform** in the catalog. | The review form's platform picker. A new review starts on the rating's platform. |
 | Table | `public.game_ratings` (migrations 000015–000016; public read, owner-only write) | `public.reviews` |
 | Code | `services/ratings.ts` → `rateGame`, `clearGameRating`, `fetchMyRatings`; `hooks/useRatings.ts` → `useRateGame`, `useMyGameRatings` | `services/reviews.ts` → `saveReview`; `hooks/useReviews.ts` → `useSaveReview` |
 

@@ -33,6 +33,8 @@ const THEMED_SURFACE: Record<'default' | 'primary', string> = {
  * Raised bevel button. While pressed the bevel inverts (sunken). Border widths
  * never change between states, only colors, so pressing never shifts layout.
  */
+const PRESSED_NUDGE = { transform: [{ translateX: 1 }, { translateY: 1 }] };
+
 export function RetroGamingPCButton({
   label,
   variant = 'default',
@@ -104,7 +106,9 @@ export function RetroGamingPCButton({
         className,
       )}
     >
-      <View className={cn('flex-row items-center gap-2', pressed && 'translate-x-px translate-y-px')}>
+      {/* Pressed nudge as a plain style: Tailwind translate classes set CSS variables, and adding
+          variables after the first render crashes NativeWind's native runtime. */}
+      <View className="flex-row items-center gap-2" style={pressed ? PRESSED_NUDGE : undefined}>
         {leading}
         <Text style={labelColor ? { color: labelColor } : undefined} className={cn('text-retrogamingpc-base font-bold', !action && 'text-retrogamingpc-text-bright')}>
           {label}

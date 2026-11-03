@@ -5,6 +5,8 @@ import {
   IGDB_LOOKUP_MAX_IDS,
   IGDB_SEARCH_LIMITS,
   normalizeSearchQuery,
+  type IgdbCompanyDetailRequest,
+  type IgdbCompanyDetailResponse,
   type IgdbDetailRequest,
   type IgdbLookupRequest,
   type IgdbLookupResponse,
@@ -45,7 +47,7 @@ async function readEnvelopeError(response: unknown): Promise<string | null> {
  */
 /** Low-level proxy call with envelope unwrapping and retry-aware errors. */
 export async function invokeProxy<T>(
-  body: IgdbSearchRequest | IgdbLookupRequest | IgdbDetailRequest,
+  body: IgdbSearchRequest | IgdbLookupRequest | IgdbDetailRequest | IgdbCompanyDetailRequest,
   signal?: AbortSignal,
 ): Promise<T> {
   const { data, error } = await supabase.functions.invoke<ApiEnvelope<T>>('igdb-proxy', { body, signal });
@@ -103,4 +105,9 @@ export async function searchIgdb<E extends IgdbSearchableEntity>(
     { action: 'search', entity_type: entityType, query, limit: options.limit },
     options.signal,
   );
+}
+
+/** Studio page: the company plus every catalogue game it developed or published. */
+export function fetchCompanyDetail(companyId: number, signal?: AbortSignal): Promise<IgdbCompanyDetailResponse> {
+  return invokeProxy<IgdbCompanyDetailResponse>({ action: 'company', entity_type: 'companies', id: companyId }, signal);
 }

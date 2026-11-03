@@ -5,6 +5,7 @@ import { FlatList, Pressable, Text, View } from 'react-native';
 import { ListEditorModal } from '@/components/lists/ListEditorModal';
 import { ReportLink } from '@/components/safety/ReportLink';
 import { Thumbnail } from '@/components/search/Thumbnail';
+import { gameMetaLine } from '@/components/search/GameResultCard';
 import { GamePickerModal } from '@/components/studio/GamePickerModal';
 import {
   RetroGamingPCAlert,
@@ -101,7 +102,7 @@ function GameRow({
   onRemove: () => void;
 }) {
   const name = game?.name ?? `Game #${gameId}`;
-  const meta = [game?.releaseYear, game?.developers[0]].filter(Boolean).join(' · ');
+  const meta = game ? gameMetaLine(game) : '';
   return (
     <View className="retrogamingpc-bevel flex-row items-center gap-2 bg-retrogamingpc-card p-1.5">
       {ranked ? <Text className="w-9 text-center font-mono text-retrogamingpc-lg font-bold text-retrogamingpc-text-bright">#{index + 1}</Text> : null}
@@ -117,6 +118,11 @@ function GameRow({
             {name}
           </Text>
           {meta ? <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted">{meta}</Text> : null}
+          {game && game.platforms.length > 0 ? (
+            <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted" numberOfLines={1}>
+              {game.platforms.join(' · ')}
+            </Text>
+          ) : null}
         </View>
       </Pressable>
       {editable ? (

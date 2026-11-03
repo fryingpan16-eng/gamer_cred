@@ -11,7 +11,9 @@
  *
  *   POST … { "action": "detail", "entity_type": "games", "id": 1942 }
  *
- * Response: ApiEnvelope<IgdbSearchResponse | IgdbLookupResponse | IgdbDetailResponse>
+ *   POST … { "action": "company", "entity_type": "companies", "id": 6037 }   (studio page)
+ *
+ * Response: ApiEnvelope<IgdbSearchResponse | IgdbLookupResponse | IgdbDetailResponse | IgdbCompanyDetailResponse>
  *
  * Secrets (supabase secrets set …): IGDB_CLIENT_ID, IGDB_CLIENT_SECRET, RAWG_API_KEY
  * Auto-injected by Supabase:        SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
@@ -23,12 +25,15 @@
 import { createClient } from '@supabase/supabase-js';
 
 import {
+  COMPANY_GAMES_MAX,
   IGDB_ENTITY_TYPES,
   IGDB_LOOKUP_MAX_IDS,
   IGDB_SEARCH_LIMITS,
   normalizeSearchQuery,
   SEARCH_PROVIDER,
   type ApiEnvelope,
+  type IgdbCompanyDetail,
+  type IgdbCompanyDetailResponse,
   type IgdbCompanyResult,
   type IgdbEntityType,
   type GameReleaseDate,
@@ -58,6 +63,7 @@ import { cacheFreshness, computeRulesVersion, runInBackground, SEARCH_REFRESH_AF
 import * as curationModule from './curation.ts';
 import { rankCompanies, rankGames } from './ranking.ts';
 import { releasePlatformOrder } from './platform_order.ts';
+import { chunk, companyGameIds, IGDB_PAGE_MAX, tagCompanyGames } from './company_games.ts';
 import * as rankingModule from './ranking.ts';
 import { fetchRawgPcRequirements, RawgError, searchRawgCreators } from './rawg.ts';
 
@@ -117,7 +123,8 @@ function requireEnv(name: string): string {
 type ParsedSearch = { action: 'search'; entityType: IgdbEntityType; query: string; limit: number };
 type ParsedLookup = { action: 'lookup'; ids: number[] };
 type ParsedDetail = { action: 'detail'; id: number };
-type ParsedRequest = ParsedSearch | ParsedLookup | ParsedDetail;
+type ParsedCompany = { action: 'company'; id: number };
+type ParsedRequest = ParsedSearch | ParsedLookup | ParsedDetail | ParsedCompany;
 
 function isEntityType(value: unknown): value is IgdbEntityType {
   return typeof value === 'string' && (IGDB_ENTITY_TYPES as readonly string[]).includes(value);
@@ -142,7 +149,8 @@ async function parseRequest(req: Request): Promise<ParsedRequest> {
   const action = raw.action ?? 'search';
   if (action === 'lookup') return parseLookup(raw);
   if (action === 'detail') return parseDetail(raw);
-  if (action !== 'search') throw new HttpError(400, "action must be 'search', 'lookup' or 'detail'");
+  if (action === 'company') return parseCompany(raw);
+  if (action !== 'search') throw new HttpError(400, "action must be 'search', 'lookup', 'detail' or 'company'");
 
   if (!isEntityType(raw.entity_type)) {
     throw new HttpError(400, `entity_type must be one of: ${IGDB_ENTITY_TYPES.join(', ')}`);
@@ -170,6 +178,13 @@ function parseDetail(raw: Record<string, unknown>): ParsedDetail {
   const id = Number(raw.id);
   if (!Number.isSafeInteger(id) || id <= 0) throw new HttpError(400, 'id must be a positive IGDB game id');
   return { action: 'detail', id };
+}
+
+function parseCompany(raw: Record<string, unknown>): ParsedCompany {
+  if (raw.entity_type !== 'companies') throw new HttpError(400, "company supports entity_type 'companies' only");
+  const id = Number(raw.id);
+  if (!Number.isSafeInteger(id) || id <= 0) throw new HttpError(400, 'id must be a positive IGDB company id');
+  return { action: 'company', id };
 }
 
 function parseLookup(raw: Record<string, unknown>): ParsedLookup {
@@ -490,6 +505,41 @@ async function searchCompanies(query: string, limit: number): Promise<IgdbCompan
   return rankCompanies(companies, query, limit);
 }
 
+type RawCompanyDetail = RawCompany & { parent?: { name?: string } | number | null };
+
+/** Studio page: the company record plus every curated game it developed or published. */
+async function fetchCompanyDetail(id: number): Promise<IgdbCompanyDetail | null> {
+  const [c] = await igdbRequest<RawCompanyDetail[]>(
+    'companies',
+    `fields name,slug,logo.image_id,start_date,description,developed,published,parent.name; where id = ${id}; limit 1;`,
+  );
+  if (!c || typeof c.name !== 'string') return null;
+
+  const { ids, truncated } = companyGameIds(c.developed, c.published, COMPANY_GAMES_MAX);
+  const where = searchWhereClause(await getOverrides());
+  const pages = await Promise.all(
+    chunk(ids, IGDB_PAGE_MAX).map((page) =>
+      igdbRequest<RawGame[]>('games', `${GAME_FIELDS} where id = (${page.join(',')}) & (${where}); limit ${IGDB_PAGE_MAX};`),
+    ),
+  );
+  const { kept } = await curateGames(pages.flat(), curationDeps);
+
+  return {
+    kind: 'company',
+    id: c.id,
+    name: c.name,
+    slug: c.slug ?? null,
+    logoImageId: c.logo?.image_id ?? null,
+    foundedYear: yearFromUnix(c.start_date),
+    description: c.description ?? null,
+    developedCount: c.developed?.length ?? 0,
+    publishedCount: c.published?.length ?? 0,
+    parentName: typeof c.parent === 'object' && c.parent ? (c.parent.name ?? null) : null,
+    games: tagCompanyGames(mapGames(kept), c.developed, c.published),
+    gamesTruncated: truncated,
+  };
+}
+
 async function fetchUpstream(entityType: IgdbEntityType, query: string, limit: number): Promise<unknown[]> {
   switch (entityType) {
     case 'games':
@@ -796,10 +846,54 @@ async function handleDetail(id: number): Promise<Response> {
   }
 }
 
+/** Studio page: cached 7 days as one record; stale copy served if IGDB is down. */
+async function handleCompany(id: number): Promise<Response> {
+  const db = cacheClient();
+  const cacheKey = `company:${CACHE_VERSION}:igdb:${id}`;
+  const cached = await readCache(db, cacheKey);
+  const cachedCompany = cached?.payload.results[0] as IgdbCompanyDetail | undefined;
+  const reply = async (company: IgdbCompanyDetail, fromCache: boolean, fetchedAt: string, xCache: string) => {
+    const data: IgdbCompanyDetailResponse = {
+      company: { ...company, games: await withoutExcluded(company.games) },
+      cached: fromCache,
+      fetchedAt,
+    };
+    return respond(200, { success: true, data }, { 'X-Cache': xCache });
+  };
+
+  const state = cached
+    ? cacheFreshness({
+        ageMs: cached.ageMs,
+        ttlMs: GAME_RECORD_TTL_MS,
+        refreshAfterMs: null,
+        rulesVersion: cached.payload.rulesVersion,
+        currentRulesVersion: await getRulesVersion(),
+      })
+    : 'expired';
+  if (cached && cachedCompany && state !== 'expired') return reply(cachedCompany, true, cached.payload.fetchedAt, 'HIT');
+
+  try {
+    const payload = await fetchAndCacheOnce(db, cacheKey, async () => {
+      const company = await fetchCompanyDetail(id);
+      if (!company) throw new HttpError(404, `Studio ${id} was not found`);
+      // Each game doubles as a per-game record, so opening one from the studio page is instant.
+      await cacheGameRecords(db, company.games.map(({ roles: _roles, ...game }) => game), new Date().toISOString());
+      return [company];
+    }, { stampRules: true });
+    return reply(payload.results[0] as IgdbCompanyDetail, false, payload.fetchedAt, cached ? 'REFRESH' : 'MISS');
+  } catch (error) {
+    if (cached && cachedCompany && cached.ageMs < STALE_MAX_MS && !(error instanceof HttpError && error.status === 404)) {
+      return reply(cachedCompany, true, cached.payload.fetchedAt, 'STALE');
+    }
+    throw error;
+  }
+}
+
 async function handle(req: Request): Promise<Response> {
   const parsed = await parseRequest(req);
   if (parsed.action === 'lookup') return handleLookup(parsed.ids);
   if (parsed.action === 'detail') return handleDetail(parsed.id);
+  if (parsed.action === 'company') return handleCompany(parsed.id);
   const { entityType, query, limit } = parsed;
 
   const db = cacheClient();

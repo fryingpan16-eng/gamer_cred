@@ -109,6 +109,7 @@ function RootNavigator() {
         <Stack.Screen name="review/[id]" options={{ title: 'Review' }} />
         <Stack.Screen name="ratings/[userId]" options={{ title: 'Ratings' }} />
         <Stack.Screen name="list/[id]" options={{ title: 'List' }} />
+        <Stack.Screen name="studio/[id]" options={{ title: 'Studio' }} />
         <Stack.Screen name="admin/reports" options={{ title: 'Moderation' }} />
       </Stack.Protected>
 

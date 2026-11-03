@@ -14,7 +14,6 @@ import { RetroGamingPCAlert, RetroGamingPCInput, RetroGamingPCTabs, type RetroGa
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useGameLookup } from '@/hooks/useGames';
 import { useListSearch } from '@/hooks/useLists';
-import { useMyGameRatings } from '@/hooks/useRatings';
 import { listSearchPattern } from '@/services/lists';
 import { useCompanySearch, useCreatorSearch, useFriendAction, useGameSearch, useUserSearch } from '@/hooks/useSearch';
 import { USER_SEARCH_MIN_LENGTH } from '@/services/users';
@@ -61,8 +60,6 @@ function isActive(term: string, entity: SearchEntity): boolean {
 
 function GameResults({ term, typing }: ResultsProps) {
   const query = useGameSearch(term);
-  // The viewer's ratings for every result on screen, in one request.
-  const ratings = useMyGameRatings((query.data?.results ?? []).map((g) => g.id));
   return (
     <SearchResultList
       query={query}
@@ -74,13 +71,12 @@ function GameResults({ term, typing }: ResultsProps) {
       loadingLabel="Searching IGDB…"
       statusNote={query.data?.cached ? 'cached' : undefined}
       keyExtractor={(g) => String(g.id)}
-      extraData={ratings.data}
-      renderItem={(g) => <GameResultCard game={g} myRating={ratings.data ? (ratings.data[g.id] ?? null) : undefined} />}
+      renderItem={(g) => <GameResultCard game={g} />}
     />
   );
 }
 
-function CompanyResults({ term, typing, onSearchGames }: ResultsProps & { onSearchGames: (name: string) => void }) {
+function CompanyResults({ term, typing }: ResultsProps) {
   const query = useCompanySearch(term);
   return (
     <SearchResultList
@@ -93,7 +89,7 @@ function CompanyResults({ term, typing, onSearchGames }: ResultsProps & { onSear
       loadingLabel="Searching studios…"
       statusNote={query.data?.cached ? 'cached' : undefined}
       keyExtractor={(c) => String(c.id)}
-      renderItem={(c) => <CompanyResultCard company={c} onSearchGames={onSearchGames} />}
+      renderItem={(c) => <CompanyResultCard company={c} />}
     />
   );
 }
@@ -230,7 +226,7 @@ export default function SearchScreen() {
       <View className="flex-1">
         {entity === 'games' ? <GameResults term={debouncedTerm} typing={typing} /> : null}
         {entity === 'companies' && industryMode === 'studios' ? (
-          <CompanyResults term={debouncedTerm} typing={typing} onSearchGames={searchGamesFor} />
+          <CompanyResults term={debouncedTerm} typing={typing} />
         ) : null}
         {entity === 'companies' && industryMode === 'people' ? (
           <PeopleResults term={debouncedTerm} typing={typing} onSearchGames={searchGamesFor} />
