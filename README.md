@@ -113,7 +113,7 @@ Every chart shows the exact value when you tap a bar, and has a table view that 
   - It also hides both players from each other everywhere: profile, reviews, ratings, lists, Now Playing and search.
   - Unblock in **Settings → Blocked Players**.
 - **Moderation:** admins get a **Moderation queue** in Settings. They can view, dismiss, remove the content, or remove the account, review held profile pictures, and see the admin **Activity** log.
-- **Text filter:** usernames, list titles and descriptions, reviews, Now Playing notes and device names are checked with an open-source slur and profanity filter before saving.
+- **Text filter:** usernames, list titles and descriptions, reviews, Now Playing notes and device names are checked with an open-source slur and profanity filter before saving. The database enforces a smaller backstop list too, so requests that skip the app are also refused, and sign-ups whose Google name fails it get a neutral username.
 - **Terms:** everyone accepts the **Terms of Use & Community Guidelines** (zero tolerance for objectionable content).
   - Email sign-ups tick a box on Register.
   - Everyone else gets a one-time prompt.
@@ -270,6 +270,7 @@ Every table has row-level security with explicit read and write policies.
 | `user_blocks` | Who blocked whom. Blocking hides both players from each other through extra row-level policies. |
 | `content_reports` | Reports on reviews, lists, ratings and players. Reporters see their own; admins resolve them. |
 | `terms_acceptances` | Which Terms version each user accepted |
+| `api_rate_limits` | Per-user request counters for the game-database proxy (service role only) |
 | `games` | A durable copy of IGDB metadata used by Stats and the ratings list |
 | `igdb_cache` | The proxy's response cache (`cache_key`, `data` JSONB, `updated_at`) |
 | `game_overrides` | Manual include/exclude overrides for catalogue curation |
@@ -306,6 +307,7 @@ Storage: a private `avatar-uploads` bucket (each user can write only their own p
 | 000023 | Smart lists (admin rule-based lists) |
 | 000024 | Stars as the default rating scale for new players |
 | 000025 | Two-step sign-in for admin powers, admin activity log |
+| 000026 | Security hardening: friend-request guard, database text filter, reads need a session, proxy rate limit, scheduled cache cleanup |
 
 ### avatar Edge Function
 - `submit` screens an uploaded picture with Google Cloud Vision SafeSearch, then publishes, rejects or holds it.
@@ -324,6 +326,7 @@ Storage: a private `avatar-uploads` bucket (each user can write only their own p
   - `detail`: the full game page, with RAWG PC requirements;
   - `company`: a studio and every game it developed or published.
 - **Response format:** every response is `{ success, data?, error? }`.
+- **Access:** signed-in players only, rate limited to 120 requests a minute each.
 - **Curation:** one entry per game.
   - Dropped: editions, unreleased entries, mods and fan games.
   - Bundles only count as collections when their games share a series or a developer.
@@ -466,7 +469,6 @@ Phases 1–11 are complete: setup, auth, search, Review Studio, profiles, game p
 
 Still open:
 - Decide how standalone expansions should be grouped.
-- Add rate limiting to the proxy.
 - Ratings don't appear in the activity feed yet; only reviews do.
 - Trending posts are ranked by how popular their game is, because the app has no likes or comments yet.
 - **Before store submission:**

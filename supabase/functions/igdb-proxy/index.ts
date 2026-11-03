@@ -889,7 +889,34 @@ async function handleCompany(id: number): Promise<Response> {
   }
 }
 
+/** Per signed-in user (migration 000026). Search is debounced; a studio page or a 500-game smart list is ~10 calls. */
+const RATE_LIMIT_PER_MINUTE = 120;
+
+/**
+ * Only signed-in players may use the proxy (the public anon key alone is not enough),
+ * and each is rate limited, so nobody can drain the IGDB/RAWG allowance or flood the cache.
+ */
+async function requireCaller(req: Request): Promise<void> {
+  const token = (req.headers.get('Authorization') ?? '').replace(/^Bearer\s+/i, '');
+  if (!token) throw new HttpError(401, 'Sign in to search the game database.');
+  const db = cacheClient();
+  const { data, error } = await db.auth.getClaims(token);
+  const userId = data?.claims.sub;
+  if (error || !userId || data.claims.role !== 'authenticated') throw new HttpError(401, 'Sign in to search the game database.');
+
+  const { data: allowed, error: limitError } = await db.rpc('take_rate_limit', {
+    p_user: userId,
+    p_bucket: 'igdb',
+    p_limit: RATE_LIMIT_PER_MINUTE,
+    p_window_seconds: 60,
+  });
+  // A counter hiccup shouldn't take search down for everyone: log it and let the call through.
+  if (limitError) console.error('[igdb-proxy] rate limit check failed', limitError.message);
+  else if (allowed === false) throw new HttpError(429, 'Too many searches at once. Wait a minute and try again.');
+}
+
 async function handle(req: Request): Promise<Response> {
+  await requireCaller(req);
   const parsed = await parseRequest(req);
   if (parsed.action === 'lookup') return handleLookup(parsed.ids);
   if (parsed.action === 'detail') return handleDetail(parsed.id);

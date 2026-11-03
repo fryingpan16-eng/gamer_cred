@@ -107,7 +107,9 @@ UNDER NO CIRCUMSTANCES create, modify, or output \`.js\` or \`.jsx\` source file
 - **Database RLS**: Every table created in migrations MUST enable Row Level Security with explicit read/write policies.
 - **Global Error Boundary**: Implement \`app/+error.tsx\` at the root.
 - **Typed Routes**: Enable Expo Router's typed routes in \`app.json\`.
-- **Input Validation**: Use Zod schemas for all user-submitted data. Text other users can read must also pass \`containsObjectionable\` (\`src/utils/contentFilter.ts\`).
+- **Input Validation**: Use Zod schemas for all user-submitted data. Text other users can read must also pass \`containsObjectionable\` (\`src/utils/contentFilter.ts\`). The database backs this up (migration 000026, \`reject_objectionable\` trigger): add the trigger to any new public text column, and keep \`supabase/tests/fixtures/objectionable_samples.json\` passing in both filters (the database list must never block what the app allows).
+- **Reads need a session**: SELECT policies are \`to authenticated\` (migration 000026), never \`public\`/anon. New security-definer functions: \`revoke execute … from public, anon\` and grant to \`authenticated\` (or nobody, for service-role helpers).
+- **igdb-proxy** requires a signed-in user and is rate limited per user (\`take_rate_limit\`, 120/min).
 - **User-content safety (store requirements)**:
   - Every new kind of public content needs a ⚑ Report entry point (\`ReportLink\`, a \`content_reports\` target).
   - It also needs a restrictive \`… hide blocked\` select policy (migration 000021), so blocking hides it.
