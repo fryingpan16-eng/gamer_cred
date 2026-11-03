@@ -1,4 +1,4 @@
-import { PC_HANDHELD_PLATFORM_ID, PLATFORM_FAMILIES, PLATFORMS, platformIcon, platformInfo } from '@/constants/platforms';
+import { groupByFamily, PC_HANDHELD_PLATFORM_ID, PLATFORM_FAMILIES, PLATFORMS, platformIcon, platformInfo } from '@/constants/platforms';
 import { MAX_PLATFORM_DEVICES, platformDevicesSchema } from '@/utils/profileSchemas';
 
 describe('platform catalog', () => {
@@ -17,6 +17,31 @@ describe('platform catalog', () => {
   it('includes Nintendo Switch 2 alongside the original Switch', () => {
     expect(PLATFORMS.find((p) => p.name === 'Nintendo Switch 2')).toMatchObject({ family: 'nintendo' });
     expect(platformInfo(130).name).toBe('Nintendo Switch');
+  });
+
+  it('groups Atari systems by their IGDB ids, and handhelds under PC', () => {
+    const atari = PLATFORMS.filter((p) => p.family === 'atari').map((p) => [p.id, p.short]);
+    expect(atari).toEqual([
+      [59, '2600'],
+      [66, '5200'],
+      [60, '7800'],
+      [61, 'Lynx'],
+      [62, 'Jaguar'],
+    ]);
+    expect(platformInfo(PC_HANDHELD_PLATFORM_ID).family).toBe('pc');
+    expect(PLATFORM_FAMILIES.map((f) => f.label)).toEqual(['PC', 'Nintendo', 'Xbox', 'PlayStation', 'Sega', 'Atari', 'Mobile & Other']);
+  });
+});
+
+describe('groupByFamily', () => {
+  it('groups by maker in display order, newest hardware first, skipping empty groups', () => {
+    const rows = [33, 6, 48, 130, 34, PC_HANDHELD_PLATFORM_ID, 167, 9999].map((platform_id) => ({ platform_id }));
+    expect(groupByFamily(rows).map((g) => [g.short, g.rows.map((r) => r.platform_id)])).toEqual([
+      ['PC', [6, PC_HANDHELD_PLATFORM_ID]],
+      ['Nintendo', [130, 33]],
+      ['PlayStation', [167, 48]],
+      ['Other', [34, 9999]],
+    ]);
   });
 });
 

@@ -20,6 +20,8 @@ type PlatformPickerProps = {
   defaultId?: number | null;
   /** Smaller, label-less variant for search rows. */
   compact?: boolean;
+  /** Label for the null chip. Default "Not specified". */
+  noneLabel?: string;
 };
 
 function Chip({
@@ -27,19 +29,21 @@ function Chip({
   selected,
   onPress,
   isDefault = false,
+  noneLabel = 'Not specified',
 }: {
   platform: PlatformInfo | null;
   selected: boolean;
   onPress: () => void;
   isDefault?: boolean;
+  noneLabel?: string;
 }) {
   const themeColors = useThemeColors();
-  const name = platform ? `${platform.short}${isDefault ? ' (earliest)' : ''}` : 'Not specified';
+  const name = platform ? `${platform.short}${isDefault ? ' (earliest)' : ''}` : noneLabel;
   return (
     <Pressable
       accessibilityRole="radio"
       accessibilityState={{ selected }}
-      accessibilityLabel={platform ? platform.name : 'Platform not specified'}
+      accessibilityLabel={platform ? platform.name : noneLabel}
       onPress={onPress}
       className={cn(
         'flex-row items-center gap-1 border px-2 py-1',
@@ -49,7 +53,9 @@ function Chip({
       {platform ? (
         <MaterialCommunityIcons name={platformIcon(platform)} size={11} color={selected ? themeColors.textBright : themeColors.textMuted} />
       ) : null}
-      <Text className={cn('text-retrogamingpc-xs', selected ? 'font-bold text-retrogamingpc-text-bright' : 'text-retrogamingpc-text-muted')}>
+      <Text
+        className={cn('text-retrogamingpc-xs', selected ? 'font-bold text-retrogamingpc-text-bright' : 'text-retrogamingpc-text-muted')}
+      >
         {name}
       </Text>
     </Pressable>
@@ -60,12 +66,24 @@ function Chip({
  * "Played on" picker: your own platforms first (Main first), with every other
  * catalog platform one tap away. Only catalog ids can be chosen.
  */
-export function PlatformPicker({ value, onChange, label = 'Played on', error, allowNone = true, defaultId = null, compact = false }: PlatformPickerProps) {
+export function PlatformPicker({
+  value,
+  onChange,
+  label = 'Played on',
+  error,
+  allowNone = true,
+  defaultId = null,
+  compact = false,
+  noneLabel,
+}: PlatformPickerProps) {
   const viewerId = useAuthStore((s) => s.user?.id ?? null);
   const roster = usePlatforms(viewerId);
   const rosterPlatforms = (roster.data ?? []).map((r) => platformInfo(r.platform_id));
   // The game's earliest platform sits with your own, so the default is one tap away.
-  const owned = defaultId !== null && !rosterPlatforms.some((p) => p.id === defaultId) ? [platformInfo(defaultId), ...rosterPlatforms] : rosterPlatforms;
+  const owned =
+    defaultId !== null && !rosterPlatforms.some((p) => p.id === defaultId)
+      ? [platformInfo(defaultId), ...rosterPlatforms]
+      : rosterPlatforms;
   const ownedIds = new Set(owned.map((p) => p.id));
   // Show the full catalog when you own nothing, or when the current pick isn't one of yours.
   const [showAll, setShowAll] = useState(false);
@@ -78,7 +96,7 @@ export function PlatformPicker({ value, onChange, label = 'Played on', error, al
         {owned.map((p) => (
           <Chip key={p.id} platform={p} selected={value === p.id} isDefault={p.id === defaultId} onPress={() => onChange(p.id)} />
         ))}
-        {allowNone ? <Chip platform={null} selected={value === null} onPress={() => onChange(null)} /> : null}
+        {allowNone ? <Chip platform={null} selected={value === null} noneLabel={noneLabel} onPress={() => onChange(null)} /> : null}
         {owned.length > 0 ? (
           <Pressable accessibilityRole="button" onPress={() => setShowAll((v) => !v)} className="justify-center px-1">
             <Text className="text-retrogamingpc-xs text-retrogamingpc-text-bright underline">

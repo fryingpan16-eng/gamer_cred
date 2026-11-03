@@ -14,20 +14,44 @@ import {
   RetroGamingPCConfirmModal,
   RetroGamingPCPanel,
   RetroGamingPCSpinner,
+  RetroGamingPCTierBadge,
 } from '@/components/ui';
 import { ACTION_COLORS } from '@/constants/actionColors';
 import { useAuthStore } from '@/hooks/useAuth';
 import { useGameLookup } from '@/hooks/useGames';
-import { useDeleteList, useIsAdmin, useList, useListItems, usePinnedLists, useSetListPin, useUpdateList } from '@/hooks/useLists';
+import {
+  useDeleteList,
+  useIsAdmin,
+  useList,
+  useListItems,
+  usePinnedLists,
+  useSetListPin,
+  useSmartListGames,
+  useUpdateList,
+} from '@/hooks/useLists';
 import { showToast } from '@/hooks/useToastStore';
 import type { ListDetail } from '@/services/lists';
 import { igdbImageUrl, type IgdbGameResult } from '@/types/igdb';
 import { cn } from '@/utils/cn';
 import { LIST_MAX_GAMES } from '@/utils/listSchemas';
+import { numericToTier } from '@/utils/rating';
+import { describeRequirements, describeSmartRule, type SmartListGame } from '@/utils/smartLists';
 
 const fmtDate = (iso: string) => new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
 
-function StepButton({ label, a11y, onPress, disabled, tone }: { label: string; a11y: string; onPress: () => void; disabled?: boolean; tone?: string }) {
+function StepButton({
+  label,
+  a11y,
+  onPress,
+  disabled,
+  tone,
+}: {
+  label: string;
+  a11y: string;
+  onPress: () => void;
+  disabled?: boolean;
+  tone?: string;
+}) {
   return (
     <Pressable
       accessibilityRole="button"
@@ -37,7 +61,10 @@ function StepButton({ label, a11y, onPress, disabled, tone }: { label: string; a
       hitSlop={4}
       className={cn('retrogamingpc-bevel h-8 w-8 items-center justify-center bg-retrogamingpc-button', disabled && 'opacity-30')}
     >
-      <Text className={cn('text-retrogamingpc-sm font-bold', !tone && 'text-retrogamingpc-text-bright')} style={tone ? { color: tone } : undefined}>
+      <Text
+        className={cn('text-retrogamingpc-sm font-bold', !tone && 'text-retrogamingpc-text-bright')}
+        style={tone ? { color: tone } : undefined}
+      >
         {label}
       </Text>
     </Pressable>
@@ -68,14 +95,24 @@ function AdminPinControls({ list }: { list: ListDetail }) {
               accessibilityLabel={`Feature at position ${rank}`}
               disabled={pin.isPending}
               onPress={() => pin.mutate({ listId: list.id, rank })}
-              className={cn('min-h-[28px] min-w-[32px] items-center justify-center border px-2', selected ? 'border-2 border-retrogamingpc-text-bright bg-retrogamingpc-active' : 'border-retrogamingpc-accent bg-retrogamingpc-button')}
+              className={cn(
+                'min-h-[28px] min-w-[32px] items-center justify-center border px-2',
+                selected
+                  ? 'border-2 border-retrogamingpc-text-bright bg-retrogamingpc-active'
+                  : 'border-retrogamingpc-accent bg-retrogamingpc-button',
+              )}
             >
               <Text className="font-mono text-retrogamingpc-xs font-bold text-retrogamingpc-text-bright">#{rank}</Text>
             </Pressable>
           );
         })}
         {list.pinnedRank !== null ? (
-          <RetroGamingPCButton variant="cancel" label="Unfeature" loading={pin.isPending} onPress={() => pin.mutate({ listId: list.id, rank: null })} />
+          <RetroGamingPCButton
+            variant="cancel"
+            label="Unfeature"
+            loading={pin.isPending}
+            onPress={() => pin.mutate({ listId: list.id, rank: null })}
+          />
         ) : null}
       </View>
     </View>
@@ -89,6 +126,7 @@ function GameRow({
   total,
   ranked,
   editable,
+  score,
   onMove,
   onRemove,
 }: {
@@ -98,6 +136,8 @@ function GameRow({
   total: number;
   ranked: boolean;
   editable: boolean;
+  /** Smart lists: the Gamer Cred average and rating count behind the rank. */
+  score?: SmartListGame;
   onMove: (to: number) => void;
   onRemove: () => void;
 }) {
@@ -105,14 +145,21 @@ function GameRow({
   const meta = game ? gameMetaLine(game) : '';
   return (
     <View className="retrogamingpc-bevel flex-row items-center gap-2 bg-retrogamingpc-card p-1.5">
-      {ranked ? <Text className="w-9 text-center font-mono text-retrogamingpc-lg font-bold text-retrogamingpc-text-bright">#{index + 1}</Text> : null}
+      {ranked ? (
+        <Text className="w-9 text-center font-mono text-retrogamingpc-lg font-bold text-retrogamingpc-text-bright">#{index + 1}</Text>
+      ) : null}
       <Pressable
         accessibilityRole="link"
         accessibilityLabel={`${ranked ? `#${index + 1} ` : ''}${name}. Open game page`}
         onPress={() => router.push({ pathname: '/game/[id]', params: { id: String(gameId) } })}
         className="flex-1 flex-row items-center gap-2"
       >
-        <Thumbnail uri={game?.coverImageId ? igdbImageUrl(game.coverImageId, 'cover_small', true) : null} fallback={name} shape="cover" accessibilityLabel="" />
+        <Thumbnail
+          uri={game?.coverImageId ? igdbImageUrl(game.coverImageId, 'cover_small', true) : null}
+          fallback={name}
+          shape="cover"
+          accessibilityLabel=""
+        />
         <View className="flex-1 gap-0.5">
           <Text className="text-retrogamingpc-base font-bold text-retrogamingpc-text-bright" numberOfLines={2}>
             {name}
@@ -125,6 +172,17 @@ function GameRow({
           ) : null}
         </View>
       </Pressable>
+      {score ? (
+        <View className="items-end gap-0.5" accessibilityLabel={`Gamer Cred average ${score.average}, ${score.ratingCount} ratings`}>
+          <View className="flex-row items-center gap-1">
+            <Text className="font-mono text-retrogamingpc-base font-bold text-retrogamingpc-text-bright">{score.average.toFixed(1)}</Text>
+            <RetroGamingPCTierBadge tier={numericToTier(Math.round(score.average))} showDescriptor={false} size="compact" />
+          </View>
+          <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted">
+            {score.ratingCount} rating{score.ratingCount === 1 ? '' : 's'}
+          </Text>
+        </View>
+      ) : null}
       {editable ? (
         <View className="flex-row gap-1">
           <StepButton label="▲" a11y={`Move ${name} up`} disabled={index === 0} onPress={() => onMove(index)} />
@@ -143,7 +201,12 @@ export default function ListScreen() {
   const viewerId = useAuthStore((s) => s.user?.id ?? null);
   const list = useList(id ?? null);
   const data = list.data ?? null;
-  const games = useGameLookup(data?.gameIds ?? []);
+  const smartRule = data?.smartRule ?? null;
+  const smart = useSmartListGames(id ?? null, smartRule !== null);
+  const smartGames = smart.data?.games ?? [];
+  const gameIds = smartRule ? smartGames.map((g) => g.gameId) : (data?.gameIds ?? []);
+  const scoreById = new Map(smartGames.map((g) => [g.gameId, g] as const));
+  const games = useGameLookup(gameIds);
   const items = useListItems(id ?? 'none');
   const update = useUpdateList(id ?? 'none');
   const remove = useDeleteList();
@@ -183,7 +246,8 @@ export default function ListScreen() {
           </Text>
           <View className="flex-row flex-wrap items-center gap-1">
             {data.pinnedRank !== null ? <RetroGamingPCBadge label={`Featured #${data.pinnedRank}`} variant="main" /> : null}
-            {data.isRanked ? <RetroGamingPCBadge label="Ranked" variant="nowPlaying" /> : null}
+            {smartRule ? <RetroGamingPCBadge label="Auto-updated" variant="published" /> : null}
+            {data.isRanked && !smartRule ? <RetroGamingPCBadge label="Ranked" variant="nowPlaying" /> : null}
             {!data.isPublic ? <RetroGamingPCBadge label="Private — only you" variant="neutral" /> : null}
           </View>
           <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted">
@@ -198,12 +262,28 @@ export default function ListScreen() {
             ) : (
               'Unknown player'
             )}
-            {` · ${data.gameIds.length} game${data.gameIds.length === 1 ? '' : 's'} · updated ${fmtDate(data.updatedAt)}`}
+            {smartRule
+              ? ` · ${smart.data ? `${gameIds.length} game${gameIds.length === 1 ? '' : 's'}` : 'loading'} · updates automatically`
+              : ` · ${gameIds.length} game${gameIds.length === 1 ? '' : 's'} · updated ${fmtDate(data.updatedAt)}`}
           </Text>
-          {data.description ? <Text className="text-retrogamingpc-sm leading-[18px] text-retrogamingpc-text">{data.description}</Text> : null}
+          {data.description ? (
+            <Text className="text-retrogamingpc-sm leading-[18px] text-retrogamingpc-text">{data.description}</Text>
+          ) : null}
+          {smartRule ? (
+            <View className="retrogamingpc-bevel-inset gap-0.5 bg-retrogamingpc-dark p-2">
+              <Text className="text-retrogamingpc-xs font-bold text-retrogamingpc-text">{describeSmartRule(smartRule)}</Text>
+              <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted">
+                Ranked by Gamer Cred average. {smart.data ? describeRequirements(smart.data.requirements) : ''} The bar rises as more
+                players rate games.
+              </Text>
+            </View>
+          ) : null}
+          {smart.isError ? <RetroGamingPCAlert message={smart.error.message} /> : null}
           {isOwner ? (
             <View className="flex-row flex-wrap gap-2 pt-1">
-              <RetroGamingPCButton variant="create" label="Add Games" disabled={full} onPress={() => setAdding(true)} />
+              {smartRule ? null : (
+                <RetroGamingPCButton variant="create" label="Add Games" disabled={full} onPress={() => setAdding(true)} />
+              )}
               <RetroGamingPCButton label="Edit Details" onPress={() => setEditing(true)} />
               <RetroGamingPCButton variant="danger" label="Delete List" onPress={() => setConfirmDelete(true)} />
             </View>
@@ -212,11 +292,19 @@ export default function ListScreen() {
             <View className="flex-row">
               <ReportLink
                 label="Report list"
-                subject={{ targetType: 'list', targetId: data.id, targetUserId: data.userId, label: 'this list', ownerName: data.owner.username }}
+                subject={{
+                  targetType: 'list',
+                  targetId: data.id,
+                  targetUserId: data.userId,
+                  label: 'this list',
+                  ownerName: data.owner.username,
+                }}
               />
             </View>
           ) : null}
-          {full && isOwner ? <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted">Lists hold up to {LIST_MAX_GAMES} games.</Text> : null}
+          {full && isOwner ? (
+            <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted">Lists hold up to {LIST_MAX_GAMES} games.</Text>
+          ) : null}
           {isAdmin.data ? <AdminPinControls list={data} /> : null}
         </View>
       </RetroGamingPCPanel>
@@ -227,7 +315,7 @@ export default function ListScreen() {
     <View className="flex-1 bg-retrogamingpc-dark">
       <Stack.Screen options={{ title: data.title }} />
       <FlatList
-        data={data.gameIds}
+        data={gameIds}
         keyExtractor={(g) => String(g)}
         contentContainerClassName="gap-1.5 p-3 md:max-w-[860px] md:w-full md:self-center"
         ListHeaderComponent={header}
@@ -236,17 +324,31 @@ export default function ListScreen() {
             gameId={item}
             game={games.data?.get(item)}
             index={index}
-            total={data.gameIds.length}
+            total={gameIds.length}
             ranked={data.isRanked}
-            editable={isOwner}
+            editable={isOwner && !smartRule}
+            score={scoreById.get(item)}
             onMove={(to) => items.mutate({ action: 'move', gameId: item, to })}
             onRemove={() => items.mutate({ action: 'remove', gameId: item })}
           />
         )}
         ListEmptyComponent={
           <View className="retrogamingpc-bevel-inset items-center gap-2 bg-retrogamingpc-dark px-4 py-6">
-            <Text className="text-retrogamingpc-base font-bold text-retrogamingpc-text">No games yet</Text>
-            {isOwner ? <RetroGamingPCButton variant="create" label="Add Games" onPress={() => setAdding(true)} /> : null}
+            {smartRule && smart.isPending ? (
+              <RetroGamingPCSpinner label="Working out the list…" />
+            ) : smartRule ? (
+              <>
+                <Text className="text-retrogamingpc-base font-bold text-retrogamingpc-text">No games qualify yet</Text>
+                <Text className="text-center text-retrogamingpc-xs text-retrogamingpc-text-muted">
+                  Games appear here once enough players have rated them.
+                </Text>
+              </>
+            ) : (
+              <>
+                <Text className="text-retrogamingpc-base font-bold text-retrogamingpc-text">No games yet</Text>
+                {isOwner ? <RetroGamingPCButton variant="create" label="Add Games" onPress={() => setAdding(true)} /> : null}
+              </>
+            )}
           </View>
         }
       />
@@ -266,7 +368,14 @@ export default function ListScreen() {
           />
           <ListEditorModal
             visible={editing}
-            initial={{ title: data.title, description: data.description ?? '', isRanked: data.isRanked, isPublic: data.isPublic }}
+            initial={{
+              title: data.title,
+              description: data.description ?? '',
+              isRanked: data.isRanked,
+              isPublic: data.isPublic,
+              smartRule,
+            }}
+            allowSmart={isAdmin.data === true}
             pinned={data.pinnedRank !== null}
             saving={update.isPending}
             error={update.isError ? update.error.message : null}
@@ -276,7 +385,11 @@ export default function ListScreen() {
           <RetroGamingPCConfirmModal
             visible={confirmDelete}
             title="Delete list"
-            message={`Delete “${data.title}” and its ${data.gameIds.length} game${data.gameIds.length === 1 ? '' : 's'}? This can't be undone.`}
+            message={
+              smartRule
+                ? `Delete the smart list “${data.title}”? This can't be undone.`
+                : `Delete “${data.title}” and its ${gameIds.length} game${gameIds.length === 1 ? '' : 's'}? This can't be undone.`
+            }
             confirmLabel="Delete"
             destructive
             busy={remove.isPending}

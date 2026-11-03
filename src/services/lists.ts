@@ -6,6 +6,7 @@
 import type { PostgrestError } from '@supabase/supabase-js';
 
 import type { ListFormValues } from '@/utils/listSchemas';
+import { parseSmartRule, smartListResultSchema, type SmartListResult, type SmartRule } from '@/utils/smartLists';
 
 import { supabase } from './supabase';
 
@@ -34,8 +35,11 @@ export type ListSummary = {
   isRanked: boolean;
   isPublic: boolean;
   pinnedRank: number | null;
+  /** Admin smart list: games come from this rule, not list_items (migration 000023). */
+  smartRule: SmartRule | null;
   updatedAt: string;
   owner: ListOwner | null;
+  /** Hand-picked games only; a smart list's count comes from fetchSmartListGames. */
   gameCount: number;
   /** First few games (by position), for the cover mosaic. */
   previewGameIds: number[];
@@ -50,7 +54,7 @@ export type ListDetail = ListSummary & {
 const PREVIEW_COUNT = 4;
 
 const SUMMARY_SELECT = `
-  id, user_id, title, description, is_ranked, is_public, pinned_rank, updated_at,
+  id, user_id, title, description, is_ranked, is_public, pinned_rank, smart_rule, updated_at,
   owner:profiles!lists_user_id_fkey ( id, username, avatar_url ),
   item_count:list_items ( count ),
   preview:list_items ( game_id, position )
@@ -76,6 +80,7 @@ function toSummary(row: SummaryRow): ListSummary {
     isRanked: row.is_ranked,
     isPublic: row.is_public,
     pinnedRank: row.pinned_rank,
+    smartRule: parseSmartRule(row.smart_rule),
     updatedAt: row.updated_at,
     owner: owner ?? null,
     gameCount: row.item_count[0]?.count ?? 0,
@@ -97,16 +102,25 @@ export async function fetchUserLists(userId: string): Promise<ListSummary[]> {
   return data.map(toSummary);
 }
 
-/** Recently updated public lists that have at least one game (the list browser's default view). */
+/** Recently updated public lists that have games (or fill themselves) — the list browser's default view. */
 export async function fetchRecentLists(limit = 20): Promise<ListSummary[]> {
-  const { data, error } = await summaryQuery().eq('is_public', true).order('updated_at', { ascending: false }).limit(limit * 2);
+  const { data, error } = await summaryQuery()
+    .eq('is_public', true)
+    .order('updated_at', { ascending: false })
+    .limit(limit * 2);
   if (error) fail(error, 'Could not load lists.');
-  return data.map(toSummary).filter((l) => l.gameCount > 0).slice(0, limit);
+  return data
+    .map(toSummary)
+    .filter((l) => l.gameCount > 0 || l.smartRule !== null)
+    .slice(0, limit);
 }
 
 /** Characters that would break a PostgREST `or=(…)` filter or act as wildcards. */
 export function listSearchPattern(term: string): string | null {
-  const cleaned = term.replace(/[,()*%\\:."]/g, ' ').replace(/\s+/g, ' ').trim();
+  const cleaned = term
+    .replace(/[,()*%\\:."]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
   return cleaned.length >= 2 ? `%${cleaned}%` : null;
 }
 
@@ -128,7 +142,7 @@ export async function fetchList(listId: string): Promise<ListDetail | null> {
   const { data, error } = await supabase
     .from('lists')
     .select(
-      `id, user_id, title, description, is_ranked, is_public, pinned_rank, created_at, updated_at,
+      `id, user_id, title, description, is_ranked, is_public, pinned_rank, smart_rule, created_at, updated_at,
        owner:profiles!lists_user_id_fkey ( id, username, avatar_url ),
        items:list_items ( game_id, position )`,
     )
@@ -147,6 +161,7 @@ export async function fetchList(listId: string): Promise<ListDetail | null> {
     isRanked: data.is_ranked,
     isPublic: data.is_public,
     pinnedRank: data.pinned_rank,
+    smartRule: parseSmartRule(data.smart_rule),
     createdAt: data.created_at,
     updatedAt: data.updated_at,
     owner: owner ?? null,
@@ -159,8 +174,10 @@ export async function fetchList(listId: string): Promise<ListDetail | null> {
 const listColumns = (values: ListFormValues) => ({
   title: values.title,
   description: values.description.length > 0 ? values.description : null,
-  is_ranked: values.isRanked,
+  // Smart lists are always ranked (the database enforces it too).
+  is_ranked: values.smartRule !== null || values.isRanked,
   is_public: values.isPublic,
+  smart_rule: values.smartRule,
 });
 
 export async function createList(userId: string, values: ListFormValues): Promise<string> {
@@ -208,6 +225,16 @@ export async function moveListItem(listId: string, gameId: number, to: number): 
 export async function setListPin(listId: string, rank: number | null): Promise<void> {
   const { error } = await supabase.rpc('set_list_pin', { p_list_id: listId, p_rank: rank });
   if (error) fail(error, 'Could not update the featured lists.');
+}
+
+/** A smart list's games, worked out live from Gamer Cred ratings. Null when the list isn't smart or visible. */
+export async function fetchSmartListGames(listId: string): Promise<SmartListResult | null> {
+  const { data, error } = await supabase.rpc('smart_list_games', { p_list_id: listId });
+  if (error) fail(error, 'Could not load this list.');
+  if (data === null) return null;
+  const parsed = smartListResultSchema.safeParse(data);
+  if (!parsed.success) throw new ListError('This list returned data the app could not read.', null);
+  return parsed.data;
 }
 
 export async function fetchIsAdmin(): Promise<boolean> {

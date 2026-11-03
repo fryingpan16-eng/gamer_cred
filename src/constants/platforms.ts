@@ -8,7 +8,7 @@
  * call is needed to render a roster. Verify/extend ids against IGDB /platforms
  * (`fields id,name,abbreviation; where id = (...);`) when adding hardware.
  */
-export type PlatformFamily = 'pc' | 'handheld' | 'playstation' | 'xbox' | 'nintendo' | 'sega' | 'mobile';
+export type PlatformFamily = 'pc' | 'nintendo' | 'xbox' | 'playstation' | 'sega' | 'atari' | 'mobile';
 
 export type PlatformInfo = {
   id: number;
@@ -31,11 +31,11 @@ export type PlatformIconName = 'desktop-tower-monitor' | 'laptop' | 'penguin' | 
 
 const FAMILY_ICONS: Record<PlatformFamily, PlatformIconName> = {
   pc: 'desktop-tower-monitor',
-  handheld: 'gamepad-round',
-  playstation: 'gamepad-variant',
-  xbox: 'gamepad-variant',
   nintendo: 'gamepad-variant',
+  xbox: 'gamepad-variant',
+  playstation: 'gamepad-variant',
   sega: 'gamepad-variant',
+  atari: 'gamepad-variant',
   mobile: 'cellphone',
 };
 
@@ -56,14 +56,15 @@ export const PC_HANDHELD_SUGGESTIONS: readonly string[] = [
   'GPD Win',
 ];
 
-export const PLATFORM_FAMILIES: readonly { key: PlatformFamily; label: string }[] = [
-  { key: 'pc', label: 'Computers' },
-  { key: 'handheld', label: 'PC Handhelds' },
-  { key: 'playstation', label: 'PlayStation' },
-  { key: 'xbox', label: 'Xbox' },
-  { key: 'nintendo', label: 'Nintendo' },
-  { key: 'sega', label: 'Sega' },
-  { key: 'mobile', label: 'Mobile' },
+/** Display order for settings and profiles. `short` is the profile header's row label. */
+export const PLATFORM_FAMILIES: readonly { key: PlatformFamily; label: string; short: string }[] = [
+  { key: 'pc', label: 'PC', short: 'PC' },
+  { key: 'nintendo', label: 'Nintendo', short: 'Nintendo' },
+  { key: 'xbox', label: 'Xbox', short: 'Xbox' },
+  { key: 'playstation', label: 'PlayStation', short: 'PlayStation' },
+  { key: 'sega', label: 'Sega', short: 'Sega' },
+  { key: 'atari', label: 'Atari', short: 'Atari' },
+  { key: 'mobile', label: 'Mobile & Other', short: 'Other' },
 ];
 
 export const PLATFORMS: readonly PlatformInfo[] = [
@@ -71,7 +72,7 @@ export const PLATFORMS: readonly PlatformInfo[] = [
   { id: 14, name: 'Mac', short: 'Mac', family: 'pc', hasSpecs: true, icon: 'laptop' },
   { id: 3, name: 'Linux', short: 'Linux', family: 'pc', hasSpecs: true, icon: 'penguin' },
 
-  { id: PC_HANDHELD_PLATFORM_ID, name: 'PC Handheld', short: 'PC Handheld', family: 'handheld', hasDevices: true },
+  { id: PC_HANDHELD_PLATFORM_ID, name: 'PC Handheld', short: 'PC Handheld', family: 'pc', hasDevices: true, icon: 'gamepad-round' },
 
   { id: 167, name: 'PlayStation 5', short: 'PS5', family: 'playstation' },
   { id: 48, name: 'PlayStation 4', short: 'PS4', family: 'playstation' },
@@ -86,8 +87,6 @@ export const PLATFORMS: readonly PlatformInfo[] = [
   { id: 12, name: 'Xbox 360', short: 'X360', family: 'xbox' },
   { id: 11, name: 'Xbox', short: 'Xbox', family: 'xbox' },
 
-  // UNVERIFIED IGDB id: confirm with `fields id,name; where name ~ *"Switch 2"*;` on /platforms
-  // before real users pick it (stored ids would need a data fix if this is wrong).
   { id: 508, name: 'Nintendo Switch 2', short: 'Switch 2', family: 'nintendo' },
   { id: 130, name: 'Nintendo Switch', short: 'Switch', family: 'nintendo' },
   { id: 41, name: 'Wii U', short: 'Wii U', family: 'nintendo' },
@@ -106,6 +105,13 @@ export const PLATFORMS: readonly PlatformInfo[] = [
   { id: 32, name: 'Sega Saturn', short: 'Saturn', family: 'sega' },
   { id: 29, name: 'Sega Genesis / Mega Drive', short: 'Genesis', family: 'sega' },
 
+  // Ids checked against IGDB game data (2026-11-03).
+  { id: 59, name: 'Atari 2600', short: '2600', family: 'atari' },
+  { id: 66, name: 'Atari 5200', short: '5200', family: 'atari' },
+  { id: 60, name: 'Atari 7800', short: '7800', family: 'atari' },
+  { id: 61, name: 'Atari Lynx', short: 'Lynx', family: 'atari' },
+  { id: 62, name: 'Atari Jaguar', short: 'Jaguar', family: 'atari' },
+
   { id: 39, name: 'iOS', short: 'iOS', family: 'mobile' },
   { id: 34, name: 'Android', short: 'Android', family: 'mobile' },
 ];
@@ -116,9 +122,27 @@ export function platformIcon(info: PlatformInfo): PlatformIconName {
   return info.icon ?? FAMILY_ICONS[info.family];
 }
 
-/** Unknown ids (e.g. added directly in the DB) still render with a generic label. */
+/** Unknown ids (e.g. added directly in the DB) still render with a generic label, under "Other". */
 export function platformInfo(id: number): PlatformInfo {
-  return BY_ID.get(id) ?? { id, name: `Platform #${id}`, short: `#${id}`, family: 'pc' };
+  return BY_ID.get(id) ?? { id, name: `Platform #${id}`, short: `#${id}`, family: 'mobile' };
+}
+
+const CATALOG_INDEX = new Map(PLATFORMS.map((p, i) => [p.id, i]));
+
+/**
+ * Owned platforms grouped by maker, in PLATFORM_FAMILIES order; inside a group,
+ * catalogue order (newest hardware first). Empty groups are left out.
+ */
+export function groupByFamily<T extends { platform_id: number }>(
+  rows: readonly T[],
+): { key: PlatformFamily; label: string; short: string; rows: T[] }[] {
+  const order = (r: T) => CATALOG_INDEX.get(r.platform_id) ?? Number.MAX_SAFE_INTEGER;
+  return PLATFORM_FAMILIES.map((family) => ({
+    ...family,
+    rows: rows
+      .filter((r) => platformInfo(r.platform_id).family === family.key)
+      .sort((a, b) => order(a) - order(b) || a.platform_id - b.platform_id),
+  })).filter((g) => g.rows.length > 0);
 }
 
 /**

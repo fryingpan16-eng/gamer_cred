@@ -25,7 +25,7 @@ export type RetroGamingPCModalProps = {
 
 const CANCEL = ACTION_COLORS.cancel;
 
-function TitlebarCloseButton({ onPress }: { onPress: () => void }) {
+export function TitlebarCloseButton({ onPress }: { onPress: () => void }) {
   const [pressed, setPressed] = useState(false);
   return (
     <Pressable

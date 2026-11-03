@@ -20,3 +20,4 @@ export { RetroGamingPCCheckbox, type RetroGamingPCCheckboxProps } from './RetroG
 export { RetroGamingPCBarChart, type RetroGamingPCBarChartProps } from './RetroGamingPCBarChart';
 export { RetroGamingPCToastHost } from './RetroGamingPCToastHost';
 export { RetroGamingPCSaveStatus, saveStatusOf, type RetroGamingPCSaveStatusProps } from './RetroGamingPCSaveStatus';
+export { RetroGamingPCSheet, type RetroGamingPCSheetProps } from './RetroGamingPCSheet';

@@ -334,6 +334,8 @@ export type Database = {
           is_public: boolean;
           /** Home "Featured Lists" position (admin-only); null = not pinned. */
           pinned_rank: number | null;
+          /** Smart list rule (admin-only, migration 000023); null = hand-picked games. */
+          smart_rule: Json | null;
           created_at: Timestamp;
           updated_at: Timestamp;
         };
@@ -345,6 +347,7 @@ export type Database = {
           is_ranked?: boolean;
           is_public?: boolean;
           pinned_rank?: number | null;
+          smart_rule?: Json | null;
           created_at?: Timestamp;
           updated_at?: Timestamp;
         };
@@ -356,6 +359,7 @@ export type Database = {
           is_ranked?: boolean;
           is_public?: boolean;
           pinned_rank?: number | null;
+          smart_rule?: Json | null;
           created_at?: Timestamp;
           updated_at?: Timestamp;
         };
@@ -574,6 +578,8 @@ export type Database = {
       add_list_item: { Args: { p_list_id: string; p_game_id: number }; Returns: undefined };
       move_list_item: { Args: { p_list_id: string; p_game_id: number; p_to: number }; Returns: undefined };
       set_list_pin: { Args: { p_list_id: string; p_rank: number | null }; Returns: undefined };
+      /** A smart list's games, live (migration 000023). Null when not smart / not visible. */
+      smart_list_games: { Args: { p_list_id: string }; Returns: Json | null };
       /** A player's whole ratings list with game metadata (migration 000016). */
       user_ratings_table: {
         Args: { p_user_id: string };

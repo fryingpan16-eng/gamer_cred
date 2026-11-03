@@ -5,7 +5,7 @@ import { ScrollView, Text, View } from 'react-native';
 import { RetroGamingPCAlert, RetroGamingPCButton, RetroGamingPCInput, RetroGamingPCPanel, RetroGamingPCSpinner } from '@/components/ui';
 import { useAuthStore } from '@/hooks/useAuth';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
-import { useCreateList, useListSearch, usePinnedLists, useRecentLists, useUserLists } from '@/hooks/useLists';
+import { useCreateList, useIsAdmin, useListSearch, usePinnedLists, useRecentLists, useUserLists } from '@/hooks/useLists';
 import { listSearchPattern } from '@/services/lists';
 
 import { ListCards } from './ListCard';
@@ -14,12 +14,14 @@ import { ListEditorModal } from './ListEditorModal';
 /** "+ New List" → editor → the new list's page with the game picker open. */
 export function NewListButton({ label = 'New List' }: { label?: string }) {
   const create = useCreateList();
+  const isAdmin = useIsAdmin();
   const [open, setOpen] = useState(false);
   return (
     <>
       <RetroGamingPCButton variant="create" label={label} onPress={() => setOpen(true)} />
       <ListEditorModal
         visible={open}
+        allowSmart={isAdmin.data === true}
         saving={create.isPending}
         error={create.isError ? create.error.message : null}
         onClose={() => setOpen(false)}
@@ -27,7 +29,8 @@ export function NewListButton({ label = 'New List' }: { label?: string }) {
           create.mutate(values, {
             onSuccess: (id) => {
               setOpen(false);
-              router.push({ pathname: '/list/[id]', params: { id, add: '1' } });
+              // Smart lists fill themselves; others open with the game picker.
+              router.push({ pathname: '/list/[id]', params: values.smartRule ? { id } : { id, add: '1' } });
             },
           })
         }
@@ -46,7 +49,9 @@ export function FeaturedListsPanel() {
       ) : pinned.isError ? (
         <RetroGamingPCAlert message={pinned.error.message} />
       ) : pinned.data.length === 0 ? (
-        <Text className="text-retrogamingpc-sm text-retrogamingpc-text-muted">Hand-picked lists from the GamerCred team will appear here.</Text>
+        <Text className="text-retrogamingpc-sm text-retrogamingpc-text-muted">
+          Hand-picked lists from the GamerCred team will appear here.
+        </Text>
       ) : (
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           <ListCards lists={pinned.data} layout="tile" />

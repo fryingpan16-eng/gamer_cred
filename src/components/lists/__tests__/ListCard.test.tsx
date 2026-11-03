@@ -14,6 +14,7 @@ const list: ListSummary = {
   isRanked: true,
   isPublic: false,
   pinnedRank: 2,
+  smartRule: null,
   updatedAt: '2026-11-01T00:00:00Z',
   owner: { id: 'u1', username: 'pan', avatar_url: null },
   gameCount: 12,

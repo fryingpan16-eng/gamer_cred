@@ -3,21 +3,40 @@ import { Image, Pressable, Text, View } from 'react-native';
 
 import { RetroGamingPCBadge } from '@/components/ui';
 import { useGameLookup } from '@/hooks/useGames';
+import { useSmartListGames } from '@/hooks/useLists';
 import type { ListSummary } from '@/services/lists';
 import { igdbImageUrl, type IgdbGameResult } from '@/types/igdb';
 import { cn } from '@/utils/cn';
 
 /** 2×2 cover mosaic of a list's first games (empty cells stay sunken). */
-export function ListMosaic({ gameIds, games, size }: { gameIds: readonly number[]; games: ReadonlyMap<number, IgdbGameResult> | undefined; size: number }) {
+export function ListMosaic({
+  gameIds,
+  games,
+  size,
+}: {
+  gameIds: readonly number[];
+  games: ReadonlyMap<number, IgdbGameResult> | undefined;
+  size: number;
+}) {
   const cell = size / 2;
   return (
-    <View className="retrogamingpc-bevel-inset flex-row flex-wrap overflow-hidden bg-retrogamingpc-dark" style={{ width: size + 2, height: (size / 3) * 4 + 2 }}>
+    <View
+      className="retrogamingpc-bevel-inset flex-row flex-wrap overflow-hidden bg-retrogamingpc-dark"
+      style={{ width: size + 2, height: (size / 3) * 4 + 2 }}
+    >
       {[0, 1, 2, 3].map((i) => {
         const id = gameIds[i];
         const cover = id !== undefined ? games?.get(id)?.coverImageId : null;
         return (
           <View key={i} style={{ width: cell, height: (cell / 3) * 4 }} className="border border-retrogamingpc-dark bg-retrogamingpc-panel">
-            {cover ? <Image source={{ uri: igdbImageUrl(cover, 'cover_small', true) }} className="h-full w-full" resizeMode="cover" accessibilityElementsHidden /> : null}
+            {cover ? (
+              <Image
+                source={{ uri: igdbImageUrl(cover, 'cover_small', true) }}
+                className="h-full w-full"
+                resizeMode="cover"
+                accessibilityElementsHidden
+              />
+            ) : null}
           </View>
         );
       })}
@@ -34,11 +53,33 @@ type ListCardProps = {
 };
 
 /** A list preview: cover mosaic, title, owner, game count and badges. Tap to open. */
-export function ListCard({ list, games, layout = 'row', showOwner = true }: ListCardProps) {
+export function ListCard(props: ListCardProps) {
+  return props.list.smartRule ? (
+    <SmartListCard {...props} />
+  ) : (
+    <ListCardBody {...props} gameCount={props.list.gameCount} previewGameIds={props.list.previewGameIds} />
+  );
+}
+
+/** Smart lists have no stored games: count and covers come from the live result. */
+function SmartListCard(props: ListCardProps) {
+  const smart = useSmartListGames(props.list.id);
+  const ids = (smart.data?.games ?? []).slice(0, 4).map((g) => g.gameId);
+  const covers = useGameLookup(ids);
+  return <ListCardBody {...props} games={covers.data} gameCount={smart.data?.games.length ?? null} previewGameIds={ids} />;
+}
+
+function ListCardBody({
+  list,
+  games,
+  layout = 'row',
+  showOwner = true,
+  gameCount,
+  previewGameIds,
+}: ListCardProps & { gameCount: number | null; previewGameIds: readonly number[] }) {
   const tile = layout === 'tile';
-  const meta = [showOwner && list.owner ? `by ${list.owner.username}` : null, `${list.gameCount} game${list.gameCount === 1 ? '' : 's'}`]
-    .filter(Boolean)
-    .join(' · ');
+  const countText = gameCount === null ? 'Loading…' : `${gameCount} game${gameCount === 1 ? '' : 's'}`;
+  const meta = [showOwner && list.owner ? `by ${list.owner.username}` : null, countText].filter(Boolean).join(' · ');
   return (
     <Pressable
       accessibilityRole="link"
@@ -46,7 +87,7 @@ export function ListCard({ list, games, layout = 'row', showOwner = true }: List
       onPress={() => router.push({ pathname: '/list/[id]', params: { id: list.id } })}
       className={cn('retrogamingpc-bevel bg-retrogamingpc-card p-2', tile ? 'w-[168px] gap-1.5' : 'flex-row gap-3')}
     >
-      <ListMosaic gameIds={list.previewGameIds} games={games} size={tile ? 150 : 72} />
+      <ListMosaic gameIds={previewGameIds} games={games} size={tile ? 150 : 72} />
       <View className={cn('gap-1', !tile && 'flex-1')}>
         <Text className="text-retrogamingpc-base font-bold text-retrogamingpc-text-bright" numberOfLines={2}>
           {list.title}
@@ -61,7 +102,8 @@ export function ListCard({ list, games, layout = 'row', showOwner = true }: List
         ) : null}
         <View className="flex-row flex-wrap gap-1">
           {list.pinnedRank !== null ? <RetroGamingPCBadge label="Featured" variant="main" /> : null}
-          {list.isRanked ? <RetroGamingPCBadge label="Ranked" variant="nowPlaying" /> : null}
+          {list.smartRule ? <RetroGamingPCBadge label="Auto-updated" variant="published" /> : null}
+          {list.isRanked && !list.smartRule ? <RetroGamingPCBadge label="Ranked" variant="nowPlaying" /> : null}
           {!list.isPublic ? <RetroGamingPCBadge label="Private" variant="neutral" /> : null}
         </View>
       </View>
@@ -70,7 +112,15 @@ export function ListCard({ list, games, layout = 'row', showOwner = true }: List
 }
 
 /** Several list cards with ONE cover lookup for all their previews. */
-export function ListCards({ lists, layout = 'row', showOwner = true }: { lists: readonly ListSummary[]; layout?: 'tile' | 'row'; showOwner?: boolean }) {
+export function ListCards({
+  lists,
+  layout = 'row',
+  showOwner = true,
+}: {
+  lists: readonly ListSummary[];
+  layout?: 'tile' | 'row';
+  showOwner?: boolean;
+}) {
   const games = useGameLookup(lists.flatMap((l) => l.previewGameIds));
   return (
     <View className={layout === 'tile' ? 'flex-row gap-2' : 'gap-2'}>

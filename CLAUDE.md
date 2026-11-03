@@ -15,6 +15,7 @@ The app MUST target **iOS, Android, and Desktop (Web/Electron wrappers)**.
   - Text ≥ 10px (\`text-retrogamingpc-xs\`). Below \`md\` (phones) the whole \`text-retrogamingpc-*\` scale is 10% larger, set once in \`tailwind.config.js\` (\`FONT_SIZES\`, \`MOBILE_FONT_SCALE\`). Use those classes, not fixed px sizes.
   - Every \`TextInput\` gets \`noZoomInputStyle\` (\`src/utils/platform.ts\`), so phone browsers don't zoom on focus.
   - Dialogs go through \`RetroGamingPCModal\`, which avoids the keyboard and scrolls when taller than the screen. Pass \`scrollable={false}\` only for bodies with their own list.
+  - Long-text writers (the Review Studio editor) use \`RetroGamingPCSheet\`: a full-height overlay pinned to the top that shrinks by exactly the part the keyboard covers. Dialogs opened from it go inside it as children.
   - Scrolling screens with inputs set \`automaticallyAdjustKeyboardInsets\` + \`keyboardShouldPersistTaps="handled"\`.
   - Anything wider than ~300px either wraps (\`flex-wrap\`) or scrolls sideways.
   - Full-screen pages keep the bottom safe-area inset (set in \`app/_layout.tsx\`).
@@ -22,7 +23,7 @@ The app MUST target **iOS, Android, and Desktop (Web/Electron wrappers)**.
 
 ## 📱 BOTTOM NAVIGATION & CORE WORKFLOWS
 The core app features a bottom navigation bar (migrating to a desktop sidebar on wider viewports) with five tabs (Stats sits between Post and Profile):
-1. **Home (\`app/(tabs)/index.tsx\`)**: one top tab bar (\`?tab=\`): **Community** (trending games + trending posts, migration 000020, then the community feed), **Friends** (friends' activity) and **Lists** (Curated Lists pinned by app admins via \`app_admins\` + \`set_list_pin\`, Your Lists with New List, Browse Lists). Lists: \`lists\` + \`list_items\` (migration 000019), page \`app/list/[id].tsx\`, searchable in the Search tab.
+1. **Home (\`app/(tabs)/index.tsx\`)**: one top tab bar (\`?tab=\`): **Community** (trending games + trending posts, migration 000020, then the community feed), **Friends** (friends' activity) and **Lists** (Curated Lists pinned by app admins via \`app_admins\` + \`set_list_pin\`, Your Lists with New List, Browse Lists). Lists: \`lists\` + \`list_items\` (migration 000019), page \`app/list/[id].tsx\`, searchable in the Search tab. Admins can also make **smart lists** (migration 000023, \`smart_rule\` + \`smart_list_games\`): a rule (type, tier, years, genre, platform, size) ranked live by plain Gamer Cred average; a game qualifies with at least the 75th-percentile rating count for its type (min 3). The SQL tier bands mirror \`ratingRubric.ts\` (test-enforced).
 2. **Search (\`app/(tabs)/search.tsx\`)**: Unified search interface with tabs/filters for:
    - **Games**: Title, genre, and platform database search (via IGDB Edge Function cache).
    - **Creators** (sub-tabs Studios · Directors & People): Developers, publishers, and key game creators (via IGDB Edge Function cache).

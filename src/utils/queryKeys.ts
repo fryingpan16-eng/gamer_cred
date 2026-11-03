@@ -61,6 +61,8 @@ export const queryKeys = {
     recent: () => [...queryKeys.lists.all(), 'recent'] as const,
     byUser: (userId: string) => [...queryKeys.lists.all(), 'user', userId] as const,
     detail: (listId: string) => [...queryKeys.lists.all(), 'detail', listId] as const,
+    /** A smart list's live games (migration 000023). */
+    smart: (listId: string) => [...queryKeys.lists.all(), 'smart', listId] as const,
     search: (term: string) => [...queryKeys.lists.all(), 'search', term] as const,
     isAdmin: (userId: string) => [...queryKeys.lists.all(), 'isAdmin', userId] as const,
   },

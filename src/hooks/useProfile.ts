@@ -263,8 +263,10 @@ export function usePlatforms(userId: string | null | undefined) {
 }
 
 export type PlatformAction =
-  | { action: 'add'; platformId: number }
-  | { action: 'remove'; platformId: number }
+  /** `makeMain`: also make it Main (the first platform you add). */
+  | { action: 'add'; platformId: number; makeMain?: boolean }
+  /** `nextMain`: when removing your Main, the platform that takes over. */
+  | { action: 'remove'; platformId: number; nextMain?: number }
   | { action: 'setMain'; platformId: number | null }
   | { action: 'specs'; platformId: number; pcSpecs: string | null }
   | { action: 'devices'; platformId: number; devices: string[] };
@@ -274,9 +276,11 @@ function applyPlatformAction(rows: UserPlatform[] = [], vars: PlatformAction, us
     case 'add':
       return rows.some((r) => r.platform_id === vars.platformId)
         ? rows
-        : [...rows, { user_id: userId, platform_id: vars.platformId, is_main: false, pc_specs: null, devices: [] }];
+        : [...rows, { user_id: userId, platform_id: vars.platformId, is_main: Boolean(vars.makeMain), pc_specs: null, devices: [] }];
     case 'remove':
-      return rows.filter((r) => r.platform_id !== vars.platformId);
+      return rows
+        .filter((r) => r.platform_id !== vars.platformId)
+        .map((r) => (vars.nextMain === undefined ? r : { ...r, is_main: r.platform_id === vars.nextMain }));
     case 'setMain':
       return rows.map((r) => ({ ...r, is_main: r.platform_id === vars.platformId }));
     case 'specs':
@@ -291,13 +295,17 @@ export function usePlatformMutation() {
   const queryClient = useQueryClient();
   const viewerId = useViewerId();
   return useMutation({
-    mutationFn: (vars: PlatformAction) => {
+    mutationFn: async (vars: PlatformAction) => {
       if (!viewerId) throw new Error('You must be signed in.');
       switch (vars.action) {
         case 'add':
-          return addPlatform(viewerId, vars.platformId);
+          await addPlatform(viewerId, vars.platformId);
+          if (vars.makeMain) await setMainPlatform(vars.platformId);
+          return;
         case 'remove':
-          return removePlatform(viewerId, vars.platformId);
+          await removePlatform(viewerId, vars.platformId);
+          if (vars.nextMain !== undefined) await setMainPlatform(vars.nextMain);
+          return;
         case 'setMain':
           return setMainPlatform(vars.platformId);
         case 'specs':

@@ -11,6 +11,7 @@ describe('list form', () => {
       description: '',
       isRanked: true,
       isPublic: false,
+      smartRule: null,
     });
     expect(listFormSchema.safeParse({ title: '   ', description: '', isRanked: false, isPublic: true }).success).toBe(false);
     expect(listFormSchema.safeParse({ title: 'x'.repeat(81), description: '', isRanked: false, isPublic: true }).success).toBe(false);

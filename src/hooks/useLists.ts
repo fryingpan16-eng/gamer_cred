@@ -16,6 +16,7 @@ import {
   setListPin,
   updateList,
   type ListDetail,
+  fetchSmartListGames,
 } from '@/services/lists';
 import type { ListFormValues } from '@/utils/listSchemas';
 import { queryKeys } from '@/utils/queryKeys';
@@ -53,6 +54,16 @@ export function useListSearch(term: string) {
     queryFn: () => searchLists(term),
     enabled,
     placeholderData: keepPreviousData,
+  });
+}
+
+/** A smart list's games, live from Gamer Cred ratings. Pass enabled=false for hand-picked lists. */
+export function useSmartListGames(listId: string | null, enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.lists.smart(listId ?? 'none'),
+    queryFn: () => fetchSmartListGames(listId!),
+    enabled: enabled && listId !== null,
+    staleTime: 5 * 60_000,
   });
 }
 
@@ -124,7 +135,11 @@ export function useListItems(listId: string) {
     // One at a time per list, so rapid ▲▼ taps apply in order.
     scope: { id: `list-items:${listId}` },
     mutationFn: (a: ListItemAction) =>
-      a.action === 'add' ? addListItem(listId, a.gameId) : a.action === 'remove' ? removeListItem(listId, a.gameId) : moveListItem(listId, a.gameId, a.to),
+      a.action === 'add'
+        ? addListItem(listId, a.gameId)
+        : a.action === 'remove'
+          ? removeListItem(listId, a.gameId)
+          : moveListItem(listId, a.gameId, a.to),
     onMutate: async (a) => {
       await queryClient.cancelQueries({ queryKey: key });
       const previous = queryClient.getQueryData<ListDetail | null>(key);

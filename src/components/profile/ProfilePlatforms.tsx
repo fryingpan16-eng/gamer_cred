@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import { RetroGamingPCBadge, RetroGamingPCButton, RetroGamingPCModal } from '@/components/ui';
-import { platformIcon, platformInfo } from '@/constants/platforms';
+import { groupByFamily, platformIcon, platformInfo } from '@/constants/platforms';
 import { usePlatforms } from '@/hooks/useProfile';
 import { useThemeColors } from '@/hooks/useTheme';
 import type { UserPlatform } from '@/types/database.types';
@@ -41,9 +41,7 @@ function PlatformChip({ row, onPress }: { row: UserPlatform; onPress?: () => voi
   );
 
   if (!onPress) {
-    return (
-      <View accessibilityLabel={`${info.name}${row.is_main ? ', main platform' : ''}`}>{body}</View>
-    );
+    return <View accessibilityLabel={`${info.name}${row.is_main ? ', main platform' : ''}`}>{body}</View>;
   }
   return (
     <Pressable
@@ -91,7 +89,7 @@ function PlatformDetailModal({ row, onClose }: { row: UserPlatform | null; onClo
 }
 
 /**
- * The player's owned platforms as compact chips (Main first, marked ★).
+ * The player's owned platforms as compact chips, one row per maker (Main marked ★).
  * PC / Mac / Linux chips with specs and PC Handheld chips with devices open a
  * read-only detail popup. Editing lives in Settings → Hardware & Platforms.
  */
@@ -112,9 +110,19 @@ export function ProfilePlatforms({ userId, isOwner }: { userId: string; isOwner:
 
   return (
     <>
-      <View className="flex-row flex-wrap gap-1" accessibilityLabel="Platforms">
-        {rows.map((row) => (
-          <PlatformChip key={row.platform_id} row={row} onPress={hasDetails(row) ? () => setOpen(row) : undefined} />
+      {/* One row per maker: label on the left, that maker's chips wrapping beside it. */}
+      <View className="gap-1" accessibilityLabel="Platforms">
+        {groupByFamily(rows).map((group) => (
+          <View key={group.key} className="flex-row items-start gap-2" accessibilityLabel={group.label}>
+            <Text className="w-[76px] pt-0.5 text-retrogamingpc-xs text-retrogamingpc-text-muted" numberOfLines={1}>
+              {group.short}
+            </Text>
+            <View className="flex-1 flex-row flex-wrap gap-1">
+              {group.rows.map((row) => (
+                <PlatformChip key={row.platform_id} row={row} onPress={hasDetails(row) ? () => setOpen(row) : undefined} />
+              ))}
+            </View>
+          </View>
         ))}
       </View>
       <PlatformDetailModal row={open} onClose={() => setOpen(null)} />

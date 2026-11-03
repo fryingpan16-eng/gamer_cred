@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { containsObjectionable, OBJECTIONABLE_MESSAGE } from './contentFilter';
+import { smartRuleSchema } from './smartLists';
 
 export const LIST_TITLE_MAX = 80;
 export const LIST_DESCRIPTION_MAX = 1000;
@@ -20,6 +21,8 @@ export const listFormSchema = z.object({
     .refine((v) => !containsObjectionable(v), OBJECTIONABLE_MESSAGE),
   isRanked: z.boolean(),
   isPublic: z.boolean(),
+  /** Admins only (migration 000023): fill the list from Gamer Cred ratings by this rule. */
+  smartRule: smartRuleSchema.nullable().default(null),
 });
 
 export type ListFormValues = z.infer<typeof listFormSchema>;
