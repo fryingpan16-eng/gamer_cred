@@ -112,6 +112,7 @@ UNDER NO CIRCUMSTANCES create, modify, or output \`.js\` or \`.jsx\` source file
   - Every new kind of public content needs a ⚑ Report entry point (\`ReportLink\`, a \`content_reports\` target).
   - It also needs a restrictive \`… hide blocked\` select policy (migration 000021), so blocking hides it.
   - Profile pictures are screened before anyone sees them (migration 000022 + \`avatar\` Edge Function, Google Cloud Vision SafeSearch). The app uploads to the private \`avatar-uploads/<uid>/pending.jpg\`. Only the function publishes to \`avatars\` or sets \`profiles.avatar_url\` (a trigger blocks clients). Borderline pictures, or pictures sent while the check is unavailable, are held for admins in Moderation → Pictures.
+  - Admin powers need two-step sign-in (migration 000025): \`is_app_admin()\` is true only for \`app_admins\` with an aal2 (authenticator-code) session, and the Edge Functions check the same via \`_shared/admin-auth.ts\`. Gate every new admin power with it, and log it with \`log_admin_action\` (or an \`admin_actions\` insert from an Edge Function). Setup and unlock live in Settings → Admin Security; the log is Moderation → Activity.
   - Account deletion is the \`account\` Edge Function. New user tables must cascade from \`profiles\` / \`auth.users\`.
   - Contact and terms live in \`src/constants/legal.ts\`. Bump \`TERMS_VERSION\` when the terms change.
 

@@ -50,6 +50,7 @@ function fakes(over: Partial<AvatarDeps> = {}) {
     readHeld: async () => img,
     clearHeld: async (id) => void log.push(`clearHeld:${id}`),
     listHeld: async () => [],
+    logAdmin: async (admin, action, _type, target) => void log.push(`log:${admin}:${action}:${target}`),
     ...over,
   };
   return { deps, log };
@@ -84,9 +85,9 @@ Deno.test('admin review: only admins; approve publishes the held picture, reject
   assertEquals((await handleAvatar({ action: 'admin_list' }, fakes({ callerId: OTHER }).deps)).status, 403);
   let { deps, log } = fakes();
   await handleAvatar({ action: 'admin_decide', user_id: OTHER, approve: true }, deps);
-  assertEquals(log, [`publish:${OTHER}`, `clearHeld:${OTHER}`]);
+  assertEquals(log, [`publish:${OTHER}`, `clearHeld:${OTHER}`, `log:${ME}:avatar.approve:${OTHER}`]);
   ({ deps, log } = fakes());
   await handleAvatar({ action: 'admin_decide', user_id: OTHER, approve: false }, deps);
-  assertEquals(log, [`clearHeld:${OTHER}`]);
+  assertEquals(log, [`clearHeld:${OTHER}`, `log:${ME}:avatar.reject:${OTHER}`]);
   assertEquals((await handleAvatar({ action: 'admin_decide', user_id: OTHER, approve: true }, fakes({ readHeld: async () => null }).deps)).status, 404);
 });

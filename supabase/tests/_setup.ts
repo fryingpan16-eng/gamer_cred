@@ -24,6 +24,9 @@ const BASE_SCHEMA = `
   alter table storage.objects enable row level security;
   create function auth.uid() returns uuid language sql stable
     as $$ select nullif(current_setting('test.uid', true), '')::uuid $$;
+  -- JWT claims: sessions are two-step verified (aal2) unless a test sets test.aal.
+  create function auth.jwt() returns jsonb language sql stable
+    as $$ select jsonb_build_object('aal', coalesce(nullif(current_setting('test.aal', true), ''), 'aal2')) $$;
   create type public.review_status as enum ('draft', 'published');
   create type public.rating_scale as enum ('numeric', 'tier', 'stars', 'rounded');
   create table public.profiles (id uuid primary key, username text, avatar_url text);
@@ -92,13 +95,13 @@ const GRANTS = `
 const migration = (name: string) => Deno.readTextFile(new URL(`../migrations/${name}`, import.meta.url));
 
 /** Fresh database. `beforeMigrations` runs between the stub schema and 000014 (e.g. cache rows for the backfill). */
-export async function freshDb(opts: { beforeMigrations?: string; through?: 14 | 15 | 16 | 17 | 19 | 20 | 21 | 22 | 23 } = {}): Promise<PGlite> {
+export async function freshDb(opts: { beforeMigrations?: string; through?: 14 | 15 | 16 | 17 | 19 | 20 | 21 | 22 | 23 | 25 } = {}): Promise<PGlite> {
   const db = new PGlite({ extensions: { pg_trgm } });
   await db.exec(BASE_SCHEMA);
   await db.exec(`insert into public.profiles (id, username) values ('${ME}', 'me'), ('${OTHER}', 'other'), ('${THIRD}', 'third');`);
   if (opts.beforeMigrations) await db.exec(opts.beforeMigrations);
   await db.exec(await migration('000014_games_and_stats.sql'));
-  const through = opts.through ?? 23;
+  const through = opts.through ?? 25;
   if (through >= 15) await db.exec(await migration('000015_quick_ratings.sql'));
   if (through >= 16) await db.exec(await migration('000016_public_ratings_and_platform.sql'));
   if (through >= 17) await db.exec(await migration('000017_user_ratings_table.sql'));
@@ -107,8 +110,15 @@ export async function freshDb(opts: { beforeMigrations?: string; through?: 14 | 
   if (through >= 21) await db.exec(await migration('000021_safety.sql'));
   if (through >= 22) await db.exec(await migration('000022_avatar_moderation.sql'));
   if (through >= 23) await db.exec(await migration('000023_smart_lists.sql'));
+  // 000024 only changes a profiles column default the stub schema doesn't have.
+  if (through >= 25) await db.exec(await migration('000025_admin_security.sql'));
   await db.exec(GRANTS);
   return db;
+}
+
+/** Make later asUser calls run with a session that is (aal2) or isn't (aal1) two-step verified. */
+export async function setAal(db: PGlite, aal: 'aal1' | 'aal2') {
+  await db.exec(`reset role; select set_config('test.aal', '${aal}', false);`);
 }
 
 /** Run `sql` as a signed-in user ('' = signed out) under the authenticated role, so RLS applies. */

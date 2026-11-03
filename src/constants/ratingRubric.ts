@@ -10,7 +10,7 @@ export type RatingScale = 'numeric' | 'tier' | 'stars' | 'rounded';
 
 export const RATING_SCALES: readonly RatingScale[] = ['numeric', 'tier', 'stars', 'rounded'];
 
-export const DEFAULT_RATING_SCALE: RatingScale = 'numeric';
+export const DEFAULT_RATING_SCALE: RatingScale = 'stars';
 
 export const RATING_SCALE_LABELS: Record<RatingScale, string> = {
   numeric: 'Numeric (1–100)',

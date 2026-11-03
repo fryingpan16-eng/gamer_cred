@@ -2,6 +2,7 @@ import { Stack } from 'expo-router';
 import { ScrollView, Text, View } from 'react-native';
 
 import { AccountSettings } from '@/components/settings/AccountSettings';
+import { AdminSecuritySetting } from '@/components/settings/AdminSecuritySetting';
 import { AvatarSetting } from '@/components/settings/AvatarSetting';
 import { BlockedUsersSetting } from '@/components/settings/BlockedUsersSetting';
 import { DeleteAccountSetting } from '@/components/settings/DeleteAccountSetting';
@@ -54,6 +55,8 @@ export default function SettingsScreen() {
       <RetroGamingPCPanel title="Blocked Players">
         <BlockedUsersSetting />
       </RetroGamingPCPanel>
+
+      <AdminSecuritySetting />
 
       <RetroGamingPCPanel title="Help & Safety">
         <HelpSafetySetting />

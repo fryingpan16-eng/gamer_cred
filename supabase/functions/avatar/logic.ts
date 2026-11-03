@@ -57,7 +57,10 @@ export type AvatarRequest =
 
 export type AvatarDeps = {
   callerId: string | null;
+  /** In app_admins AND this request's session is two-step verified (migration 000025). */
   isAdmin: (userId: string) => Promise<boolean>;
+  /** Append to the admin activity log. */
+  logAdmin: (adminId: string, action: string, targetType: string, targetId: string, details?: Record<string, unknown>) => Promise<void>;
   readPending: (userId: string) => Promise<Uint8Array | null>;
   removePending: (userId: string) => Promise<void>;
   /** Vision SafeSearch, or null when the check can't run. */
@@ -118,7 +121,7 @@ export async function handleAvatar(req: AvatarRequest | null, deps: AvatarDeps):
     return ok({ status: 'held', reason: verdict.reason });
   }
 
-  if (!(await deps.isAdmin(me))) return fail(403, 'Only app admins can review pictures.');
+  if (!(await deps.isAdmin(me))) return fail(403, 'Only app admins with two-step sign-in verified can review pictures.');
 
   if (req.action === 'admin_list') return ok({ pictures: await deps.listHeld() });
 
@@ -127,5 +130,6 @@ export async function handleAvatar(req: AvatarRequest | null, deps: AvatarDeps):
   if (!image) return fail(404, 'That picture is no longer waiting for review.');
   if (req.approve) await deps.publish(req.user_id, image);
   await deps.clearHeld(req.user_id);
+  await deps.logAdmin(me, req.approve ? 'avatar.approve' : 'avatar.reject', 'user', req.user_id);
   return ok({ status: req.approve ? 'approved' : 'rejected' });
 }

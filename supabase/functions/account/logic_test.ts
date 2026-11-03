@@ -23,6 +23,10 @@ function fakes(callerId: string | null, admins: string[] = []) {
       calls.push(`auth:${id}`);
       return Promise.resolve();
     },
+    logAdmin: (admin, action, _type, target) => {
+      calls.push(`log:${admin}:${action}:${target}`);
+      return Promise.resolve();
+    },
   };
   return { deps, calls };
 }
@@ -51,7 +55,7 @@ Deno.test('only admins remove other users; reports about them are closed first',
   const admin = fakes(ME, [ME]);
   const res = await handleAccount({ action: 'admin_delete_user', user_id: BAD }, admin.deps);
   assertEquals(res.status, 200);
-  assertEquals(admin.calls, [`reports:${BAD}:${ME}`, `storage:${BAD}/avatar.jpg`, `auth:${BAD}`]);
+  assertEquals(admin.calls, [`reports:${BAD}:${ME}`, `storage:${BAD}/avatar.jpg`, `auth:${BAD}`, `log:${ME}:user.remove:${BAD}`]);
   // an admin can't remove themselves through the moderation path
   assertEquals((await handleAccount({ action: 'admin_delete_user', user_id: ME }, fakes(ME, [ME]).deps)).status, 400);
 });

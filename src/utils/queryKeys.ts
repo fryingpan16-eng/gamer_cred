@@ -76,6 +76,10 @@ export const queryKeys = {
     /** Admin: profile pictures held by the screening check (migration 000022). */
     heldAvatars: () => [...queryKeys.safety.all(), 'heldAvatars'] as const,
     terms: (userId: string, version: string) => [...queryKeys.safety.all(), 'terms', userId, version] as const,
+    /** Admin membership + two-step status for this sign-in (migration 000025). */
+    adminStatus: (userId: string) => [...queryKeys.safety.all(), 'adminStatus', userId] as const,
+    /** Admin activity log. */
+    adminActivity: () => [...queryKeys.safety.all(), 'adminActivity'] as const,
   },
 
   friendships: {

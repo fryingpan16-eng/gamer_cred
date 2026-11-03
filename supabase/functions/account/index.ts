@@ -8,6 +8,7 @@
  */
 import { createClient } from '@supabase/supabase-js';
 
+import { isVerifiedSession } from '../_shared/admin-auth.ts';
 import { handleAccount, parseRequest, type AccountDeps } from './logic.ts';
 
 const CORS_HEADERS = {
@@ -40,10 +41,18 @@ Deno.serve(async (req) => {
 
     const deps: AccountDeps = {
       callerId: auth.user?.id ?? null,
+      // Admin powers need a two-step-verified session (migration 000025); the token was validated above.
       isAdmin: async (userId) => {
+        if (!isVerifiedSession(token)) return false;
         const { data, error } = await admin.from('app_admins').select('user_id').eq('user_id', userId).maybeSingle();
         if (error) throw error;
         return data !== null;
+      },
+      logAdmin: async (adminId, action, targetType, targetId, details) => {
+        const { error } = await admin
+          .from('admin_actions')
+          .insert({ admin_id: adminId, action, target_type: targetType, target_id: targetId, details: details ?? null });
+        if (error) throw error;
       },
       listAvatarFiles: async (userId) => {
         const { data, error } = await admin.storage.from('avatars').list(userId, { limit: 1000 });

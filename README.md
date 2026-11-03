@@ -35,7 +35,7 @@ One tab bar at the top switches between three views:
   - **Latest from the Community:** everyone's newest reviews, loading more as you scroll.
 - **Friends:** your friends' reviews and Now Playing activity.
 - **Lists:**
-  - **Curated Lists:** hand-picked by the app's admins.
+  - **Curated Lists:** featured by the app's admins (hand-picked or smart lists).
   - **Your Lists:** with **New List**.
   - **Browse Lists:** recently updated community lists, or search them by title or description.
 
@@ -44,6 +44,10 @@ One tab bar at the top switches between three views:
 - **Ranked** lists show #1, #2, #3…; the owner reorders with ▲ ▼ and removes with ✕.
 - Lists are **public** (on your profile and in search) or **private** (only you).
 - **Admins** feature public lists on Home and choose their order. Featured lists must stay public.
+- **Smart lists (admins only):** instead of hand-picked games, the list stores a rule and fills itself live from Gamer Cred ratings, e.g. "Top 500 games", "Top 500 expansions" or "every S-tier game".
+  - Rule: type (games, expansions, DLC, remakes, collections), tier, release years or decade, genre, platform played on, and size (up to 500).
+  - Ranked by the plain Gamer Cred average.
+  - A game qualifies once it has at least as many ratings as the 75th percentile of rating counts for its type, and never fewer than 3, so the bar rises as the app grows.
 
 ### Search
 Search covers three kinds of thing:
@@ -56,12 +60,15 @@ Search covers three kinds of thing:
 | **Lists** | Public game lists, by title or description | Supabase |
 
 - All IGDB and RAWG traffic goes through a Supabase Edge Function with a PostgreSQL cache. The app never calls IGDB or RAWG directly.
-- Every game result has an inline **quick rating** and a **"Played on"** platform picker. You rate without leaving search: no navigation and no popup.
+- Game results show the cover, year, platforms and studios; tap anywhere on a card to open the game page. Lists of games (search, studio pages, user lists) show no scores.
+- **Studio pages:** every game a studio developed or published, filterable by role and sortable.
 - The catalogue is curated so each game appears once. Editions, mods, fan games and unrelated bundles are filtered out. DLC, expansions, remakes and real collections are kept and labelled.
 
 ### Now Playing (Post / Review Studio)
 - **Now Playing grid:** four slots for the games you're currently playing. Each slot holds running notes and a "so far" score.
-- **Review Studio:** the only place full reviews are written, either from a Now Playing slot or for any game. Reviews can be saved as drafts or published.
+- **Review Studio:** the only place full reviews are written, either from a Now Playing slot or for any game.
+  - The writer opens as an overlay pinned to the top of the screen that shrinks above the keyboard, so you can always see what you type.
+  - One action bar: Save Draft and Publish (or Unpublish and Update Review once published). Closing with unsaved changes asks first.
 - **Drafts:** your unpublished reviews, ready to resume.
 
 ### Stats
@@ -74,25 +81,27 @@ Every chart shows the exact value when you tap a bar, and has a table view that 
 
 ### Profile
 - **Now Playing:** the four slots, with privacy options (public, friends only or private).
-- **Top 4 Favorites:** tap a cover to open the game. The owner can reorder (◀ ▶), replace (⇄) or remove (✕) entries.
+- **Top 4 Favorites:** tap a cover to open the game. The owner can reorder (◀ ▶) or remove (✕) entries.
+- **Friends:** tap the friend count for the friends list (yours also shows requests).
 - **Ratings:** your most recent ratings. Tap **Ratings ▸** for a spreadsheet of every game you've rated.
   - It has sortable columns, search, and filters for tier, score range, platform, genre and whether you've reviewed the game.
   - Only you and your friends can sort and filter it.
 - **Lists:** your game lists. Others see only your public ones.
 - **Reviews:** your published reviews.
-- **Hardware & Platforms:** the consoles you own, with one **Main** platform, PC specs, and devices such as PC handhelds.
+- **Hardware & Platforms:** the consoles you own, one row per maker (PC, Nintendo, Xbox, PlayStation, Sega, Atari, Other), with one **Main** platform (★), PC specs, and devices such as PC handhelds.
 
 ### Game pages
 - A banner with cover, developer, publisher, release info, genres and platforms.
 - **Gamer Cred score:** the community average, shown large in your default scale, then in 1–100, stars and tier.
-- **Your rating:** the same layout as an interactive control, plus your "played on" platform and a **Write a review** button.
+- **Your rating:** the same layout as an interactive control, plus your "played on" platform, a **Write a review** button and **Add to Now Playing**.
 - Both score boxes are coloured by the tier of their score.
 - **Friends' Ratings** (above the screenshots), About, Screenshots, Community Reviews, game facts, and PC system requirements (from RAWG).
 
 ### Settings
-- Profile picture: upload and crop. Avatars are stored in Supabase Storage.
+- Profile picture: upload and crop. Pictures are screened automatically (Google Cloud Vision SafeSearch) before anyone sees them; borderline ones wait for an admin.
 - **Colour themes:** **Mega** (blue, the default), **Chief** (olive), **Super** (red), **Pika** (yellow) and **Peach** (pink).
-- Owned platforms, rating scale, Now Playing privacy, username and sign out.
+- **Hardware & Platforms:** tap chips to add or remove platforms, grouped by maker; one **Main platform** button; spec and device lines under PC.
+- Rating scale (new players start on **stars**), Now Playing privacy, username and sign out.
 - Choices save automatically, with inline "Saving…" / "✓ Saved" feedback. Your username has its own Save button, and you're warned before leaving with an unsaved change.
 
 ### Safety (app store requirements)
@@ -103,7 +112,7 @@ Every chart shows the exact value when you tap a bar, and has a table view that 
   - Blocking removes any friendship and stops friend requests.
   - It also hides both players from each other everywhere: profile, reviews, ratings, lists, Now Playing and search.
   - Unblock in **Settings → Blocked Players**.
-- **Moderation:** admins get a **Moderation queue** in Settings. They can view, dismiss, remove the content, or remove the account.
+- **Moderation:** admins get a **Moderation queue** in Settings. They can view, dismiss, remove the content, or remove the account, review held profile pictures, and see the admin **Activity** log.
 - **Text filter:** usernames, list titles and descriptions, reviews, Now Playing notes and device names are checked with an open-source slur and profanity filter before saving.
 - **Terms:** everyone accepts the **Terms of Use & Community Guidelines** (zero tolerance for objectionable content).
   - Email sign-ups tick a box on Register.
@@ -111,6 +120,28 @@ Every chart shows the exact value when you tap a bar, and has a table view that 
 - **Account deletion:** **Settings → Delete Account** permanently deletes the account and all its data straight away. You confirm by typing your username.
   - The public page `/delete-account` explains how to request deletion without the app, as Google Play requires.
 - **Contact:** jjlabber16@gmail.com, set in `src/constants/legal.ts`.
+
+### Admins
+Admins can feature lists on Home, make smart lists, and moderate (reports, held pictures, removing accounts).
+
+- **Two-step sign-in is required.** Every admin power needs a session verified with a 6-digit code from an authenticator app (Supabase MFA). The database (`is_app_admin()`) and the Edge Functions both check it, so a stolen password alone can't use admin tools.
+  - First time: **Settings → Admin Security → Set Up Two-Step Sign-In**, scan the QR code (or type the key), enter the code.
+  - Each sign-in after that: enter a code in Admin Security, or on the Moderation page.
+  - Lost the phone: delete the old factor in Supabase → **Authentication → Users**, then set up a new one in the app.
+- **Activity log:** every admin action (featuring, smart rules, report decisions, picture decisions, account removals) is recorded with who and when, in **Moderation → Activity**. Entries can't be edited or deleted from the app.
+
+**Adding an admin.** There's deliberately no button for this. Run it in the Supabase dashboard → **SQL Editor**, using their username:
+```sql
+insert into public.app_admins (user_id)
+select id from public.profiles where username = 'their_username';
+```
+They then set up two-step sign-in in **Settings → Admin Security** before any admin tool works for them.
+
+**Removing an admin:**
+```sql
+delete from public.app_admins
+where user_id = (select id from public.profiles where username = 'their_username');
+```
 
 ### Authentication
 - Email and password sign-up with email confirmation, plus Google sign-in.
@@ -134,7 +165,7 @@ Every rating is stored once, as a canonical score from **1 to 100**, together wi
 | **D** | 50–59 | 2.5 | 5 | Mediocre |
 | **F** | 1–49 | 0.5–2 | NOT GOOD | Not Good |
 
-- **Your scale:** each user picks a default scale in Settings. Every rating control (quick rating and review form) uses that scale:
+- **Your scale:** each user picks a default scale in Settings (new players start on **stars**). Every rating control (quick rating and review form) uses that scale:
   - **stars:** tap a half or full star;
   - **tier:** tap a tier chip;
   - **rounded:** tap 5–10 or NOT GOOD;
@@ -231,9 +262,11 @@ Every table has row-level security with explicit read and write policies.
 | `now_playing` | The four Now Playing slots, with notes and "so far" scores |
 | `user_favorites` | Top 4 favourites |
 | `user_platforms` | Owned platforms, Main platform, PC specs, devices |
-| `lists` | Game lists: title, description, ranked, public / private, Home pin position (admins only) |
+| `lists` | Game lists: title, description, ranked, public / private, Home pin position and smart-list rule (both admins only) |
 | `list_items` | The games on each list, in order (up to 250) |
-| `app_admins` | App admins, who can pin lists to Home and moderate reports. Each user can only see their own row. |
+| `app_admins` | App admins (feature lists, smart lists, moderation). Changed only from the SQL editor; admin powers also need two-step sign-in. |
+| `admin_actions` | Admin activity log. Readable by verified admins only; never editable. |
+| `avatar_reviews` | Profile pictures held for an admin by the screening check |
 | `user_blocks` | Who blocked whom. Blocking hides both players from each other through extra row-level policies. |
 | `content_reports` | Reports on reviews, lists, ratings and players. Reporters see their own; admins resolve them. |
 | `terms_acceptances` | Which Terms version each user accepted |
@@ -241,13 +274,14 @@ Every table has row-level security with explicit read and write policies.
 | `igdb_cache` | The proxy's response cache (`cache_key`, `data` JSONB, `updated_at`) |
 | `game_overrides` | Manual include/exclude overrides for catalogue curation |
 
-There's also a public `avatars` storage bucket; each user can only write to their own folder.
+Storage: a private `avatar-uploads` bucket (each user can write only their own pending picture) and a public `avatars` bucket that only the screening function writes to.
 
 ### Server-side functions (RPCs)
 - **Feed and game stats:** the activity feed, `game_review_stats` (the Gamer Cred average, one score per user) and `friend_ratings_for_game`.
 - **Stats:** `stats_*` aggregates, built on `my_logged_games()`. A game counts as "logged" if you've rated or reviewed it.
 - **Ratings list:** `user_ratings_table` returns a player's full ratings list with game details in one call.
-- **Lists:** `add_list_item`, `move_list_item` (renumbers 1..n), `set_list_pin` (admins only) and `is_app_admin`.
+- **Lists:** `add_list_item`, `move_list_item` (renumbers 1..n), `set_list_pin` (admins only) and `smart_list_games` (a smart list's games, live).
+- **Admins:** `is_app_admin` (admin with a two-step-verified session), `is_app_admin_member`, `admin_activity` and `log_admin_action`.
 - **Trending:** `trending_games` and `trending_posts` (last 14 days of ratings and published reviews).
 - **Safety:** `block_user`, `unblock_user`, `my_blocked_users`, `block_state`, `admin_reports` and `admin_resolve_reports` (admins only).
 - **Profiles:** atomic helpers for favourites and platforms.
@@ -268,9 +302,18 @@ There's also a public `avatars` storage bucket; each user can only write to thei
 | 000019 | Game lists, list items, app admins and Home pinning |
 | 000020 | Trending games and trending posts |
 | 000021 | Blocking, reports and moderation, terms acceptance |
+| 000022 | Profile picture screening (private uploads bucket, held pictures) |
+| 000023 | Smart lists (admin rule-based lists) |
+| 000024 | Stars as the default rating scale for new players |
+| 000025 | Two-step sign-in for admin powers, admin activity log |
+
+### avatar Edge Function
+- `submit` screens an uploaded picture with Google Cloud Vision SafeSearch, then publishes, rejects or holds it.
+- `admin_list` and `admin_decide` let a verified admin review held pictures.
+- Secret: `GOOGLE_VISION_API_KEY` (`npx supabase secrets set GOOGLE_VISION_API_KEY=...`). Without it every picture is held for review.
 
 ### account Edge Function
-- Handles `delete_self` (in-app account deletion) and `admin_delete_user` (moderation).
+- Handles `delete_self` (in-app account deletion) and `admin_delete_user` (moderation, verified admins only).
 - It removes the user's avatar files, then deletes the sign-in account. Every table cascades from it.
 - It uses the service-role key, which only ever exists inside the function.
 
@@ -278,7 +321,8 @@ There's also a public `avatars` storage bucket; each user can only write to thei
 - **Actions:**
   - `search`: games, companies or creators;
   - `lookup`: games by id;
-  - `detail`: the full game page, with RAWG PC requirements.
+  - `detail`: the full game page, with RAWG PC requirements;
+  - `company`: a studio and every game it developed or published.
 - **Response format:** every response is `{ success, data?, error? }`.
 - **Curation:** one entry per game.
   - Dropped: editions, unreleased entries, mods and fan games.
@@ -329,6 +373,7 @@ npx supabase db push --remote                      # apply migrations
 npx supabase secrets set IGDB_CLIENT_ID=... IGDB_CLIENT_SECRET=... RAWG_API_KEY=...
 npx supabase functions deploy igdb-proxy --use-api
 npx supabase functions deploy account --use-api
+npx supabase functions deploy avatar --use-api
 ```
 Run the `secrets set` command in your own terminal. Secrets never go in the repo or the app.
 
@@ -353,6 +398,7 @@ The Edge Function and SQL tests run under Deno:
 ```bash
 cd supabase/functions/igdb-proxy && deno test -A   # curation, ranking, cache policy, platform order
 cd supabase/tests && deno test -A                   # migrations on real Postgres (PGlite), with RLS applied
+cd supabase/functions/avatar && deno test -A        # picture screening decisions, admin checks
 ```
 
 What the tests cover:
@@ -364,7 +410,8 @@ What the tests cover:
   - the batched lookup;
   - the save queue: debouncing, rollback, never overlapping saves;
   - that a rating never creates a review.
-- **Database:** the sync triggers, public reads with owner-only writes, the ratings spreadsheet's sorting and filtering, and the friends' ratings query.
+- **Database:** the sync triggers, public reads with owner-only writes, the ratings spreadsheet's sorting and filtering, the friends' ratings query, smart-list ranking and its rising rating bar, the two-step requirement for admins, and the read-only activity log.
+- **Tier parity:** the database's tier bands are checked against the app's rating rubric for every score from 1 to 100.
 - **Colour contrast:** theme and action colours meet WCAG contrast (text ≥ 7:1, muted text and button labels ≥ 4.5:1), and the tier-tinted score boxes stay readable.
 
 ---
@@ -409,9 +456,15 @@ Never edit a migration that has already been pushed. Add a new numbered migratio
 
 ## Status & open items
 
-Phases 1–9 are complete: setup, auth, search, Review Studio, profiles, game pages and feed, stats, quick ratings, public ratings, the ratings spreadsheet, and game lists. Still open:
+Phases 1–11 are complete: setup, auth, search, Review Studio, profiles, game pages and feed, stats, quick ratings, public ratings, the ratings spreadsheet, game lists, safety and moderation, studio pages, profile picture screening, mobile navigation, smart lists and admin two-step sign-in.
 
-- Confirm the IGDB platform id for Nintendo Switch 2 (currently `508`, unverified).
+**Before alpha testing:**
+- Custom SMTP (e.g. Resend) so confirmation emails reach testers; Supabase's built-in email only sends to team members.
+- Host the web build on the Cloudflare subdomain, and set Supabase's Site URL and redirect URLs to it.
+- Set up admin two-step sign-in, and add the Google Vision key.
+- A privacy page, and the app name and icon in `app.json`.
+
+Still open:
 - Decide how standalone expansions should be grouped.
 - Add rate limiting to the proxy.
 - Ratings don't appear in the activity feed yet; only reviews do.

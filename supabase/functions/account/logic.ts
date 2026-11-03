@@ -12,7 +12,10 @@ export type AccountRequest = { action: 'delete_self' } | { action: 'admin_delete
 export type AccountDeps = {
   /** The signed-in caller (from the request's JWT), or null. */
   callerId: string | null;
+  /** In app_admins AND this request's session is two-step verified (migration 000025). */
   isAdmin: (userId: string) => Promise<boolean>;
+  /** Append to the admin activity log. */
+  logAdmin: (adminId: string, action: string, targetType: string, targetId: string, details?: Record<string, unknown>) => Promise<void>;
   /** Paths of every file in avatars/<userId>/. */
   listAvatarFiles: (userId: string) => Promise<string[]>;
   removeAvatarFiles: (paths: string[]) => Promise<void>;
@@ -52,12 +55,13 @@ export async function handleAccount(req: AccountRequest | null, deps: AccountDep
 
   // admin_delete_user
   if (!(await deps.isAdmin(deps.callerId))) {
-    return { status: 403, body: { success: false, error: 'Only app admins can remove users.' } };
+    return { status: 403, body: { success: false, error: 'Only app admins with two-step sign-in verified can remove users.' } };
   }
   if (req.user_id === deps.callerId) {
     return { status: 400, body: { success: false, error: 'Use “Delete account” in Settings to delete your own account.' } };
   }
   await deps.closeReportsAbout(req.user_id, deps.callerId);
   await deleteEverything(req.user_id, deps);
+  await deps.logAdmin(deps.callerId, 'user.remove', 'user', req.user_id);
   return { status: 200, body: { success: true, data: { deleted: req.user_id } } };
 }

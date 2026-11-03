@@ -540,7 +540,24 @@ export type Database = {
         Args: { p_game_id: number };
         Returns: FriendReviewRow[];
       };
+      /** In app_admins AND the session is two-step verified (aal2) — migration 000025. */
       is_app_admin: { Args: Record<string, never>; Returns: boolean };
+      /** In app_admins (grants nothing; lets the app offer the code prompt). */
+      is_app_admin_member: { Args: Record<string, never>; Returns: boolean };
+      /** Admin activity log, newest first (verified admins only). */
+      admin_activity: {
+        Args: { p_limit?: number };
+        Returns: {
+          id: number;
+          created_at: string;
+          admin_id: string | null;
+          admin_name: string | null;
+          action: string;
+          target_type: string | null;
+          target_id: string | null;
+          details: Json | null;
+        }[];
+      };
       /** Safety (migration 000021). */
       block_user: { Args: { p_user: string }; Returns: undefined };
       unblock_user: { Args: { p_user: string }; Returns: undefined };
