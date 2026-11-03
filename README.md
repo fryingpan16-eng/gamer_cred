@@ -1,5 +1,362 @@
 # gamer_cred
-Video game ratings and reviews
+
+**GamerCred** is a cross-platform social app for rating and reviewing video games. It runs on iOS, Android and the web from one TypeScript codebase. You can log what you're playing, rate games in the rating system you prefer, write reviews, see what your friends think, and browse charts of your own gaming history.
+
+The look is an original early-2000s desktop game-client style: dark, high-contrast panels, beveled chrome, compact type and monospace numbers.
+
+---
+
+## Contents
+
+- [Features](#features)
+- [The rating system](#the-rating-system)
+- [Quick ratings vs. reviews](#quick-ratings-vs-reviews)
+- [Tech stack](#tech-stack)
+- [Project structure](#project-structure)
+- [Backend](#backend)
+- [Getting started](#getting-started)
+- [Testing](#testing)
+- [Deploying backend changes](#deploying-backend-changes)
+- [Conventions](#conventions)
+- [Status & open items](#status--open-items)
+- [Credits](#credits)
+
+---
+
+## Features
+
+The app has five tabs. Phones get a bottom tab bar; tablets and desktop get a permanent left sidebar inside a centred, fixed-width window.
+
+### Home
+- An activity feed of reviews, with **Friends** and **Community** views.
+- Shortcuts to find friends or switch to the community feed when your feed is empty.
+
+### Search
+Search covers three kinds of thing:
+
+| Kind | What it searches | Source |
+|---|---|---|
+| **Games** | Title, genre, platform | IGDB |
+| **Studios & Directors** | Developers, publishers and key creators | IGDB and RAWG |
+| **Users** | Player profiles by username, with friend requests | Supabase |
+
+- All IGDB and RAWG traffic goes through a Supabase Edge Function with a PostgreSQL cache. The app never calls IGDB or RAWG directly.
+- Every game result has an inline **quick rating** and a **"Played on"** platform picker. You rate without leaving search: no navigation and no popup.
+- The catalogue is curated so each game appears once. Editions, mods, fan games and unrelated bundles are filtered out. DLC, expansions, remakes and real collections are kept and labelled.
+
+### Now Playing (Post / Review Studio)
+- **Now Playing grid:** four slots for the games you're currently playing. Each slot holds running notes and a "so far" score.
+- **Review Studio:** the only place full reviews are written, either from a Now Playing slot or for any game. Reviews can be saved as drafts or published.
+- **Drafts:** your unpublished reviews, ready to resume.
+
+### Stats
+Charts of your own logged games, all computed in Postgres:
+- **Gamer Profile:** a short written summary of your tastes. It's generated in the app from your stats, with no AI involved.
+- **Ratings:** one tab per scale (1–100, Tier, Stars, Rounded), always in the tier colours.
+- **Breakdowns:** Platforms, Studios (top 10 with "Show all"), Genres (count or average), Rating Habits (harsh vs. generous), You vs Community (with "hot takes"), Release Era and Logged Over Time.
+
+Every chart shows the exact value when you tap a bar, and has a table view that screen readers use. Missing data goes into an "Unknown" bucket.
+
+### Profile
+- **Now Playing:** the four slots, with privacy options (public, friends only or private).
+- **Top 4 Favorites:** tap a cover to open the game. The owner can reorder (◀ ▶), replace (⇄) or remove (✕) entries.
+- **Ratings:** your most recent ratings. Tap **Ratings ▸** for a spreadsheet of every game you've rated.
+  - It has sortable columns, search, and filters for tier, score range, platform, genre and whether you've reviewed the game.
+  - Only you and your friends can sort and filter it.
+- **Reviews:** your published reviews.
+- **Hardware & Platforms:** the consoles you own, with one **Main** platform, PC specs, and devices such as PC handhelds.
+
+### Game pages
+- A banner with cover, developer, publisher, release info, genres and platforms.
+- **Gamer Cred score:** the community average, shown large in your default scale, then in 1–100, stars and tier.
+- **Your rating:** the same layout as an interactive control, plus your "played on" platform and a **Write a review** button.
+- Both score boxes are coloured by the tier of their score.
+- **Friends' Ratings** (above the screenshots), About, Screenshots, Community Reviews, game facts, and PC system requirements (from RAWG).
+
+### Settings
+- Profile picture: upload and crop. Avatars are stored in Supabase Storage.
+- **Colour themes:** **Mega** (blue, the default), **Chief** (olive), **Super** (red), **Pika** (yellow) and **Peach** (pink).
+- Owned platforms, rating scale, Now Playing privacy, username and sign out.
+- Choices save automatically, with inline "Saving…" / "✓ Saved" feedback. Your username has its own Save button, and you're warned before leaving with an unsaved change.
+
+### Authentication
+- Email and password sign-up with email confirmation, plus Google sign-in.
+- Sessions are stored with `expo-secure-store` on device.
+- Every screen except login and register requires an account.
+
+---
+
+## The rating system
+
+Every rating is stored once, as a canonical score from **1 to 100**, together with the scale it was entered in and the exact input. The other three scales are always derived from it with a single rubric (`src/constants/ratingRubric.ts`), so all four always agree.
+
+| Tier | 1–100 | Stars | Rounded | Descriptor |
+|---|---|---|---|---|
+| **S\*\*** | 100 | 5 | 10 | Masterpiece. Only reachable by entering exactly 100 or picking S**. |
+| **S** | 96–99 | 5 | 10 | Masterpiece |
+| **A+** | 90–95 | 4.5 | 9 | Classic |
+| **A** | 80–89 | 4 | 8 | Excellent–Fantastic |
+| **B** | 70–79 | 3.5 | 7 | Good–Great |
+| **C** | 60–69 | 3 | 6 | Decent |
+| **D** | 50–59 | 2.5 | 5 | Mediocre |
+| **F** | 1–49 | 0.5–2 | NOT GOOD | Not Good |
+
+- **Your scale:** each user picks a default scale in Settings. Every rating control (quick rating and review form) uses that scale:
+  - **stars:** tap a half or full star;
+  - **tier:** tap a tier chip;
+  - **rounded:** tap 5–10 or NOT GOOD;
+  - **1–100:** type a score, or use − / +.
+- **Converting the other way:** a star, tier or rounded value maps to the top of its 1–100 range. For example, 4★ becomes 89.
+- **Tier colours:** every tier has its own colour. They're used on tier badges, on every chart that shows ratings, and on the score boxes on game pages.
+
+---
+
+## Quick ratings vs. reviews
+
+These are two separate actions with separate code paths:
+
+| | Quick rating | Full review |
+|---|---|---|
+| **What** | One score per game, in your scale, plus the platform you played on | A score plus a written review, saved as a draft or published |
+| **Where** | Search results and game pages | **Review Studio only**, also reached from the game page's **Write a review** button |
+| **Visibility** | Public: your profile's Ratings, Friends' Ratings and the Gamer Cred average | Published reviews are public; drafts are visible only to you |
+| **Code** | `services/ratings.ts` (`rateGame`, `clearGameRating`) | `services/reviews.ts` (`saveReview`) |
+
+- **One score and one platform per game.** If you rate a game and also review it, the two always match; database triggers keep them in sync.
+  - A new review starts from your rating.
+  - Changing the rating updates the review's score.
+  - Deleting a review keeps your rating.
+  - You can't clear your rating while a published review exists, because a published review needs a score.
+- **"Played on"** defaults to the game's earliest release platform that's in the app's platform catalogue. You can change it inline.
+- **Saving:** taps save in the background straight away. Rapid taps collapse into one save, and a failed save rolls back with an error message.
+
+More detail: [`src/components/rating/README.md`](src/components/rating/README.md).
+
+---
+
+## Tech stack
+
+| Area | Choice |
+|---|---|
+| Framework | **Expo SDK 58** (managed), **React Native 0.88**, **React 19**, **Expo Router** (typed routes) |
+| Language | **TypeScript** (strict). No `.js` / `.jsx` source files apart from tool config. |
+| Styling | **NativeWind v4** (Tailwind CSS for React Native). Themes are CSS variables. |
+| Server state | **TanStack Query v5**, with one shared query-key factory (`src/utils/queryKeys.ts`) |
+| Client state | **Zustand** |
+| Validation | **Zod** for all user input and JSON results |
+| Backend | **Supabase**: Postgres with row-level security, Auth, Storage and Edge Functions (Deno) |
+| Game data | **IGDB** (via Twitch credentials) and **RAWG**, both through the `igdb-proxy` Edge Function |
+| Icons | `@expo/vector-icons` (generic MaterialCommunityIcons / Feather glyphs; no brand logos) |
+| Tests | **Jest** (`jest-expo`) + React Native Testing Library; **Deno** tests for the Edge Function; SQL tests on in-process Postgres via **PGlite** |
+
+---
+
+## Project structure
+
+```
+app/                         Expo Router routes only
+  (auth)/                    login, register
+  (tabs)/                    index (Home), search, post (Now Playing), stats, profile
+  game/[id].tsx              game page
+  user/[id].tsx              public profile
+  ratings/[userId].tsx       a player's full ratings spreadsheet
+  review/[id].tsx            one review
+  settings.tsx               settings
+  auth/callback.tsx          OAuth / email-link landing
+  _layout.tsx                providers, theme root, route guards, error boundary, toasts
+src/
+  components/                UI, by area: ui/ (RetroGamingPC* primitives), game/, search/,
+                             studio/, profile/, rating/, stats/, settings/, feed/, navigation/
+  constants/                 rating rubric, platforms catalogue, themes, action colours
+  hooks/                     TanStack Query + Zustand hooks
+  services/                  Supabase client and Edge Function wrappers
+  types/                     database.types.ts, igdb types, env.d.ts
+  utils/                     pure helpers (rating maths, stats shaping, queues, colour…)
+supabase/
+  migrations/                000001–000018 (see below)
+  functions/igdb-proxy/      the IGDB/RAWG proxy, with curation, ranking and cache policy
+  functions/_shared/         API contract shared by the proxy and the app
+  tests/                     SQL tests (Deno + PGlite)
+scripts/                     generate-theme-palettes.py (writes src/constants/themePalettes.json)
+global.css                   theme variables and bevel utility classes
+```
+
+---
+
+## Backend
+
+### Tables
+Every table has row-level security with explicit read and write policies.
+
+| Table | Purpose |
+|---|---|
+| `profiles` | Username, avatar, primary rating scale, colour theme, Now Playing privacy |
+| `friendships` | Friend requests and friendships (pending, accepted, declined) |
+| `reviews` | One review per user per game: draft or published, score, text, platform |
+| `game_ratings` | Quick ratings: one per user per game, with score and platform. Public to read, owner-only to write. |
+| `now_playing` | The four Now Playing slots, with notes and "so far" scores |
+| `user_favorites` | Top 4 favourites |
+| `user_platforms` | Owned platforms, Main platform, PC specs, devices |
+| `games` | A durable copy of IGDB metadata used by Stats and the ratings list |
+| `igdb_cache` | The proxy's response cache (`cache_key`, `data` JSONB, `updated_at`) |
+| `game_overrides` | Manual include/exclude overrides for catalogue curation |
+
+There's also a public `avatars` storage bucket; each user can only write to their own folder.
+
+### Server-side functions (RPCs)
+- **Feed and game stats:** the activity feed, `game_review_stats` (the Gamer Cred average, one score per user) and `friend_ratings_for_game`.
+- **Stats:** `stats_*` aggregates, built on `my_logged_games()`. A game counts as "logged" if you've rated or reviewed it.
+- **Ratings list:** `user_ratings_table` returns a player's full ratings list with game details in one call.
+- **Profiles:** atomic helpers for favourites and platforms.
+
+### Migrations
+| # | Adds |
+|---|---|
+| 000001–000003 | Base schema, auth and profiles, search indexes |
+| 000004–000006 | Review Studio, profile helpers, feed and game stats |
+| 000007 | Canonical 1–100 rating with input scale and raw input |
+| 000008–000011 | Platform devices, colour theme, Now Playing privacy, avatar storage |
+| 000012–000013 | Review platform and friends' reviews, curation overrides |
+| 000014 | `games` table and Stats functions |
+| 000015 | Quick ratings and the review sync triggers |
+| 000016 | Public ratings, "played on" platform, friends' ratings |
+| 000017 | `user_ratings_table` (ratings spreadsheet) |
+| 000018 | Blue (Mega) as the default theme |
+
+### igdb-proxy Edge Function
+- **Actions:**
+  - `search`: games, companies or creators;
+  - `lookup`: games by id;
+  - `detail`: the full game page, with RAWG PC requirements.
+- **Response format:** every response is `{ success, data?, error? }`.
+- **Curation:** one entry per game.
+  - Dropped: editions, unreleased entries, mods and fan games.
+  - Bundles only count as collections when their games share a series or a developer.
+- **Ranking:** results are ranked by title match and popularity.
+- **Caching:**
+  - Cache entries carry a version stamp that changes whenever the filtering rules or query fields change, so old results expire automatically.
+  - Search results are refreshed in the background once they're a few hours old.
+- **Platform order:** each result carries `releasePlatformIds`, the game's platforms in release order, which the app uses for the "Played on" default.
+
+Details: [`supabase/functions/igdb-proxy/README.md`](supabase/functions/igdb-proxy/README.md).
+
+---
+
+## Getting started
+
+### Prerequisites
+- Node.js and npm.
+- A Supabase project, plus the Supabase CLI (`npx supabase`).
+- For game data, a Twitch developer app (IGDB client ID and secret) and a RAWG API key.
+- The Expo Go app, or an emulator or simulator, if you want to run on a phone.
+
+### 1. Install
+```bash
+npm install
+```
+
+### 2. App environment
+Copy `.env.example` to `.env` and fill in:
+```
+EXPO_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+EXPO_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+```
+Only the public anon key goes here. Never put the service-role key, or any other secret, in an `EXPO_PUBLIC_` variable.
+
+In the Supabase dashboard, under **Authentication → URL Configuration**, add these redirect URLs:
+- `gamercred://auth/callback`
+- `exp://**` (Expo Go)
+- `http://localhost:8081/auth/callback` (web dev)
+- your production web domain's `/auth/callback`
+
+Then enable the **Google** provider if you want Google sign-in.
+
+### 3. Database and Edge Function
+```bash
+npx supabase link                                  # once, to your project
+npx supabase db push --remote                      # apply migrations
+npx supabase secrets set IGDB_CLIENT_ID=... IGDB_CLIENT_SECRET=... RAWG_API_KEY=...
+npx supabase functions deploy igdb-proxy --use-api
+```
+Run the `secrets set` command in your own terminal. Secrets never go in the repo or the app.
+
+### 4. Run
+```bash
+npm run web        # http://localhost:8081
+npm start          # then scan the QR code with Expo Go
+npm run ios        # or: npm run android
+```
+
+---
+
+## Testing
+
+```bash
+npm run typecheck   # tsc --noEmit (strict)
+npm run lint        # expo lint
+npm test            # Jest: utils, services, hooks logic and component render tests
+```
+
+The Edge Function and SQL tests run under Deno:
+```bash
+cd supabase/functions/igdb-proxy && deno test -A   # curation, ranking, cache policy, platform order
+cd supabase/tests && deno test -A                   # migrations on real Postgres (PGlite), with RLS applied
+```
+
+What the tests cover:
+- **Rating rubric:** the conversions between all four scales.
+- **Stats:** the aggregations and how the results are shaped into chart data.
+- **Quick ratings:**
+  - setting, changing and clearing a rating;
+  - one rating per game;
+  - the batched lookup;
+  - the save queue: debouncing, rollback, never overlapping saves;
+  - that a rating never creates a review.
+- **Database:** the sync triggers, public reads with owner-only writes, the ratings spreadsheet's sorting and filtering, and the friends' ratings query.
+- **Colour contrast:** theme and action colours meet WCAG contrast (text ≥ 7:1, muted text and button labels ≥ 4.5:1), and the tier-tinted score boxes stay readable.
+
+---
+
+## Deploying backend changes
+
+```bash
+npx supabase db push --remote --dry-run          # see what will be applied
+npx supabase db push --remote                    # apply new migrations
+npx supabase functions deploy igdb-proxy --use-api
+```
+Never edit a migration that has already been pushed. Add a new numbered migration instead.
+
+---
+
+## Conventions
+
+- **TypeScript only:** UI goes in `.tsx`, everything else in `.ts`, strict mode, and no unhandled `any`.
+- **Query keys:** every TanStack Query key comes from `src/utils/queryKeys.ts`.
+- **No direct IGDB/RAWG calls from the app:** everything goes through the Edge Function and its cache.
+- **Themes:**
+  - The colour source of truth is `src/constants/themePalettes.json`. It's generated by `scripts/generate-theme-palettes.py`; edit the script, not the JSON.
+  - Text is neutral grey in every theme.
+- **Action colours** are the same in every theme (`src/constants/actionColors.ts`):
+  - **green:** save, publish, confirm, start or add something;
+  - **red:** cancel, close, exit;
+  - **deep red with ⚠:** delete or discard;
+  - **blue:** go somewhere.
+- **Brand-safe:** no third-party logos, fonts or artwork. Product names only appear when they refer to that real product (for example a "Steam Deck" device entry).
+- **Adding a stat:** see [`src/components/stats/README.md`](src/components/stats/README.md).
+
+---
+
+## Status & open items
+
+Phases 1–8 are complete: setup, auth, search, Review Studio, profiles, game pages and feed, stats, quick ratings, public ratings and the ratings spreadsheet. Still open:
+
+- Confirm the IGDB platform id for Nintendo Switch 2 (currently `508`, unverified).
+- Decide how standalone expansions should be grouped.
+- Add rate limiting to the proxy.
+- Ratings don't appear in the activity feed yet; only reviews do.
+- Home dashboard extras from the original plan: featured games and trending lists.
+
+---
 
 ## Credits
 
