@@ -107,10 +107,50 @@ export type IgdbLookupResponse = {
   cachedCount: number;
 };
 
+/**
+ * What kind of catalogue entry a game is (set by the curation filter,
+ * supabase/functions/igdb-proxy/curation.ts). Every IGDB game shown in the app
+ * is exactly one of these; editions, remasters, mods etc. are filtered out.
+ */
+export type EntryType = 'game' | 'remake' | 'collection' | 'expansion' | 'dlc';
+
+export const ENTRY_TYPE_LABELS: Record<EntryType, string> = {
+  game: 'Game',
+  remake: 'Remake',
+  collection: 'Collection',
+  expansion: 'Expansion',
+  dlc: 'DLC',
+};
+
+/**
+ * Entry types that count as "games" for rankings such as a top-100 list.
+ * DLC, expansions and collections get their own categories instead.
+ */
+export const RANKABLE_ENTRY_TYPES: readonly EntryType[] = ['game', 'remake'];
+
+export function isRankableEntry(entryType: EntryType): boolean {
+  return RANKABLE_ENTRY_TYPES.includes(entryType);
+}
+
+/** Collections (same-series sets or developer compilations) get their own lists. */
+export function isCollectionEntry(entryType: EntryType): boolean {
+  return entryType === 'collection';
+}
+
+/** Add-on entries that belong to another game. */
+export function isAddOnEntry(entryType: EntryType): boolean {
+  return entryType === 'dlc' || entryType === 'expansion';
+}
+
 export type IgdbGameResult = {
   kind: 'game';
   id: number;
   name: string;
+  entryType: EntryType;
+  /** For DLC / expansions: the game they belong to (IGDB `parent_game`). */
+  parentGame: { id: number; name: string } | null;
+  /** For collections: the distinct base games inside (empty otherwise). */
+  collectionGames: { id: number; name: string }[];
   slug: string | null;
   /** IGDB image id; build URLs with igdbImageUrl(). */
   coverImageId: string | null;

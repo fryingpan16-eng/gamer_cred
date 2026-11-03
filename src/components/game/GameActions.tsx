@@ -6,12 +6,10 @@ import { RetroGamingPCAlert, RetroGamingPCBadge, RetroGamingPCButton, RetroGamin
 import { useGameLookup } from '@/hooks/useGames';
 import { useNowPlaying, useUpdateNowPlayingSlot } from '@/hooks/useNowPlaying';
 import { useMyReviewForGame } from '@/hooks/useReviews';
-import { useStudioStore } from '@/hooks/useStudioStore';
 import { NOW_PLAYING_SLOTS } from '@/services/nowPlaying';
 import type { NowPlayingSlot } from '@/types/database.types';
 import type { IgdbGameResult } from '@/types/igdb';
 import { cn } from '@/utils/cn';
-import { slotRating } from '@/utils/ratingColumns';
 
 type SlotChooserProps = { visible: boolean; game: IgdbGameResult; onClose: () => void; onAssigned: (slot: NowPlayingSlot) => void };
 
@@ -78,26 +76,18 @@ function SlotChooserModal({ visible, game, onClose, onAssigned }: SlotChooserPro
   );
 }
 
-/** "Assign to Now Playing Slot" + "Write / Edit Review" for a game page. */
+/**
+ * Library status + "Assign to Now Playing Slot" for a game page. (The review
+ * entry point is the hero's "Write a review" button.)
+ */
 export function GameActions({ game }: { game: IgdbGameResult }) {
   const nowPlaying = useNowPlaying();
   const myReview = useMyReviewForGame(game.id);
-  const startReview = useStudioStore((s) => s.startReview);
   const [choosing, setChoosing] = useState(false);
   const [assignedTo, setAssignedTo] = useState<NowPlayingSlot | null>(null);
 
   const inSlot = nowPlaying.data?.find((r) => r.game_id === game.id);
   const review = myReview.data;
-
-  const openStudio = () => {
-    startReview({
-      gameId: game.id,
-      fromSlot: inSlot?.slot_index,
-      // Seed from Now Playing notes only when there is no saved review to resume.
-      seed: !review && inSlot ? { rating: slotRating(inSlot), content: inSlot.notes ?? '' } : undefined,
-    });
-    router.push('/post');
-  };
 
   return (
     <RetroGamingPCPanel title="Your Library">
@@ -112,12 +102,6 @@ export function GameActions({ game }: { game: IgdbGameResult }) {
         ) : (
           <RetroGamingPCButton label="Assign to Now Playing Slot" variant="primary" onPress={() => setChoosing(true)} />
         )}
-        <RetroGamingPCButton
-          label={review ? (review.status === 'published' ? 'Edit Review' : 'Resume Draft') : 'Write Review'}
-          variant={inSlot ? 'primary' : 'default'}
-          loading={myReview.isPending}
-          onPress={openStudio}
-        />
       </View>
       <SlotChooserModal
         visible={choosing}

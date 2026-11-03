@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
@@ -29,7 +30,10 @@ function TinyButton({ label, a11y, onPress, disabled }: { label: string; a11y: s
 
 type FavoritesShowcaseProps = { userId: string; editable: boolean };
 
-/** Top 4 all-time favorites. Owners pick, reorder (◀ ▶) and clear (✕) entries. */
+/**
+ * Top 4 all-time favorites. A filled slot opens the game's page; owners pick a
+ * game for an empty slot, and reorder (◀ ▶), replace (⇄) or clear (✕) entries.
+ */
 export function FavoritesShowcase({ userId, editable }: FavoritesShowcaseProps) {
   const favorites = useFavorites(userId);
   const rows = favorites.data ?? [];
@@ -65,13 +69,17 @@ export function FavoritesShowcase({ userId, editable }: FavoritesShowcaseProps) 
               );
               return (
                 <View key={rank} className="flex-1 gap-1">
-                  <Text className="font-mono text-retrogamingpc-xs font-bold text-retrogamingpc-highlight">#{rank}</Text>
-                  {editable ? (
+                  <Text className="font-mono text-retrogamingpc-xs font-bold text-retrogamingpc-text-bright">#{rank}</Text>
+                  {row ? (
                     <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel={row ? `Replace favorite #${rank}` : `Pick favorite #${rank}`}
-                      onPress={() => setPickingRank(rank)}
+                      accessibilityRole="link"
+                      accessibilityLabel={`Favorite #${rank}: ${game?.name ?? 'game'}. Open game page`}
+                      onPress={() => router.push({ pathname: '/game/[id]', params: { id: String(row.game_id) } })}
                     >
+                      {tile}
+                    </Pressable>
+                  ) : editable ? (
+                    <Pressable accessibilityRole="button" accessibilityLabel={`Pick favorite #${rank}`} onPress={() => setPickingRank(rank)}>
                       {tile}
                     </Pressable>
                   ) : (
@@ -88,6 +96,7 @@ export function FavoritesShowcase({ userId, editable }: FavoritesShowcaseProps) 
                         disabled={rank === 1}
                         onPress={() => mutation.mutate({ action: 'swap', a: rank, b: (rank - 1) as FavoriteRank })}
                       />
+                      <TinyButton label="⇄" a11y={`Replace favorite #${rank}`} onPress={() => setPickingRank(rank)} />
                       <TinyButton label="✕" a11y={`Remove favorite #${rank}`} onPress={() => mutation.mutate({ action: 'remove', rank })} />
                       <TinyButton
                         label="▶"

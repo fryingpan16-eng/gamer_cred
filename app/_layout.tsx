@@ -11,6 +11,7 @@ import { retroGamingPCStackHeader } from '@/components/navigation/retroGamingPCS
 import { RetroGamingPCBootScreen } from '@/components/RetroGamingPCBootScreen';
 import { RetroGamingPCErrorBoundary } from '@/components/RetroGamingPCErrorBoundary';
 import { RetroGamingPCWindowFrame } from '@/components/RetroGamingPCWindowFrame';
+import { RetroGamingPCToastHost } from '@/components/ui';
 import { useAuthStore } from '@/hooks/useAuth';
 import { queryClient } from '@/services/queryClient';
 import { useThemeColors, useThemeStore, useThemeVars } from '@/hooks/useTheme';
@@ -40,6 +41,7 @@ export default function RootLayout() {
             <RetroGamingPCWindowFrame>
               <RootNavigator />
             </RetroGamingPCWindowFrame>
+            <RetroGamingPCToastHost />
           </SafeAreaView>
         </ThemeRoot>
       </SafeAreaProvider>
@@ -101,6 +103,7 @@ function RootNavigator() {
         <Stack.Screen name="game/[id]" options={{ title: 'Game' }} />
         <Stack.Screen name="user/[id]" options={{ title: 'Player' }} />
         <Stack.Screen name="settings" options={{ title: 'Settings' }} />
+        <Stack.Screen name="review/[id]" options={{ title: 'Review' }} />
       </Stack.Protected>
 
       <Stack.Protected guard={!isSignedIn} redirectTo="/">

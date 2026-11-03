@@ -45,7 +45,7 @@ export default function RegisterScreen() {
               message={`We sent a confirmation link to ${confirmationSentTo}. Open it on this device to finish signing in.`}
             />
             <View className="flex-row justify-end">
-              <Link href="/login" className="text-retrogamingpc-sm text-retrogamingpc-highlight underline">
+              <Link href="/login" className="text-retrogamingpc-sm text-retrogamingpc-text-bright underline">
                 Back to login
               </Link>
             </View>
@@ -122,7 +122,7 @@ export default function RegisterScreen() {
             />
 
             <View className="flex-row items-center justify-between pt-1">
-              <Link href="/login" className="text-retrogamingpc-sm text-retrogamingpc-highlight underline">
+              <Link href="/login" className="text-retrogamingpc-sm text-retrogamingpc-text-bright underline">
                 Have an account?
               </Link>
               <RetroGamingPCButton

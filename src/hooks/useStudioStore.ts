@@ -16,7 +16,7 @@ export type StudioModal =
   | { kind: 'editSlot'; slot: NowPlayingSlot }
   /** Confirm clearing a slot. */
   | { kind: 'remove'; slot: NowPlayingSlot }
-  /** Pick a game for a standalone quick review. */
+  /** Pick a game to review (Review Studio "Review a Game…"). */
   | { kind: 'pickReviewGame' };
 
 /** What the Review Studio form is currently editing. */
@@ -36,8 +36,8 @@ type StudioState = {
   openModal: (modal: Exclude<StudioModal, { kind: 'none' }>) => void;
   closeModal: () => void;
   startReview: (target: StudioTarget) => void;
-  /** Standalone quick review picked from the selector. */
-  startQuickReview: (game: IgdbGameResult) => void;
+  /** Standalone review (not from a Now Playing slot) picked from the selector. */
+  startStandaloneReview: (game: IgdbGameResult) => void;
   clearTarget: () => void;
 };
 
@@ -49,6 +49,6 @@ export const useStudioStore = create<StudioState>()((set) => ({
   openModal: (modal) => set({ modal, selectedSlot: 'slot' in modal ? modal.slot : null }),
   closeModal: () => set({ modal: { kind: 'none' } }),
   startReview: (target) => set({ target, modal: { kind: 'none' } }),
-  startQuickReview: (game) => set({ target: { gameId: game.id }, modal: { kind: 'none' } }),
+  startStandaloneReview: (game) => set({ target: { gameId: game.id }, modal: { kind: 'none' } }),
   clearTarget: () => set({ target: null }),
 }));

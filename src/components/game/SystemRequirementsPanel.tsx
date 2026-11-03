@@ -41,7 +41,7 @@ export function SystemRequirementsPanel({ requirements, hasPc }: { requirements:
           </View>
           <Text className="text-right text-retrogamingpc-xs text-retrogamingpc-text-muted">
             Requirements via{' '}
-            <Link href={requirements.sourceUrl as `https://${string}`} target="_blank" className="text-retrogamingpc-highlight underline">
+            <Link href={requirements.sourceUrl as `https://${string}`} target="_blank" className="text-retrogamingpc-text-bright underline">
               RAWG
             </Link>
           </Text>

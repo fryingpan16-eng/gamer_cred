@@ -1,5 +1,5 @@
-import { Link } from 'expo-router';
-import { Text, View } from 'react-native';
+import { Link, router } from 'expo-router';
+import { Pressable, Text, View } from 'react-native';
 
 import { RetroGamingPCAlert, RetroGamingPCBadge, RetroGamingPCPanel, RetroGamingPCRating, RetroGamingPCSpinner } from '@/components/ui';
 import { useGameLookup } from '@/hooks/useGames';
@@ -42,7 +42,7 @@ export function NowPlayingShowcase({ userId, isOwner, visibility }: NowPlayingSh
             {visibility !== 'public' ? (
               <RetroGamingPCBadge label={NOW_PLAYING_VISIBILITY_OPTIONS[visibility].badge} variant="draft" />
             ) : null}
-            <Link href="/post" className="text-retrogamingpc-xs text-retrogamingpc-highlight underline">
+            <Link href="/post" className="text-retrogamingpc-xs text-retrogamingpc-text-bright underline">
               Manage
             </Link>
           </View>
@@ -52,7 +52,7 @@ export function NowPlayingShowcase({ userId, isOwner, visibility }: NowPlayingSh
       {isOwner && visibility !== 'public' ? (
         <Text className="pb-2 text-retrogamingpc-xs text-retrogamingpc-text-muted">
           {visibility === 'friends' ? 'Only your friends can see this.' : 'Only you can see this.'} Change it in{' '}
-          <Link href="/settings" className="text-retrogamingpc-highlight underline">
+          <Link href="/settings" className="text-retrogamingpc-text-bright underline">
             Settings
           </Link>
           .
@@ -79,7 +79,17 @@ export function NowPlayingShowcase({ userId, isOwner, visibility }: NowPlayingSh
             const game = row ? games.data?.get(row.game_id) : undefined;
             return (
               <View key={slot} className="flex-1 gap-1">
-                <CoverTile game={game} gameId={row?.game_id ?? null} loading={games.isFetching} emptyLabel="—" />
+                {row ? (
+                  <Pressable
+                    accessibilityRole="link"
+                    accessibilityLabel={`Now playing: ${game?.name ?? 'game'}. Open game page`}
+                    onPress={() => router.push({ pathname: '/game/[id]', params: { id: String(row.game_id) } })}
+                  >
+                    <CoverTile game={game} gameId={row.game_id} loading={games.isFetching} />
+                  </Pressable>
+                ) : (
+                  <CoverTile game={game} gameId={null} loading={games.isFetching} emptyLabel="—" />
+                )}
                 {row ? (
                   <>
                     <Text className="text-retrogamingpc-xs font-bold text-retrogamingpc-text-bright" numberOfLines={1}>

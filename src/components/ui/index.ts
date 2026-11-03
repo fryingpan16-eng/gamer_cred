@@ -17,3 +17,5 @@ export { RetroGamingPCRatingInput, type RetroGamingPCRatingInputProps } from './
 export { RetroGamingPCTierBadge, type RetroGamingPCTierBadgeProps } from './RetroGamingPCTierBadge';
 export { RetroGamingPCStarRating, type RetroGamingPCStarRatingProps } from './RetroGamingPCStarRating';
 export { RetroGamingPCCheckbox, type RetroGamingPCCheckboxProps } from './RetroGamingPCCheckbox';
+export { RetroGamingPCBarChart, type RetroGamingPCBarChartProps } from './RetroGamingPCBarChart';
+export { RetroGamingPCToastHost } from './RetroGamingPCToastHost';

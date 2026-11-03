@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { PLATFORMS } from '@/constants/platforms';
+
 import { isConsistentStoredRating, type StoredRating } from './rating';
 
 export const REVIEW_MAX_LENGTH = 10_000;
@@ -26,13 +28,19 @@ export const reviewFormSchema = z
     rating: storedRatingSchema.nullable(),
     content: z.string().trim().max(REVIEW_MAX_LENGTH, `Keep it under ${REVIEW_MAX_LENGTH.toLocaleString()} characters`),
     status: z.enum(['draft', 'published']),
+    /** Platform played on: a catalog id (src/constants/platforms.ts) or null. */
+    platformId: z
+      .number()
+      .int()
+      .nullable()
+      .refine((id) => id === null || PLATFORMS.some((p) => p.id === id), 'Pick a platform from the list'),
   })
   // Mirrors DB check `reviews_published_has_rating`.
   .refine((r) => r.status === 'draft' || r.rating !== null, {
     path: ['rating'],
     message: 'Give the game a rating before publishing',
   })
-  // A draft with nothing in it is pointless; a published quick review may be rating-only.
+  // A draft with nothing in it is pointless; a published review may be score-only (existing reviews like that keep working).
   .refine((r) => r.status === 'published' || r.rating !== null || r.content.length > 0, {
     path: ['content'],
     message: 'Add a rating or some notes to save a draft',

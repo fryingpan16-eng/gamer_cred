@@ -39,6 +39,15 @@ export const queryKeys = {
     detail: (reviewId: string) => [...queryKeys.reviews.all(), 'detail', reviewId] as const,
   },
 
+  /** The signed-in user's own quick ratings (private; migration 000015). */
+  ratings: {
+    all: () => [...queryKeys.all, 'ratings'] as const,
+    byUser: (userId: string) => [...queryKeys.ratings.all(), userId] as const,
+    /** One batched lookup; ids are sorted + de-duplicated so equal sets share a cache entry. */
+    mine: (userId: string, gameIds: readonly number[]) =>
+      [...queryKeys.ratings.byUser(userId), [...new Set(gameIds)].sort((a, b) => a - b)] as const,
+  },
+
   friendships: {
     all: () => [...queryKeys.all, 'friendships'] as const,
     byUser: (userId: string) => [...queryKeys.friendships.all(), userId] as const,
@@ -55,6 +64,14 @@ export const queryKeys = {
     friends: (userId: string) => [...queryKeys.feed.all(), 'friends', userId] as const,
   },
 
+  /** Stats page aggregates — always the signed-in user's own (keyed per viewer). */
+  stats: {
+    all: () => [...queryKeys.all, 'stats'] as const,
+    byUser: (userId: string) => [...queryKeys.stats.all(), userId] as const,
+    stat: (userId: string, stat: string, ...params: (string | number | null)[]) =>
+      [...queryKeys.stats.byUser(userId), stat, ...params] as const,
+  },
+
   games: {
     all: () => [...queryKeys.all, 'games'] as const,
     detail: (gameId: number) => [...queryKeys.games.all(), 'detail', gameId] as const,
@@ -64,6 +81,9 @@ export const queryKeys = {
     reviewsAll: () => [...queryKeys.games.all(), 'reviews'] as const,
     reviews: (gameId: number) => [...queryKeys.games.reviewsAll(), gameId] as const,
     reviewStatsAll: () => [...queryKeys.games.all(), 'reviewStats'] as const,
+    /** The viewer's friends' reviews of a game (per viewer: depends on their friend list). */
+    friendReviewsAll: () => [...queryKeys.games.all(), 'friendReviews'] as const,
+    friendReviews: (viewerId: string, gameId: number) => [...queryKeys.games.friendReviewsAll(), viewerId, gameId] as const,
     reviewStats: (gameId: number) => [...queryKeys.games.reviewStatsAll(), gameId] as const,
     /** Batch lookup; ids are sorted so [2,1] and [1,2] share a cache entry. */
     lookup: (gameIds: readonly number[]) =>

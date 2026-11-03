@@ -1,0 +1,3559 @@
+{
+  "_note": "Live IGDB payloads captured 2026-11-03T02:22:02.638Z (trimmed to curation fields). Regenerate with tools/igdb-verify.mjs.",
+  "game_types": [
+    {
+      "id": 0,
+      "type": "Main Game"
+    },
+    {
+      "id": 1,
+      "type": "DLC"
+    },
+    {
+      "id": 2,
+      "type": "Expansion"
+    },
+    {
+      "id": 3,
+      "type": "Bundle"
+    },
+    {
+      "id": 4,
+      "type": "Standalone Expansion"
+    },
+    {
+      "id": 5,
+      "type": "Mod"
+    },
+    {
+      "id": 6,
+      "type": "Episode"
+    },
+    {
+      "id": 7,
+      "type": "Season"
+    },
+    {
+      "id": 8,
+      "type": "Remake"
+    },
+    {
+      "id": 9,
+      "type": "Remaster"
+    },
+    {
+      "id": 10,
+      "type": "Expanded Game"
+    },
+    {
+      "id": 11,
+      "type": "Port"
+    },
+    {
+      "id": 12,
+      "type": "Fork"
+    },
+    {
+      "id": 13,
+      "type": "Pack / Addon"
+    },
+    {
+      "id": 14,
+      "type": "Update"
+    }
+  ],
+  "games": [
+    {
+      "id": 339,
+      "name": "The Orange Box",
+      "game_type": 3,
+      "first_release_date": 1191974400,
+      "total_rating_count": 162,
+      "external_games": [
+        {
+          "external_game_source": 3
+        },
+        {
+          "external_game_source": 11
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 31
+        }
+      ],
+      "involved_companies": [
+        {
+          "developer": false,
+          "publisher": false,
+          "company": {
+            "id": 276,
+            "name": "EA UK"
+          }
+        },
+        {
+          "developer": false,
+          "publisher": true,
+          "company": {
+            "id": 1,
+            "name": "Electronic Arts"
+          }
+        },
+        {
+          "developer": true,
+          "publisher": true,
+          "company": {
+            "id": 56,
+            "name": "Valve"
+          }
+        }
+      ]
+    },
+    {
+      "id": 1009,
+      "name": "The Last of Us",
+      "game_type": 0,
+      "first_release_date": 1371168000,
+      "total_rating_count": 3629,
+      "external_games": [
+        {
+          "external_game_source": 3
+        },
+        {
+          "external_game_source": 10
+        },
+        {
+          "external_game_source": 14
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        }
+      ],
+      "involved_companies": [
+        {
+          "developer": true,
+          "publisher": false,
+          "company": {
+            "id": 401,
+            "name": "Naughty Dog"
+          }
+        },
+        {
+          "developer": false,
+          "publisher": true,
+          "company": {
+            "id": 13634,
+            "name": "Sony Computer Entertainment"
+          }
+        }
+      ]
+    },
+    {
+      "id": 1942,
+      "name": "The Witcher 3: Wild Hunt",
+      "game_type": 0,
+      "first_release_date": 1431993600,
+      "bundles": [
+        22439,
+        141472,
+        119402
+      ],
+      "total_rating_count": 5539,
+      "external_games": [
+        {
+          "external_game_source": 1
+        },
+        {
+          "external_game_source": 3
+        },
+        {
+          "external_game_source": 5
+        },
+        {
+          "external_game_source": 5
+        },
+        {
+          "external_game_source": 10
+        },
+        {
+          "external_game_source": 11
+        },
+        {
+          "external_game_source": 14
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 36
+        }
+      ],
+      "involved_companies": [
+        {
+          "developer": false,
+          "publisher": true,
+          "company": {
+            "id": 50,
+            "name": "WB Games"
+          }
+        },
+        {
+          "developer": false,
+          "publisher": true,
+          "company": {
+            "id": 3119,
+            "name": "cdp.pl"
+          }
+        },
+        {
+          "developer": false,
+          "publisher": true,
+          "company": {
+            "id": 1217,
+            "name": "Spike Chunsoft"
+          }
+        },
+        {
+          "developer": false,
+          "publisher": true,
+          "company": {
+            "id": 248,
+            "name": "Bandai Namco Entertainment"
+          }
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": {
+            "id": 5696,
+            "name": "D3T Limited"
+          }
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": {
+            "id": 946,
+            "name": "Saber Interactive"
+          }
+        },
+        {
+          "developer": true,
+          "publisher": false,
+          "company": {
+            "id": 908,
+            "name": "CD Projekt RED"
+          }
+        }
+      ]
+    },
+    {
+      "id": 6036,
+      "name": "The Last of Us Remastered",
+      "game_type": 9,
+      "parent_game": 1009,
+      "first_release_date": 1406332800,
+      "total_rating_count": 1710,
+      "external_games": [
+        {
+          "external_game_source": 10
+        },
+        {
+          "external_game_source": 14
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 36
+        }
+      ],
+      "involved_companies": [
+        {
+          "developer": true,
+          "publisher": false,
+          "company": {
+            "id": 401,
+            "name": "Naughty Dog"
+          }
+        },
+        {
+          "developer": false,
+          "publisher": true,
+          "company": {
+            "id": 13634,
+            "name": "Sony Computer Entertainment"
+          }
+        }
+      ]
+    },
+    {
+      "id": 7348,
+      "name": "Halo: The Master Chief Collection",
+      "game_type": 3,
+      "first_release_date": 1415664000,
+      "total_rating_count": 315,
+      "external_games": [
+        {
+          "external_game_source": 1
+        },
+        {
+          "external_game_source": 3
+        },
+        {
+          "external_game_source": 11
+        },
+        {
+          "external_game_source": 11
+        },
+        {
+          "external_game_source": 11
+        },
+        {
+          "external_game_source": 14
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 54
+        }
+      ],
+      "involved_companies": [
+        {
+          "developer": false,
+          "publisher": false,
+          "company": {
+            "id": 823,
+            "name": "United Front Games"
+          }
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": {
+            "id": 221,
+            "name": "Splash Damage"
+          }
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": {
+            "id": 946,
+            "name": "Saber Interactive"
+          }
+        },
+        {
+          "developer": true,
+          "publisher": false,
+          "company": {
+            "id": 722,
+            "name": "343 Industries"
+          }
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": {
+            "id": 57,
+            "name": "Certain Affinity"
+          }
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": {
+            "id": 1359,
+            "name": "Ruffian Games"
+          }
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": {
+            "id": 221,
+            "name": "Splash Damage"
+          }
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": {
+            "id": 3246,
+            "name": "Blur Studio"
+          }
+        },
+        {
+          "developer": false,
+          "publisher": true,
+          "company": {
+            "id": 17966,
+            "name": "Xbox Game Studios"
+          }
+        }
+      ]
+    },
+    {
+      "id": 10962,
+      "name": "Uncharted: The Nathan Drake Collection",
+      "game_type": 3,
+      "first_release_date": 1444176000,
+      "total_rating_count": 351,
+      "external_games": [
+        {
+          "external_game_source": 3
+        },
+        {
+          "external_game_source": 10
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 36
+        }
+      ],
+      "involved_companies": [
+        {
+          "developer": true,
+          "publisher": false,
+          "company": {
+            "id": 401,
+            "name": "Naughty Dog"
+          }
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": {
+            "id": 1030,
+            "name": "Bluepoint Games"
+          }
+        },
+        {
+          "developer": false,
+          "publisher": true,
+          "company": {
+            "id": 13634,
+            "name": "Sony Computer Entertainment"
+          }
+        }
+      ]
+    },
+    {
+      "id": 11147,
+      "name": "Rare Replay",
+      "game_type": 3,
+      "first_release_date": 1438646400,
+      "bundles": [
+        41613
+      ],
+      "total_rating_count": 43,
+      "external_games": [
+        {
+          "external_game_source": 3
+        },
+        {
+          "external_game_source": 11
+        }
+      ],
+      "involved_companies": [
+        {
+          "developer": true,
+          "publisher": false,
+          "company": {
+            "id": 771,
+            "name": "Rare"
+          }
+        },
+        {
+          "developer": false,
+          "publisher": true,
+          "company": {
+            "id": 1010,
+            "name": "Microsoft Studios"
+          }
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": {
+            "id": 33566,
+            "name": "4th Kernel Studios"
+          }
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": {
+            "id": 7700,
+            "name": "Code Mystics"
+          }
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": {
+            "id": 4449,
+            "name": "Sprung Studios"
+          }
+        }
+      ]
+    },
+    {
+      "id": 11169,
+      "name": "Final Fantasy VII Remake",
+      "game_type": 8,
+      "parent_game": 427,
+      "first_release_date": 1586476800,
+      "bundles": [
+        133299,
+        144024
+      ],
+      "total_rating_count": 510,
+      "external_games": [
+        {
+          "external_game_source": 3
+        },
+        {
+          "external_game_source": 14
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 36
+        }
+      ],
+      "involved_companies": [
+        {
+          "developer": true,
+          "publisher": false,
+          "company": {
+            "id": 45304,
+            "name": "Square Enix Creative Business Unit I"
+          }
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": {
+            "id": 72234,
+            "name": "Square Enix Creative Studio 1"
+          }
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": {
+            "id": 45304,
+            "name": "Square Enix Creative Business Unit I"
+          }
+        },
+        {
+          "developer": false,
+          "publisher": true,
+          "company": {
+            "id": 26,
+            "name": "Square Enix"
+          }
+        }
+      ]
+    },
+    {
+      "id": 22439,
+      "name": "The Witcher 3: Wild Hunt - Game of the Year Edition",
+      "game_type": 3,
+      "version_parent": 1942,
+      "first_release_date": 1472428800,
+      "bundles": [
+        154960
+      ],
+      "total_rating_count": 572,
+      "external_games": [
+        {
+          "external_game_source": 1
+        },
+        {
+          "external_game_source": 5
+        },
+        {
+          "external_game_source": 5
+        },
+        {
+          "external_game_source": 11
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 26
+        },
+        {
+          "external_game_source": 26
+        }
+      ],
+      "involved_companies": [
+        {
+          "developer": true,
+          "publisher": false,
+          "company": {
+            "id": 908,
+            "name": "CD Projekt RED"
+          }
+        },
+        {
+          "developer": false,
+          "publisher": true,
+          "company": {
+            "id": 4291,
+            "name": "CD Projekt"
+          }
+        }
+      ]
+    },
+    {
+      "id": 26192,
+      "name": "The Last of Us Part II",
+      "game_type": 0,
+      "first_release_date": 1592524800,
+      "total_rating_count": 1832,
+      "external_games": [
+        {
+          "external_game_source": 3
+        },
+        {
+          "external_game_source": 14
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 36
+        }
+      ],
+      "involved_companies": [
+        {
+          "developer": false,
+          "publisher": true,
+          "company": {
+            "id": 10100,
+            "name": "Sony Interactive Entertainment"
+          }
+        },
+        {
+          "developer": true,
+          "publisher": false,
+          "company": {
+            "id": 401,
+            "name": "Naughty Dog"
+          }
+        }
+      ]
+    },
+    {
+      "id": 27238,
+      "name": "AM2R: Return of Samus",
+      "game_type": 0,
+      "first_release_date": 1470441600,
+      "total_rating_count": 59,
+      "external_games": [
+        {
+          "external_game_source": 14
+        }
+      ],
+      "involved_companies": [
+        {
+          "developer": true,
+          "publisher": true,
+          "company": {
+            "id": 12189,
+            "name": "DoctorM64"
+          }
+        }
+      ]
+    },
+    {
+      "id": 41608,
+      "name": "Halo: The Master Chief Collection - Limited Edition",
+      "game_type": 3,
+      "version_parent": 7348,
+      "first_release_date": 1417392000,
+      "total_rating_count": 7,
+      "external_games": [],
+      "involved_companies": [
+        {
+          "developer": true,
+          "publisher": false,
+          "company": {
+            "id": 722,
+            "name": "343 Industries"
+          }
+        },
+        {
+          "developer": false,
+          "publisher": true,
+          "company": {
+            "id": 1010,
+            "name": "Microsoft Studios"
+          }
+        }
+      ]
+    },
+    {
+      "id": 41613,
+      "name": "Gears of War: Ultimate Edition and Rare Replay",
+      "game_type": 3,
+      "first_release_date": 1451520000,
+      "external_games": [],
+      "involved_companies": [
+        {
+          "developer": false,
+          "publisher": true,
+          "company": {
+            "id": 1010,
+            "name": "Microsoft Studios"
+          }
+        },
+        {
+          "developer": true,
+          "publisher": false,
+          "company": {
+            "id": 771,
+            "name": "Rare"
+          }
+        },
+        {
+          "developer": true,
+          "publisher": false,
+          "company": {
+            "id": 17463,
+            "name": "Epic Games"
+          }
+        }
+      ]
+    },
+    {
+      "id": 89929,
+      "name": "Uncharted: The Nathan Drake Collection - Special Edition",
+      "game_type": 3,
+      "version_parent": 10962,
+      "first_release_date": 1451520000,
+      "total_rating_count": 11,
+      "involved_companies": [
+        {
+          "developer": false,
+          "publisher": true,
+          "company": {
+            "id": 907,
+            "name": "Sony Computer Entertainment of America"
+          }
+        },
+        {
+          "developer": true,
+          "publisher": false,
+          "company": {
+            "id": 401,
+            "name": "Naughty Dog"
+          }
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": {
+            "id": 1030,
+            "name": "Bluepoint Games"
+          }
+        }
+      ]
+    },
+    {
+      "id": 89931,
+      "name": "The Last of Us Remastered: Day 1 Edition",
+      "game_type": 0,
+      "version_parent": 6036,
+      "first_release_date": 1406592000,
+      "external_games": [
+        {
+          "external_game_source": 20
+        }
+      ],
+      "involved_companies": [
+        {
+          "developer": true,
+          "publisher": false,
+          "company": {
+            "id": 401,
+            "name": "Naughty Dog"
+          }
+        },
+        {
+          "developer": false,
+          "publisher": true,
+          "company": {
+            "id": 13634,
+            "name": "Sony Computer Entertainment"
+          }
+        }
+      ]
+    },
+    {
+      "id": 103204,
+      "name": "Destiny 2: Forsaken",
+      "game_type": 2,
+      "parent_game": 25657,
+      "first_release_date": 1536019200,
+      "bundles": [
+        304472
+      ],
+      "total_rating_count": 62,
+      "external_games": [
+        {
+          "external_game_source": 1
+        },
+        {
+          "external_game_source": 11
+        },
+        {
+          "external_game_source": 11
+        }
+      ],
+      "involved_companies": [
+        {
+          "developer": false,
+          "publisher": true,
+          "company": {
+            "id": 66,
+            "name": "Activision"
+          }
+        },
+        {
+          "developer": true,
+          "publisher": false,
+          "company": {
+            "id": 620,
+            "name": "Bungie"
+          }
+        }
+      ]
+    },
+    {
+      "id": 118535,
+      "name": "Destiny 2: Forsaken - Complete Collection",
+      "game_type": 0,
+      "version_parent": 103204,
+      "first_release_date": 1546214400,
+      "involved_companies": [
+        {
+          "developer": true,
+          "publisher": false,
+          "company": {
+            "id": 620,
+            "name": "Bungie"
+          }
+        },
+        {
+          "developer": false,
+          "publisher": true,
+          "company": {
+            "id": 66,
+            "name": "Activision"
+          }
+        }
+      ]
+    },
+    {
+      "id": 129886,
+      "name": "Destiny 2: Forsaken - Season of Opulence",
+      "game_type": 7,
+      "parent_game": 25657,
+      "first_release_date": 1559606400,
+      "involved_companies": [
+        {
+          "developer": false,
+          "publisher": true,
+          "company": {
+            "id": 66,
+            "name": "Activision"
+          }
+        },
+        {
+          "developer": true,
+          "publisher": false,
+          "company": {
+            "id": 620,
+            "name": "Bungie"
+          }
+        }
+      ]
+    },
+    {
+      "id": 129889,
+      "name": "Destiny 2: Forsaken - Season of the Forge",
+      "game_type": 7,
+      "parent_game": 25657,
+      "first_release_date": 1543881600,
+      "involved_companies": [
+        {
+          "developer": true,
+          "publisher": false,
+          "company": {
+            "id": 620,
+            "name": "Bungie"
+          }
+        },
+        {
+          "developer": false,
+          "publisher": true,
+          "company": {
+            "id": 66,
+            "name": "Activision"
+          }
+        }
+      ]
+    },
+    {
+      "id": 132989,
+      "name": "Half-Life 2: MMod",
+      "game_type": 5,
+      "parent_game": 233,
+      "first_release_date": 1545609600,
+      "involved_companies": [
+        {
+          "developer": true,
+          "publisher": true,
+          "company": {
+            "id": 25117,
+            "name": "Gunship_Mark_II"
+          }
+        }
+      ]
+    },
+    {
+      "id": 133299,
+      "name": "Final Fantasy VII Remake: Digital Deluxe Upgrade",
+      "game_type": 3,
+      "involved_companies": [
+        {
+          "developer": false,
+          "publisher": true,
+          "company": {
+            "id": 26,
+            "name": "Square Enix"
+          }
+        },
+        {
+          "developer": true,
+          "publisher": false,
+          "company": {
+            "id": 45304,
+            "name": "Square Enix Creative Business Unit I"
+          }
+        }
+      ]
+    },
+    {
+      "id": 141472,
+      "name": "The Witcher 3: Wild Hunt + Dark Souls III",
+      "game_type": 3,
+      "first_release_date": 1540512000,
+      "external_games": [],
+      "involved_companies": [
+        {
+          "developer": false,
+          "publisher": true,
+          "company": {
+            "id": 248,
+            "name": "Bandai Namco Entertainment"
+          }
+        }
+      ]
+    },
+    {
+      "id": 144024,
+      "name": "Final Fantasy VII Remake Intergrade",
+      "game_type": 3,
+      "first_release_date": 1623283200,
+      "bundles": [
+        266737,
+        266738,
+        416148
+      ],
+      "total_rating_count": 138,
+      "external_games": [
+        {
+          "external_game_source": 1
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 26
+        },
+        {
+          "external_game_source": 26
+        }
+      ],
+      "involved_companies": [
+        {
+          "developer": false,
+          "publisher": true,
+          "company": {
+            "id": 26,
+            "name": "Square Enix"
+          }
+        },
+        {
+          "developer": true,
+          "publisher": false,
+          "company": {
+            "id": 45304,
+            "name": "Square Enix Creative Business Unit I"
+          }
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": {
+            "id": 45304,
+            "name": "Square Enix Creative Business Unit I"
+          }
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": {
+            "id": 72234,
+            "name": "Square Enix Creative Studio 1"
+          }
+        }
+      ]
+    },
+    {
+      "id": 144037,
+      "name": "Final Fantasy VII Remake: Episode Intermission",
+      "game_type": 1,
+      "parent_game": 11169,
+      "first_release_date": 1623283200,
+      "bundles": [
+        144024
+      ],
+      "total_rating_count": 49,
+      "involved_companies": [
+        {
+          "developer": false,
+          "publisher": true,
+          "company": {
+            "id": 26,
+            "name": "Square Enix"
+          }
+        },
+        {
+          "developer": true,
+          "publisher": false,
+          "company": {
+            "id": 45304,
+            "name": "Square Enix Creative Business Unit I"
+          }
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": {
+            "id": 45304,
+            "name": "Square Enix Creative Business Unit I"
+          }
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": {
+            "id": 72234,
+            "name": "Square Enix Creative Studio 1"
+          }
+        }
+      ]
+    },
+    {
+      "id": 202219,
+      "name": "Rive: Orange Box Limited Edition",
+      "game_type": 0,
+      "version_parent": 17069,
+      "external_games": []
+    },
+    {
+      "id": 204350,
+      "name": "The Last of Us Part I",
+      "game_type": 8,
+      "parent_game": 1009,
+      "first_release_date": 1662076800,
+      "bundles": [
+        340213
+      ],
+      "total_rating_count": 828,
+      "external_games": [
+        {
+          "external_game_source": 1
+        },
+        {
+          "external_game_source": 14
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 26
+        },
+        {
+          "external_game_source": 26
+        },
+        {
+          "external_game_source": 36
+        }
+      ],
+      "involved_companies": [
+        {
+          "developer": false,
+          "publisher": true,
+          "company": {
+            "id": 10100,
+            "name": "Sony Interactive Entertainment"
+          }
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": {
+            "id": 2121,
+            "name": "Iron Galaxy Studios"
+          }
+        },
+        {
+          "developer": true,
+          "publisher": false,
+          "company": {
+            "id": 401,
+            "name": "Naughty Dog"
+          }
+        }
+      ]
+    },
+    {
+      "id": 205049,
+      "name": "Halo: The Master Chief Collection Season 2 - Spark",
+      "game_type": 7,
+      "parent_game": 7348,
+      "first_release_date": 1594684800,
+      "involved_companies": [
+        {
+          "developer": true,
+          "publisher": false,
+          "company": {
+            "id": 722,
+            "name": "343 Industries"
+          }
+        },
+        {
+          "developer": false,
+          "publisher": true,
+          "company": {
+            "id": 1010,
+            "name": "Microsoft Studios"
+          }
+        },
+        {
+          "developer": false,
+          "publisher": true,
+          "company": {
+            "id": 17966,
+            "name": "Xbox Game Studios"
+          }
+        }
+      ]
+    },
+    {
+      "id": 205055,
+      "name": "Halo: The Master Chief Collection Season 3 - Recon",
+      "game_type": 7,
+      "parent_game": 7348,
+      "first_release_date": 1600646400,
+      "involved_companies": [
+        {
+          "developer": true,
+          "publisher": false,
+          "company": {
+            "id": 722,
+            "name": "343 Industries"
+          }
+        },
+        {
+          "developer": false,
+          "publisher": true,
+          "company": {
+            "id": 1010,
+            "name": "Microsoft Studios"
+          }
+        },
+        {
+          "developer": false,
+          "publisher": true,
+          "company": {
+            "id": 17966,
+            "name": "Xbox Game Studios"
+          }
+        }
+      ]
+    },
+    {
+      "id": 227352,
+      "name": "Destiny 2: Forsaken Pack",
+      "game_type": 13,
+      "parent_game": 25657,
+      "external_games": [
+        {
+          "external_game_source": 26
+        }
+      ],
+      "involved_companies": [
+        {
+          "developer": true,
+          "publisher": true,
+          "company": {
+            "id": 620,
+            "name": "Bungie"
+          }
+        }
+      ]
+    },
+    {
+      "id": 267639,
+      "name": "Half-Life 2: MMod - Half-Life 2: Update",
+      "game_type": 5,
+      "parent_game": 127906,
+      "first_release_date": 1545696000,
+      "involved_companies": [
+        {
+          "developer": true,
+          "publisher": true,
+          "company": {
+            "id": 25117,
+            "name": "Gunship_Mark_II"
+          }
+        },
+        {
+          "developer": true,
+          "publisher": false,
+          "company": {
+            "id": 56112,
+            "name": "MMod Team"
+          }
+        }
+      ]
+    },
+    {
+      "id": 270708,
+      "name": "Half-Life 2: MMod - Minerva",
+      "game_type": 5,
+      "parent_game": 174435,
+      "first_release_date": 1547337600,
+      "involved_companies": [
+        {
+          "developer": true,
+          "publisher": true,
+          "company": {
+            "id": 25117,
+            "name": "Gunship_Mark_II"
+          }
+        }
+      ]
+    },
+    {
+      "id": 271414,
+      "name": "Half-Life 2: MMod - Half-Life 2: Episode One",
+      "game_type": 5,
+      "parent_game": 338,
+      "first_release_date": 1545696000,
+      "involved_companies": [
+        {
+          "developer": true,
+          "publisher": true,
+          "company": {
+            "id": 25117,
+            "name": "Gunship_Mark_II"
+          }
+        },
+        {
+          "developer": true,
+          "publisher": false,
+          "company": {
+            "id": 56112,
+            "name": "MMod Team"
+          }
+        }
+      ]
+    },
+    {
+      "id": 271415,
+      "name": "Half-Life 2: MMod - Half-Life 2: Episode Two",
+      "game_type": 5,
+      "parent_game": 247,
+      "first_release_date": 1545696000,
+      "involved_companies": [
+        {
+          "developer": true,
+          "publisher": true,
+          "company": {
+            "id": 25117,
+            "name": "Gunship_Mark_II"
+          }
+        },
+        {
+          "developer": true,
+          "publisher": false,
+          "company": {
+            "id": 56112,
+            "name": "MMod Team"
+          }
+        }
+      ]
+    },
+    {
+      "id": 277143,
+      "name": "The Last of Us Part II Remastered",
+      "game_type": 9,
+      "parent_game": 26192,
+      "first_release_date": 1705622400,
+      "bundles": [
+        340213
+      ],
+      "total_rating_count": 215,
+      "external_games": [
+        {
+          "external_game_source": 1
+        },
+        {
+          "external_game_source": 14
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 20
+        },
+        {
+          "external_game_source": 26
+        }
+      ],
+      "involved_companies": [
+        {
+          "developer": false,
+          "publisher": true,
+          "company": {
+            "id": 10100,
+            "name": "Sony Interactive Entertainment"
+          }
+        },
+        {
+          "developer": true,
+          "publisher": false,
+          "company": {
+            "id": 401,
+            "name": "Naughty Dog"
+          }
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": {
+            "id": 291,
+            "name": "Nixxes Software"
+          }
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": {
+            "id": 2121,
+            "name": "Iron Galaxy Studios"
+          }
+        }
+      ]
+    },
+    {
+      "id": 279776,
+      "name": "The Last of Us Part II Remastered: W.L.F. Edition",
+      "game_type": 0,
+      "version_parent": 277143,
+      "first_release_date": 1705622400,
+      "involved_companies": [
+        {
+          "developer": false,
+          "publisher": true,
+          "company": {
+            "id": 10100,
+            "name": "Sony Interactive Entertainment"
+          }
+        },
+        {
+          "developer": true,
+          "publisher": false,
+          "company": {
+            "id": 401,
+            "name": "Naughty Dog"
+          }
+        }
+      ]
+    },
+    {
+      "id": 340213,
+      "name": "The Last of Us Complete",
+      "game_type": 3,
+      "first_release_date": 1744243200,
+      "external_games": [
+        {
+          "external_game_source": 36
+        }
+      ],
+      "involved_companies": [
+        {
+          "developer": true,
+          "publisher": false,
+          "company": {
+            "id": 401,
+            "name": "Naughty Dog"
+          }
+        },
+        {
+          "developer": false,
+          "publisher": true,
+          "company": {
+            "id": 10100,
+            "name": "Sony Interactive Entertainment"
+          }
+        }
+      ]
+    },
+    {
+      "id": 405240,
+      "name": "Final Fantasy VII Remake: Mako Crystal",
+      "game_type": 13,
+      "parent_game": 11169
+    },
+    {
+      "id": 415005,
+      "name": "The Witcher 3: Wild Hunt Remastered",
+      "game_type": 9,
+      "parent_game": 1942,
+      "first_release_date": 1790640000,
+      "total_rating_count": 20,
+      "external_games": [
+        {
+          "external_game_source": 14
+        }
+      ],
+      "involved_companies": [
+        {
+          "developer": true,
+          "publisher": true,
+          "company": {
+            "id": 908,
+            "name": "CD Projekt RED"
+          }
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": {
+            "id": 29744,
+            "name": "Virtuos Games"
+          }
+        }
+      ]
+    }
+  ],
+  "bundle_children": [
+    {
+      "id": 71,
+      "name": "Portal",
+      "game_type": 0,
+      "collections": [
+        87
+      ],
+      "franchises": [
+        1724
+      ],
+      "involved_companies": [
+        {
+          "developer": true,
+          "publisher": false,
+          "company": 56
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 1
+        }
+      ],
+      "bundles": [
+        339
+      ]
+    },
+    {
+      "id": 233,
+      "name": "Half-Life 2",
+      "game_type": 0,
+      "collections": [
+        35
+      ],
+      "franchises": [
+        425
+      ],
+      "involved_companies": [
+        {
+          "developer": true,
+          "publisher": false,
+          "company": 56
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 22994
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 1
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 24
+        }
+      ],
+      "bundles": [
+        339
+      ]
+    },
+    {
+      "id": 247,
+      "name": "Half-Life 2: Episode Two",
+      "game_type": 4,
+      "parent_game": 233,
+      "collections": [
+        35
+      ],
+      "franchises": [
+        425
+      ],
+      "involved_companies": [
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 19200
+        },
+        {
+          "developer": true,
+          "publisher": false,
+          "company": 56
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 56
+        }
+      ],
+      "bundles": [
+        339
+      ]
+    },
+    {
+      "id": 338,
+      "name": "Half-Life 2: Episode One",
+      "game_type": 4,
+      "parent_game": 233,
+      "collections": [
+        35
+      ],
+      "franchises": [
+        425
+      ],
+      "involved_companies": [
+        {
+          "developer": true,
+          "publisher": false,
+          "company": 56
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 19200
+        },
+        {
+          "developer": true,
+          "publisher": false,
+          "company": 56
+        }
+      ],
+      "bundles": [
+        339
+      ]
+    },
+    {
+      "id": 891,
+      "name": "Team Fortress 2",
+      "game_type": 0,
+      "collections": [
+        218
+      ],
+      "franchises": [
+        2891
+      ],
+      "involved_companies": [
+        {
+          "developer": true,
+          "publisher": false,
+          "company": 56
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 56
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 1
+        }
+      ],
+      "bundles": [
+        339
+      ]
+    },
+    {
+      "id": 986,
+      "name": "Halo 2",
+      "game_type": 0,
+      "collections": [
+        173
+      ],
+      "franchises": [
+        137
+      ],
+      "involved_companies": [
+        {
+          "developer": true,
+          "publisher": false,
+          "company": 620
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 53
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 362
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 53
+        }
+      ],
+      "bundles": [
+        41608
+      ]
+    },
+    {
+      "id": 987,
+      "name": "Halo 3",
+      "game_type": 0,
+      "collections": [
+        173
+      ],
+      "franchises": [
+        137
+      ],
+      "involved_companies": [
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 53
+        },
+        {
+          "developer": true,
+          "publisher": false,
+          "company": 620
+        }
+      ],
+      "bundles": [
+        7348,
+        41608
+      ]
+    },
+    {
+      "id": 989,
+      "name": "Halo 3: ODST",
+      "game_type": 0,
+      "collections": [
+        173
+      ],
+      "franchises": [
+        137
+      ],
+      "involved_companies": [
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 53
+        },
+        {
+          "developer": true,
+          "publisher": false,
+          "company": 620
+        }
+      ],
+      "bundles": [
+        7348
+      ]
+    },
+    {
+      "id": 990,
+      "name": "Halo: Reach",
+      "game_type": 0,
+      "collections": [
+        173
+      ],
+      "franchises": [
+        137
+      ],
+      "involved_companies": [
+        {
+          "developer": true,
+          "publisher": false,
+          "company": 620
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 53
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 722
+        }
+      ],
+      "bundles": [
+        7348
+      ]
+    },
+    {
+      "id": 991,
+      "name": "Halo 4",
+      "game_type": 0,
+      "collections": [
+        173
+      ],
+      "franchises": [
+        137
+      ],
+      "involved_companies": [
+        {
+          "developer": true,
+          "publisher": false,
+          "company": 722
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 1010
+        }
+      ],
+      "bundles": [
+        7348,
+        41608
+      ]
+    },
+    {
+      "id": 1286,
+      "name": "Conker's Bad Fur Day",
+      "game_type": 0,
+      "collections": [
+        285
+      ],
+      "involved_companies": [
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 197
+        },
+        {
+          "developer": true,
+          "publisher": false,
+          "company": 771
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 812
+        }
+      ],
+      "bundles": [
+        11147
+      ]
+    },
+    {
+      "id": 1355,
+      "name": "Jet Force Gemini",
+      "game_type": 0,
+      "involved_companies": [
+        {
+          "developer": true,
+          "publisher": false,
+          "company": 771
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 812
+        }
+      ],
+      "bundles": [
+        11147
+      ]
+    },
+    {
+      "id": 1465,
+      "name": "Perfect Dark Zero",
+      "game_type": 0,
+      "collections": [
+        307
+      ],
+      "franchises": [
+        2687
+      ],
+      "involved_companies": [
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 53
+        },
+        {
+          "developer": true,
+          "publisher": false,
+          "company": 771
+        }
+      ],
+      "bundles": [
+        11147
+      ]
+    },
+    {
+      "id": 1466,
+      "name": "Perfect Dark",
+      "game_type": 9,
+      "parent_game": 1463,
+      "collections": [
+        307
+      ],
+      "franchises": [
+        2687
+      ],
+      "involved_companies": [
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 53
+        },
+        {
+          "developer": true,
+          "publisher": false,
+          "company": 279
+        },
+        {
+          "developer": true,
+          "publisher": false,
+          "company": 771
+        }
+      ],
+      "bundles": [
+        11147
+      ]
+    },
+    {
+      "id": 1942,
+      "name": "The Witcher 3: Wild Hunt",
+      "game_type": 0,
+      "collections": [
+        62
+      ],
+      "franchises": [
+        452
+      ],
+      "involved_companies": [
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 50
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 3119
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 1217
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 248
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 5696
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 946
+        },
+        {
+          "developer": true,
+          "publisher": false,
+          "company": 908
+        }
+      ],
+      "bundles": [
+        22439,
+        141472
+      ]
+    },
+    {
+      "id": 2640,
+      "name": "Halo: Combat Evolved Anniversary",
+      "game_type": 9,
+      "parent_game": 740,
+      "collections": [
+        173
+      ],
+      "franchises": [
+        137
+      ],
+      "involved_companies": [
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 1010
+        },
+        {
+          "developer": true,
+          "publisher": false,
+          "company": 722
+        }
+      ],
+      "bundles": [
+        7348,
+        41608
+      ]
+    },
+    {
+      "id": 2970,
+      "name": "Battletoads",
+      "game_type": 0,
+      "collections": [
+        545
+      ],
+      "franchises": [
+        793
+      ],
+      "involved_companies": [
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 10068
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 33804
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 489
+        },
+        {
+          "developer": true,
+          "publisher": false,
+          "company": 771
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 1384
+        }
+      ],
+      "bundles": [
+        11147
+      ]
+    },
+    {
+      "id": 3008,
+      "name": "Banjo-Kazooie: Nuts & Bolts",
+      "game_type": 0,
+      "collections": [
+        440
+      ],
+      "franchises": [
+        1525
+      ],
+      "involved_companies": [
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 53
+        },
+        {
+          "developer": true,
+          "publisher": false,
+          "company": 771
+        }
+      ],
+      "bundles": [
+        11147
+      ]
+    },
+    {
+      "id": 3424,
+      "name": "Blast Corps",
+      "game_type": 0,
+      "involved_companies": [
+        {
+          "developer": true,
+          "publisher": false,
+          "company": 771
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 70
+        }
+      ],
+      "bundles": [
+        11147
+      ]
+    },
+    {
+      "id": 4479,
+      "name": "Snake Rattle 'n' Roll",
+      "game_type": 0,
+      "involved_companies": [
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 70
+        },
+        {
+          "developer": true,
+          "publisher": false,
+          "company": 771
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 33804
+        }
+      ],
+      "bundles": [
+        11147
+      ]
+    },
+    {
+      "id": 7029,
+      "name": "Kameo: Elements of Power",
+      "game_type": 0,
+      "collections": [
+        9609
+      ],
+      "involved_companies": [
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 53
+        },
+        {
+          "developer": true,
+          "publisher": false,
+          "company": 771
+        }
+      ],
+      "bundles": [
+        11147
+      ]
+    },
+    {
+      "id": 7236,
+      "name": "Viva Piñata",
+      "game_type": 0,
+      "collections": [
+        975
+      ],
+      "franchises": [
+        1967
+      ],
+      "involved_companies": [
+        {
+          "developer": true,
+          "publisher": false,
+          "company": 771
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 53
+        },
+        {
+          "developer": true,
+          "publisher": false,
+          "company": 60
+        }
+      ],
+      "bundles": [
+        11147
+      ]
+    },
+    {
+      "id": 7238,
+      "name": "Viva Piñata: Trouble in Paradise",
+      "game_type": 0,
+      "collections": [
+        975
+      ],
+      "franchises": [
+        1967
+      ],
+      "involved_companies": [
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 53
+        },
+        {
+          "developer": true,
+          "publisher": false,
+          "company": 771
+        }
+      ],
+      "bundles": [
+        11147
+      ]
+    },
+    {
+      "id": 7851,
+      "name": "Jetpac",
+      "game_type": 0,
+      "collections": [
+        1062
+      ],
+      "involved_companies": [
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 3772
+        },
+        {
+          "developer": true,
+          "publisher": false,
+          "company": 11556
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 1466
+        }
+      ],
+      "bundles": [
+        11147
+      ]
+    },
+    {
+      "id": 7852,
+      "name": "Lunar Jetman",
+      "game_type": 0,
+      "collections": [
+        1062
+      ],
+      "involved_companies": [
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 3772
+        },
+        {
+          "developer": true,
+          "publisher": false,
+          "company": 11556
+        }
+      ],
+      "bundles": [
+        11147
+      ]
+    },
+    {
+      "id": 7853,
+      "name": "Solar Jetman: Hunt for the Golden Warpship",
+      "game_type": 0,
+      "collections": [
+        1062
+      ],
+      "involved_companies": [
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 70
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 1384
+        },
+        {
+          "developer": true,
+          "publisher": false,
+          "company": 771
+        },
+        {
+          "developer": true,
+          "publisher": false,
+          "company": 3773
+        }
+      ],
+      "bundles": [
+        11147
+      ]
+    },
+    {
+      "id": 7854,
+      "name": "Jetpac Refuelled",
+      "game_type": 8,
+      "parent_game": 7851,
+      "collections": [
+        1062
+      ],
+      "involved_companies": [
+        {
+          "developer": true,
+          "publisher": false,
+          "company": 771
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 53
+        }
+      ],
+      "bundles": [
+        11147
+      ]
+    },
+    {
+      "id": 9155,
+      "name": "R.C. Pro-Am",
+      "game_type": 0,
+      "collections": [
+        1235
+      ],
+      "involved_companies": [
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 1384
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 70
+        },
+        {
+          "developer": true,
+          "publisher": false,
+          "company": 771
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 33804
+        }
+      ],
+      "bundles": [
+        11147
+      ]
+    },
+    {
+      "id": 9156,
+      "name": "R.C. Pro-Am II",
+      "game_type": 0,
+      "collections": [
+        1235
+      ],
+      "involved_companies": [
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 1384
+        },
+        {
+          "developer": true,
+          "publisher": false,
+          "company": 771
+        }
+      ],
+      "bundles": [
+        11147
+      ]
+    },
+    {
+      "id": 10613,
+      "name": "Killer Instinct Gold",
+      "game_type": 10,
+      "parent_game": 2930,
+      "collections": [
+        542
+      ],
+      "franchises": [
+        1358
+      ],
+      "involved_companies": [
+        {
+          "developer": true,
+          "publisher": false,
+          "company": 771
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 70
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 33804
+        }
+      ],
+      "bundles": [
+        11147
+      ]
+    },
+    {
+      "id": 11133,
+      "name": "Dark Souls III",
+      "game_type": 0,
+      "collections": [
+        543
+      ],
+      "franchises": [
+        1124
+      ],
+      "involved_companies": [
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 248
+        },
+        {
+          "developer": true,
+          "publisher": false,
+          "company": 1012
+        }
+      ],
+      "bundles": [
+        141472
+      ]
+    },
+    {
+      "id": 11147,
+      "name": "Rare Replay",
+      "game_type": 3,
+      "involved_companies": [
+        {
+          "developer": true,
+          "publisher": false,
+          "company": 771
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 1010
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 33566
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 7700
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 4449
+        }
+      ],
+      "bundles": [
+        41613
+      ]
+    },
+    {
+      "id": 11169,
+      "name": "Final Fantasy VII Remake",
+      "game_type": 8,
+      "parent_game": 427,
+      "collections": [
+        5134,
+        39,
+        9321,
+        9007
+      ],
+      "franchises": [
+        4
+      ],
+      "involved_companies": [
+        {
+          "developer": true,
+          "publisher": false,
+          "company": 45304
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 72234
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 45304
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 26
+        }
+      ],
+      "bundles": [
+        133299,
+        144024
+      ]
+    },
+    {
+      "id": 12359,
+      "name": "Knight Lore",
+      "game_type": 0,
+      "collections": [
+        926
+      ],
+      "involved_companies": [
+        {
+          "developer": true,
+          "publisher": false,
+          "company": 11556
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 11684
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 1466
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 3772
+        }
+      ],
+      "bundles": [
+        11147
+      ]
+    },
+    {
+      "id": 12503,
+      "name": "The Witcher 3: Wild Hunt - Hearts of Stone",
+      "game_type": 2,
+      "parent_game": 1942,
+      "collections": [
+        62
+      ],
+      "franchises": [
+        452
+      ],
+      "involved_companies": [
+        {
+          "developer": true,
+          "publisher": false,
+          "company": 908
+        }
+      ],
+      "bundles": [
+        22439
+      ]
+    },
+    {
+      "id": 12932,
+      "name": "Digger T. Rock: The Legend of the Lost City",
+      "game_type": 0,
+      "involved_companies": [
+        {
+          "developer": true,
+          "publisher": false,
+          "company": 771
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 70
+        }
+      ],
+      "bundles": [
+        11147
+      ]
+    },
+    {
+      "id": 13166,
+      "name": "The Witcher 3: Wild Hunt - Blood and Wine",
+      "game_type": 2,
+      "parent_game": 1942,
+      "collections": [
+        62
+      ],
+      "franchises": [
+        452
+      ],
+      "involved_companies": [
+        {
+          "developer": true,
+          "publisher": false,
+          "company": 908
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 4291
+        }
+      ],
+      "bundles": [
+        22439
+      ]
+    },
+    {
+      "id": 13693,
+      "name": "Atic Atac",
+      "game_type": 0,
+      "involved_companies": [
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 3772
+        },
+        {
+          "developer": true,
+          "publisher": false,
+          "company": 11556
+        }
+      ],
+      "bundles": [
+        11147
+      ]
+    },
+    {
+      "id": 14102,
+      "name": "Gunfright",
+      "game_type": 0,
+      "involved_companies": [
+        {
+          "developer": true,
+          "publisher": false,
+          "company": 3772
+        }
+      ],
+      "bundles": [
+        11147
+      ]
+    },
+    {
+      "id": 14588,
+      "name": "Underwurlde",
+      "game_type": 0,
+      "collections": [
+        926
+      ],
+      "involved_companies": [
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 3772
+        },
+        {
+          "developer": true,
+          "publisher": false,
+          "company": 11556
+        }
+      ],
+      "bundles": [
+        11147
+      ]
+    },
+    {
+      "id": 14589,
+      "name": "Slalom",
+      "game_type": 0,
+      "collections": [
+        6261
+      ],
+      "involved_companies": [
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 70
+        },
+        {
+          "developer": true,
+          "publisher": false,
+          "company": 771
+        }
+      ],
+      "bundles": [
+        11147
+      ]
+    },
+    {
+      "id": 14590,
+      "name": "Cobra Triangle",
+      "game_type": 0,
+      "involved_companies": [
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 70
+        },
+        {
+          "developer": true,
+          "publisher": false,
+          "company": 771
+        }
+      ],
+      "bundles": [
+        11147
+      ]
+    },
+    {
+      "id": 14591,
+      "name": "Battletoads",
+      "game_type": 0,
+      "collections": [
+        545
+      ],
+      "franchises": [
+        793
+      ],
+      "involved_companies": [
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 1
+        },
+        {
+          "developer": true,
+          "publisher": false,
+          "company": 771
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 1384
+        }
+      ],
+      "bundles": [
+        11147
+      ]
+    },
+    {
+      "id": 16605,
+      "name": "Gears of War: Ultimate Edition",
+      "game_type": 9,
+      "parent_game": 318793,
+      "collections": [
+        66
+      ],
+      "involved_companies": [
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 1010
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 221
+        },
+        {
+          "developer": true,
+          "publisher": false,
+          "company": 17463
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 5961
+        }
+      ],
+      "bundles": [
+        41613
+      ]
+    },
+    {
+      "id": 23057,
+      "name": "Sabre Wulf",
+      "game_type": 0,
+      "collections": [
+        926
+      ],
+      "involved_companies": [
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 3772
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 1375
+        },
+        {
+          "developer": true,
+          "publisher": false,
+          "company": 11556
+        }
+      ],
+      "bundles": [
+        11147
+      ]
+    },
+    {
+      "id": 41876,
+      "name": "Uncharted 3: Drake's Deception Remastered",
+      "game_type": 9,
+      "parent_game": 512,
+      "collections": [
+        97
+      ],
+      "franchises": [
+        2121
+      ],
+      "involved_companies": [
+        {
+          "developer": true,
+          "publisher": false,
+          "company": 401
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 1030
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 13634
+        }
+      ],
+      "bundles": [
+        10962,
+        89929
+      ]
+    },
+    {
+      "id": 41877,
+      "name": "Uncharted 2: Among Thieves Remastered",
+      "game_type": 9,
+      "parent_game": 565,
+      "collections": [
+        97
+      ],
+      "franchises": [
+        2121
+      ],
+      "involved_companies": [
+        {
+          "developer": true,
+          "publisher": false,
+          "company": 401
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 1030
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 13634
+        }
+      ],
+      "bundles": [
+        10962,
+        89929
+      ]
+    },
+    {
+      "id": 41878,
+      "name": "Uncharted: Drake's Fortune Remastered",
+      "game_type": 9,
+      "parent_game": 431,
+      "collections": [
+        97
+      ],
+      "franchises": [
+        2121
+      ],
+      "involved_companies": [
+        {
+          "developer": true,
+          "publisher": false,
+          "company": 401
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 13634
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 1030
+        }
+      ],
+      "bundles": [
+        10962,
+        89929
+      ]
+    },
+    {
+      "id": 125009,
+      "name": "Halo 2: Anniversary",
+      "game_type": 9,
+      "parent_game": 986,
+      "collections": [
+        173
+      ],
+      "franchises": [
+        137
+      ],
+      "involved_companies": [
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 17966
+        },
+        {
+          "developer": true,
+          "publisher": false,
+          "company": 722
+        },
+        {
+          "developer": true,
+          "publisher": false,
+          "company": 620
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 946
+        }
+      ],
+      "bundles": [
+        7348
+      ]
+    },
+    {
+      "id": 144037,
+      "name": "Final Fantasy VII Remake: Episode Intermission",
+      "game_type": 1,
+      "parent_game": 11169,
+      "collections": [
+        39,
+        5134,
+        9321,
+        9007
+      ],
+      "franchises": [
+        4
+      ],
+      "involved_companies": [
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 26
+        },
+        {
+          "developer": true,
+          "publisher": false,
+          "company": 45304
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 45304
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 72234
+        }
+      ],
+      "bundles": [
+        144024
+      ]
+    },
+    {
+      "id": 157580,
+      "name": "The Witcher 3: Wild Hunt - New Quest 'Contract: Skellige's Most Wanted'",
+      "game_type": 1,
+      "parent_game": 1942,
+      "collections": [
+        62
+      ],
+      "franchises": [
+        452
+      ],
+      "involved_companies": [
+        {
+          "developer": true,
+          "publisher": false,
+          "company": 908
+        }
+      ],
+      "bundles": [
+        22439
+      ]
+    },
+    {
+      "id": 170449,
+      "name": "The Witcher 3: Wild Hunt - New Quest 'Where the Cat and Wolf Play...'",
+      "game_type": 1,
+      "parent_game": 1942,
+      "collections": [
+        62
+      ],
+      "franchises": [
+        452
+      ],
+      "involved_companies": [
+        {
+          "developer": true,
+          "publisher": false,
+          "company": 908
+        }
+      ],
+      "bundles": [
+        22439
+      ]
+    },
+    {
+      "id": 170450,
+      "name": "The Witcher 3: Wild Hunt - New Quest 'Fool's Gold'",
+      "game_type": 1,
+      "parent_game": 1942,
+      "collections": [
+        62
+      ],
+      "franchises": [
+        452
+      ],
+      "involved_companies": [
+        {
+          "developer": true,
+          "publisher": false,
+          "company": 908
+        }
+      ],
+      "bundles": [
+        22439
+      ]
+    },
+    {
+      "id": 170451,
+      "name": "The Witcher 3: Wild Hunt - New Quest 'Contract: Missing Miners'",
+      "game_type": 1,
+      "parent_game": 1942,
+      "collections": [
+        62
+      ],
+      "franchises": [
+        452
+      ],
+      "involved_companies": [
+        {
+          "developer": true,
+          "publisher": false,
+          "company": 908
+        }
+      ],
+      "bundles": [
+        22439
+      ]
+    },
+    {
+      "id": 201644,
+      "name": "Banjo-Kazooie",
+      "game_type": 9,
+      "parent_game": 2148,
+      "collections": [
+        440
+      ],
+      "franchises": [
+        1525
+      ],
+      "involved_companies": [
+        {
+          "developer": true,
+          "publisher": false,
+          "company": 771
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 279
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 53
+        }
+      ],
+      "bundles": [
+        11147
+      ]
+    },
+    {
+      "id": 201645,
+      "name": "Banjo-Tooie",
+      "game_type": 9,
+      "parent_game": 3418,
+      "collections": [
+        440
+      ],
+      "franchises": [
+        1525
+      ],
+      "involved_companies": [
+        {
+          "developer": true,
+          "publisher": false,
+          "company": 771
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 279
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 53
+        }
+      ],
+      "bundles": [
+        11147
+      ]
+    },
+    {
+      "id": 204350,
+      "name": "The Last of Us Part I",
+      "game_type": 8,
+      "parent_game": 1009,
+      "collections": [
+        864
+      ],
+      "franchises": [
+        2675
+      ],
+      "involved_companies": [
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 10100
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 2121
+        },
+        {
+          "developer": true,
+          "publisher": false,
+          "company": 401
+        }
+      ],
+      "bundles": [
+        340213
+      ]
+    },
+    {
+      "id": 229855,
+      "name": "Banjo-Kazooie: Nuts & Bolts - L.O.G.'s Lost Challenges",
+      "game_type": 1,
+      "parent_game": 3008,
+      "involved_companies": [
+        {
+          "developer": true,
+          "publisher": false,
+          "company": 771
+        }
+      ],
+      "bundles": [
+        11147
+      ]
+    },
+    {
+      "id": 277143,
+      "name": "The Last of Us Part II Remastered",
+      "game_type": 9,
+      "parent_game": 26192,
+      "collections": [
+        864
+      ],
+      "franchises": [
+        2675
+      ],
+      "involved_companies": [
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 10100
+        },
+        {
+          "developer": true,
+          "publisher": false,
+          "company": 401
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 291
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 2121
+        }
+      ],
+      "bundles": [
+        340213
+      ]
+    },
+    {
+      "id": 324860,
+      "name": "Grabbed by the Ghoulies",
+      "game_type": 9,
+      "parent_game": 5849,
+      "involved_companies": [
+        {
+          "developer": true,
+          "publisher": false,
+          "company": 771
+        },
+        {
+          "developer": false,
+          "publisher": false,
+          "company": 1010
+        }
+      ],
+      "bundles": [
+        11147
+      ]
+    }
+  ],
+  "bundle_ids": [
+    339,
+    7348,
+    10962,
+    11147,
+    22439,
+    41608,
+    41613,
+    89929,
+    133299,
+    141472,
+    144024,
+    340213
+  ]
+}

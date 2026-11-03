@@ -3,7 +3,8 @@
  * (src/hooks/useTheme.ts) so they follow the user's chosen palette.
  */
 export const retroGamingPCStaticColors = {
-  error: '#c45a3c',
+  /** Bright enough for ≥ 4.5:1 on every dark theme surface. */
+  error: '#ff8a7a',
 } as const;
 
 /** Fixed navigation chrome dimensions — constant so tab switches never shift layout. */

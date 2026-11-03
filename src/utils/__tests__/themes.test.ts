@@ -2,6 +2,7 @@ import palettes from '@/constants/themePalettes.json';
 import {
   DEFAULT_THEME,
   hexToTriplet,
+  NEUTRAL_TEXT_TOKENS,
   isThemeName,
   THEME_NAMES,
   THEME_TOKENS,
@@ -43,24 +44,45 @@ describe('colour themes', () => {
     for (const hex of Object.values(palette)) expect(hex).toMatch(/^#[0-9a-f]{6}$/i);
   });
 
-  it.each(THEME_NAMES.filter((n) => n !== 'olive'))('%s keeps olive’s text contrast (±0.15)', (name) => {
+  it.each(THEME_NAMES.filter((n) => n !== 'olive'))('%s keeps olive’s text contrast (±0.25)', (name) => {
     const olive = palettes.olive as Record<string, string>;
     const theme = palettes[name] as Record<string, string>;
     for (const [fg, bg] of PAIRS) {
-      expect(Math.abs(contrast(theme[fg]!, theme[bg]!) - contrast(olive[fg]!, olive[bg]!))).toBeLessThan(0.15);
+      expect(Math.abs(contrast(theme[fg]!, theme[bg]!) - contrast(olive[fg]!, olive[bg]!))).toBeLessThan(0.25);
     }
   });
 
-  it.each(THEME_NAMES)('%s body text stays readable (≥ 4.5:1 on dark and card)', (name) => {
+  it('text is neutral grey (no tint) and identical in every theme', () => {
+    for (const token of NEUTRAL_TEXT_TOKENS) {
+      const values = new Set(THEME_NAMES.map((n) => (palettes[n] as Record<string, string>)[token]));
+      expect(values.size).toBe(1);
+      const hex = [...values][0]!;
+      expect(hex.slice(1, 3)).toBe(hex.slice(3, 5)); // R = G
+      expect(hex.slice(3, 5)).toBe(hex.slice(5, 7)); // G = B
+    }
+  });
+
+  it.each(THEME_NAMES)('%s is high contrast (AAA body text, AA everything else)', (name) => {
     const t = palettes[name] as Record<string, string>;
-    expect(contrast(t.text!, t.dark!)).toBeGreaterThanOrEqual(4.5);
-    expect(contrast(t['text-bright']!, t.card!)).toBeGreaterThanOrEqual(4.5);
+    for (const surface of ['dark', 'card', 'panel', 'button']) {
+      expect(contrast(t.text!, t[surface]!)).toBeGreaterThanOrEqual(7); // WCAG AAA
+      expect(contrast(t['text-bright']!, t[surface]!)).toBeGreaterThanOrEqual(7);
+      expect(contrast(t['text-muted']!, t[surface]!)).toBeGreaterThanOrEqual(4.5); // WCAG AA
+    }
+    expect(contrast(t['text-bright']!, t.active!)).toBeGreaterThanOrEqual(4.5); // primary buttons
+    expect(contrast(t.ink!, t.highlight!)).toBeGreaterThanOrEqual(4.5); // "Main" badge
+  });
+
+  it.each(THEME_NAMES)('%s is a dark theme (backgrounds near black)', (name) => {
+    const t = palettes[name] as Record<string, string>;
+    expect(luminance(t.dark!)).toBeLessThan(0.015);
+    expect(luminance(t.card!)).toBeLessThan(0.02);
   });
 
   it('builds JS palettes and CSS variables', () => {
     expect(themePalette('blue').textBright).toBe(palettes.blue['text-bright']);
     expect(hexToTriplet('#3a3d36')).toBe('58 61 54');
-    expect(themeCssVariables('olive')['--rgpc-dark']).toBe('58 61 54');
+    expect(themeCssVariables('olive')['--rgpc-dark']).toBe(hexToTriplet(palettes.olive.dark));
     expect(Object.keys(themeCssVariables('pink'))).toHaveLength(THEME_TOKENS.length);
   });
 

@@ -5,24 +5,28 @@ import type { ComponentProps } from 'react';
 import { RetroGamingPCHeaderBar } from '@/components/navigation/RetroGamingPCHeaderBar';
 import { RetroGamingPCTabBar } from '@/components/navigation/RetroGamingPCTabBar';
 import { useIsDesktop } from '@/hooks/useIsDesktop';
+import { useApplyPendingRating } from '@/hooks/useRatings';
 import { useThemeColors } from '@/hooks/useTheme';
 
 type IconName = ComponentProps<typeof MaterialCommunityIcons>['name'];
 
-const TABS: readonly { name: 'index' | 'search' | 'post' | 'profile'; title: string; icon: IconName }[] = [
+const TABS: readonly { name: 'index' | 'search' | 'post' | 'stats' | 'profile'; title: string; icon: IconName }[] = [
   { name: 'index', title: 'Home', icon: 'home-outline' },
   { name: 'search', title: 'Search', icon: 'magnify' },
   { name: 'post', title: 'Review Studio', icon: 'pencil-box-outline' },
+  { name: 'stats', title: 'Stats', icon: 'chart-bar' },
   { name: 'profile', title: 'Profile', icon: 'account-outline' },
 ];
 
 /**
- * 4-tab navigator: bottom bar on mobile, permanent left sidebar on desktop.
+ * 5-tab navigator: bottom bar on mobile, permanent left sidebar on desktop.
  * The same navigator instance is kept across breakpoints (only tabBarPosition
  * changes), so crossing the breakpoint never remounts screens or loses state.
  */
 export default function TabsLayout() {
   const themeColors = useThemeColors();
+  // A star tapped while signed out is applied once the user is in.
+  useApplyPendingRating();
   const isDesktop = useIsDesktop();
 
   return (

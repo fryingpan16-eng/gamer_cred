@@ -1,11 +1,18 @@
 import { Image, Text, View } from 'react-native';
 
 import { CoverTile } from '@/components/profile/CoverTile';
+import { QuickRating } from '@/components/rating/QuickRating';
 import { RetroGamingPCBadge } from '@/components/ui';
+import { usePrimaryRatingScale } from '@/hooks/useAuth';
+import { useMyGameRating, useRateGame } from '@/hooks/useRatings';
+import { useMyReviewForGame } from '@/hooks/useReviews';
 import type { GameReviewStats } from '@/services/games';
 import { igdbImageUrl, type IgdbGameDetail } from '@/types/igdb';
+import type { StoredRating } from '@/utils/rating';
 
-import { ScoreBox } from './ScoreBox';
+import { EntryTypeBadge } from './EntryTypeBadge';
+import { ScoreScales } from './ScoreScales';
+import { WriteReviewButton } from './WriteReviewButton';
 
 type GameHeroProps = { game: IgdbGameDetail; stats: GameReviewStats | undefined };
 
@@ -13,12 +20,26 @@ function firstRelease(game: IgdbGameDetail): string | null {
   return game.releaseDates.find((r) => r.date)?.human ?? game.releaseDates[0]?.human ?? (game.releaseYear ? String(game.releaseYear) : null);
 }
 
-/** Store-page banner: dimmed artwork backdrop, cover, title block, badges and score boxes. */
+/**
+ * Store-page banner: dimmed artwork backdrop, cover, title block, badges, the
+ * Gamer Cred score, your quick rating (always visible, one tap) and the
+ * "Write a review" button.
+ */
 export function GameHero({ game, stats }: GameHeroProps) {
   const backdrop = game.artworkIds[0] ?? game.screenshotIds[0] ?? null;
   const release = firstRelease(game);
-  // Community average is on the canonical 1–100 scale.
-  const community = stats && stats.count > 0 && stats.average !== null ? Math.round(stats.average) : null;
+  const mine = useMyReviewForGame(game.id);
+  const myRating = useMyGameRating(game.id);
+  const { rate } = useRateGame();
+  const primaryScale = usePrimaryRatingScale();
+  // Community average (canonical 1–100) shown like any rating, in the viewer's chosen scale.
+  const community: StoredRating | null =
+    stats && stats.count > 0 && stats.average !== null
+      ? (() => {
+          const numeric = Math.min(100, Math.max(1, Math.round(stats.average)));
+          return { numeric, inputScale: 'numeric', input: String(numeric) };
+        })()
+      : null;
 
   return (
     <View className="retrogamingpc-window overflow-hidden">
@@ -51,6 +72,7 @@ export function GameHero({ game, stats }: GameHeroProps) {
               {game.publishers.join(', ')}
             </Text>
           ) : null}
+          <EntryTypeBadge game={game} />
           {release ? (
             <Text className="text-retrogamingpc-sm text-retrogamingpc-text">
               <Text className="text-retrogamingpc-text-muted">Release: </Text>
@@ -66,9 +88,44 @@ export function GameHero({ game, stats }: GameHeroProps) {
             ))}
           </View>
           <View className="flex-row flex-wrap gap-3 pt-2">
-            <ScoreBox label="Critics" score={game.criticRating} caption={game.criticRatingCount ? `${game.criticRatingCount} reviews` : undefined} />
-            <ScoreBox label="IGDB users" score={game.userRating} caption={game.userRatingCount ? `${game.userRatingCount} votes` : undefined} />
-            <ScoreBox label="Gamer Cred" score={community} caption={stats ? `${stats.count} review${stats.count === 1 ? '' : 's'}` : undefined} />
+            <View className="retrogamingpc-bevel-inset min-w-[200px] flex-1 gap-1.5 bg-retrogamingpc-dark p-2">
+              <Text className="retrogamingpc-label">Gamer Cred score · avg</Text>
+              <ScoreScales
+                rating={community}
+                primaryScale={primaryScale}
+                // The exact average (one decimal), not the rounded score used for tier / stars.
+                numericText={community && stats?.average !== null && stats?.average !== undefined ? stats.average.toFixed(1) : undefined}
+              />
+              <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted">
+                {stats ? (stats.count > 0 ? `${stats.count} rating${stats.count === 1 ? '' : 's'}` : 'No ratings yet') : '…'}
+              </Text>
+            </View>
+            <View className="retrogamingpc-bevel-inset min-w-[200px] flex-1 gap-1.5 bg-retrogamingpc-dark p-2">
+              <Text className="retrogamingpc-label">Your rating</Text>
+              {/* Your default scale, large and tappable; the other scales follow below. */}
+              <QuickRating
+                gameId={game.id}
+                gameName={game.name}
+                size="regular"
+                showTierBadge={false}
+                value={myRating.rating}
+                readOnly={myRating.isPending}
+                onChange={(next) => rate(game.id, next, myRating.rating)}
+              />
+              <ScoreScales rating={myRating.rating} primaryScale={primaryScale} omitPrimary />
+              <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted">
+                {myRating.rating
+                  ? mine.data
+                    ? 'Also the score on your review.'
+                    : 'Private — counts toward your stats and the Gamer Cred score.'
+                  : primaryScale === 'numeric'
+                    ? 'Type a score and press Enter, or use − / +.'
+                    : 'Tap to rate. Tap it again to clear.'}
+              </Text>
+            </View>
+          </View>
+          <View className="flex-row pt-1">
+            <WriteReviewButton gameId={game.id} />
           </View>
         </View>
       </View>

@@ -58,7 +58,7 @@ export function NowPlayingSlotCard({
       >
         {!filled ? (
           <View className="items-center gap-1">
-            <Text className="text-[32px] leading-[34px] text-retrogamingpc-highlight">+</Text>
+            <Text className="text-[32px] leading-[34px] text-retrogamingpc-text-bright">+</Text>
             <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted">Add game</Text>
           </View>
         ) : game?.coverImageId ? (

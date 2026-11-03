@@ -39,6 +39,25 @@ import {
   type IgdbSearchResponse,
 } from '../_shared/igdb-contract.ts';
 
+import {
+  collectionsFromChildren,
+  COLLECTION_CHILD_FIELDS,
+  COLLECTION_CHILD_GAME_TYPES,
+  curateGames,
+  CURATION_FIELDS,
+  parentGameOf,
+  SEARCH_CANDIDATE_LIMIT,
+  searchWhereClause,
+  type BundleChild,
+  type CollectionInfo,
+  type CuratedGame,
+  type CurationDeps,
+  type OverrideAction,
+} from './curation.ts';
+import { cacheFreshness, computeRulesVersion, runInBackground, SEARCH_REFRESH_AFTER_MS } from './cache_policy.ts';
+import * as curationModule from './curation.ts';
+import { rankCompanies, rankGames } from './ranking.ts';
+import * as rankingModule from './ranking.ts';
 import { fetchRawgPcRequirements, RawgError, searchRawgCreators } from './rawg.ts';
 
 // -----------------------------------------------------------------------------
@@ -55,8 +74,12 @@ const CACHE_TTL_MS: Record<IgdbEntityType, number> = {
 const STALE_MAX_MS = 60 * 24 * HOUR_MS; // serve stale up to 60d if the upstream is down
 /** Individual game records (titles, covers) barely change. */
 const GAME_RECORD_TTL_MS = 7 * 24 * HOUR_MS;
+/** Bundle → "is a real collection" results (curation.ts) rarely change. */
+const BUNDLE_CHECK_TTL_MS = 30 * 24 * HOUR_MS;
+/** How long an isolate reuses game_overrides before re-reading the table. */
+const OVERRIDES_TTL_MS = 5 * 60 * 1000;
 const UPSTREAM_TIMEOUT_MS = 8000;
-const CACHE_VERSION = 'v1'; // bump when result shapes change
+const CACHE_VERSION = 'v3'; // bump when result shapes, ranking or curation change (v3: curation filter + entryType)
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -201,7 +224,37 @@ function getTwitchToken(forceRefresh = false): Promise<string> {
 // IGDB
 // -----------------------------------------------------------------------------
 
-async function igdbRequest<T>(endpoint: string, body: string, retried = false): Promise<T> {
+/**
+ * IGDB allows ~4 requests/second and 8 open requests. Every IGDB call goes
+ * through this per-isolate limiter: requests start at most every 250 ms and no
+ * more than 8 run at once.
+ */
+const IGDB_MIN_INTERVAL_MS = 250;
+const IGDB_MAX_CONCURRENT = 8;
+let igdbNextSlot = 0;
+let igdbActive = 0;
+const igdbWaiters: (() => void)[] = [];
+
+async function withIgdbRateLimit<T>(task: () => Promise<T>): Promise<T> {
+  if (igdbActive >= IGDB_MAX_CONCURRENT) await new Promise<void>((resolve) => igdbWaiters.push(resolve));
+  igdbActive++;
+  try {
+    const now = Date.now();
+    const start = Math.max(now, igdbNextSlot);
+    igdbNextSlot = start + IGDB_MIN_INTERVAL_MS;
+    if (start > now) await new Promise((r) => setTimeout(r, start - now));
+    return await task();
+  } finally {
+    igdbActive--;
+    igdbWaiters.shift()?.();
+  }
+}
+
+function igdbRequest<T>(endpoint: string, body: string, retried = false): Promise<T> {
+  return withIgdbRateLimit(() => igdbRequestOnce<T>(endpoint, body, retried));
+}
+
+async function igdbRequestOnce<T>(endpoint: string, body: string, retried = false): Promise<T> {
   const token = await getTwitchToken(retried);
   const res = await fetch(`https://api.igdb.com/v4/${endpoint}`, {
     method: 'POST',
@@ -217,7 +270,7 @@ async function igdbRequest<T>(endpoint: string, body: string, retried = false): 
 
   if (res.status === 401 && !retried) {
     cachedToken = null;
-    return igdbRequest<T>(endpoint, body, true);
+    return igdbRequestOnce<T>(endpoint, body, true);
   }
   if (res.status === 429) throw new HttpError(429, 'IGDB rate limit reached. Try again in a moment.');
   if (!res.ok) throw new HttpError(502, `IGDB request failed (${res.status})`);
@@ -236,9 +289,15 @@ type RawGame = {
   cover?: { image_id?: string };
   first_release_date?: number; // unix seconds
   total_rating?: number;
+  total_rating_count?: number;
+  /** Curation inputs (curation.ts). */
+  game_type?: number;
+  version_parent?: number | null;
+  parent_game?: { id: number; name?: string } | number | null;
   platforms?: { abbreviation?: string; name?: string }[];
   genres?: { name?: string }[];
-  involved_companies?: { developer?: boolean; company?: { name?: string } }[];
+  involved_companies?: { developer?: boolean; publisher?: boolean; company?: { id: number; name?: string } }[];
+  external_games?: { external_game_source?: number }[];
 };
 
 type RawCompany = {
@@ -260,24 +319,28 @@ function compact(values: (string | undefined)[]): string[] {
   return [...new Set(values.filter((v): v is string => typeof v === 'string' && v.length > 0))];
 }
 
+// CURATION_FIELDS already includes total_rating_count, external games and involved companies.
 const GAME_FIELDS = [
-  'fields name,slug,cover.image_id,first_release_date,total_rating,',
-  'platforms.abbreviation,platforms.name,genres.name,',
-  'involved_companies.developer,involved_companies.company.name;',
+  `fields name,slug,cover.image_id,total_rating,${CURATION_FIELDS},`,
+  'platforms.abbreviation,platforms.name,genres.name;',
 ].join(' ');
 
 async function searchGames(query: string, limit: number): Promise<IgdbGameResult[]> {
   const q = apicalypseLiteral(query);
+  // Pre-filter at IGDB and fetch a wide pool: for broad terms IGDB's own ranking
+  // puts fan games first, so official titles only appear deeper in the results.
+  // Curation then drops the rest and ranking.ts orders by title match + popularity.
   const raw = await igdbRequest<RawGame[]>(
     'games',
     [
       `search "${q}";`,
       GAME_FIELDS,
-      'where version_parent = null;', // hide editions/bundles of the same game
-      `limit ${limit};`,
+      `where ${searchWhereClause(await getOverrides())};`,
+      `limit ${SEARCH_CANDIDATE_LIMIT};`,
     ].join(' '),
   );
-  return mapGames(raw);
+  const { kept } = await curateGames(raw, curationDeps);
+  return mapGames(rankGames(kept, query, limit));
 }
 
 type RawGameDetail = Omit<RawGame, 'involved_companies'> & {
@@ -290,7 +353,7 @@ type RawGameDetail = Omit<RawGame, 'involved_companies'> & {
   player_perspectives?: { name?: string }[];
   game_engines?: { name?: string }[];
   franchises?: { name?: string }[];
-  involved_companies?: { developer?: boolean; publisher?: boolean; company?: { name?: string } }[];
+  involved_companies?: { developer?: boolean; publisher?: boolean; company?: { id: number; name?: string } }[];
   release_dates?: { date?: number; human?: string; platform?: { abbreviation?: string; name?: string } }[];
   aggregated_rating?: number;
   aggregated_rating_count?: number;
@@ -301,17 +364,21 @@ type RawGameDetail = Omit<RawGame, 'involved_companies'> & {
 const DETAIL_FIELDS = [
   GAME_FIELDS.replace(/;$/, ','),
   'summary,storyline,screenshots.image_id,artworks.image_id,themes.name,game_modes.name,',
-  'player_perspectives.name,game_engines.name,franchises.name,involved_companies.publisher,',
+  'player_perspectives.name,game_engines.name,franchises.name,',
   'release_dates.date,release_dates.human,release_dates.platform.abbreviation,release_dates.platform.name,',
   'aggregated_rating,aggregated_rating_count,rating,rating_count;',
 ].join(' ');
 
 const PC_PLATFORM_NAMES = new Set(['PC', 'Mac', 'Linux', 'PC (Microsoft Windows)']);
 
-async function fetchGameDetail(id: number): Promise<IgdbGameDetail | null> {
+async function fetchGameDetail(
+  id: number,
+  reuse?: { requirements: IgdbGameDetail['systemRequirements'] },
+): Promise<IgdbGameDetail | null> {
   const raw = await igdbRequest<RawGameDetail[]>('games', `${DETAIL_FIELDS} where id = ${id}; limit 1;`);
-  const g = raw[0];
-  if (!g) return null;
+  const { kept } = await curateGames(raw, curationDeps);
+  const g = kept[0];
+  if (!g) return null; // unknown id, or not a catalogue entry (edition, remaster, mod, …)
   const [base] = mapGames([g]);
   if (!base) return null;
 
@@ -350,7 +417,9 @@ async function fetchGameDetail(id: number): Promise<IgdbGameDetail | null> {
 
   // PC requirements are best-effort: a RAWG outage or missing key never breaks the page.
   const apiKey = Deno.env.get('RAWG_API_KEY');
-  if (apiKey && detail.platforms.some((p) => PC_PLATFORM_NAMES.has(p))) {
+  if (reuse) {
+    detail.systemRequirements = reuse.requirements;
+  } else if (apiKey && detail.platforms.some((p) => PC_PLATFORM_NAMES.has(p))) {
     try {
       detail.systemRequirements = await fetchRawgPcRequirements(detail.slug, detail.name, apiKey, {
         timeoutMs: UPSTREAM_TIMEOUT_MS,
@@ -364,16 +433,21 @@ async function fetchGameDetail(id: number): Promise<IgdbGameDetail | null> {
 
 async function fetchGamesByIds(ids: number[]): Promise<IgdbGameResult[]> {
   const raw = await igdbRequest<RawGame[]>('games', `${GAME_FIELDS} where id = (${ids.join(',')}); limit ${ids.length};`);
-  return mapGames(raw);
+  // Ids that fail curation are simply not returned (they show up as `missing`).
+  const { kept } = await curateGames(raw, curationDeps);
+  return mapGames(kept);
 }
 
-function mapGames(raw: RawGame[]): IgdbGameResult[] {
+function mapGames(raw: CuratedGame<RawGame>[]): IgdbGameResult[] {
   return raw
     .filter((g) => typeof g.name === 'string')
     .map((g) => ({
       kind: 'game' as const,
       id: g.id,
       name: g.name!,
+      entryType: g.entryType,
+      parentGame: parentGameOf(g),
+      collectionGames: g.collectionGames,
       slug: g.slug ?? null,
       coverImageId: g.cover?.image_id ?? null,
       releaseYear: yearFromUnix(g.first_release_date),
@@ -397,15 +471,7 @@ async function searchCompanies(query: string, limit: number): Promise<IgdbCompan
     ].join(' '),
   );
 
-  const rank = (name: string) => {
-    const n = name.toLowerCase();
-    if (n === q) return 0;
-    if (n.startsWith(q)) return 1;
-    if (n.split(/\s+/).some((word) => word.startsWith(q))) return 2;
-    return 3;
-  };
-
-  return raw
+  const companies = raw
     .filter((c) => typeof c.name === 'string')
     .map((c) => ({
       kind: 'company' as const,
@@ -417,13 +483,8 @@ async function searchCompanies(query: string, limit: number): Promise<IgdbCompan
       description: c.description ? c.description.slice(0, 280) : null,
       developedCount: c.developed?.length ?? 0,
       publishedCount: c.published?.length ?? 0,
-    }))
-    .sort(
-      (a, b) =>
-        rank(a.name) - rank(b.name) ||
-        b.developedCount + b.publishedCount - (a.developedCount + a.publishedCount),
-    )
-    .slice(0, limit);
+    }));
+  return rankCompanies(companies, query, limit);
 }
 
 async function fetchUpstream(entityType: IgdbEntityType, query: string, limit: number): Promise<unknown[]> {
@@ -446,7 +507,28 @@ async function fetchUpstream(entityType: IgdbEntityType, query: string, limit: n
 // Cache (igdb_cache — shared by IGDB and RAWG; keys are namespaced by entity)
 // -----------------------------------------------------------------------------
 
-type CachedPayload = { results: unknown[]; fetchedAt: string };
+/** `rulesVersion` is set on IGDB-derived payloads only (RAWG data is unstamped). */
+type CachedPayload = { results: unknown[]; fetchedAt: string; rulesVersion?: string };
+
+/**
+ * Fingerprint of everything that shapes IGDB results: the curation + ranking
+ * modules and this file's query fields / mapping. A deploy that changes any of
+ * it expires older cache entries automatically (cache_policy.ts).
+ */
+let rulesVersionPromise: Promise<string> | null = null;
+function getRulesVersion(): Promise<string> {
+  rulesVersionPromise ??= computeRulesVersion([
+    curationModule,
+    rankingModule,
+    GAME_FIELDS,
+    DETAIL_FIELDS,
+    mapGames,
+    searchGames,
+    searchCompanies,
+    fetchGameDetail,
+  ]);
+  return rulesVersionPromise;
+}
 
 function cacheClient() {
   return createClient(requireEnv('SUPABASE_URL'), requireEnv('SUPABASE_SERVICE_ROLE_KEY'), {
@@ -486,12 +568,17 @@ function fetchAndCacheOnce(
   db: ReturnType<typeof cacheClient>,
   cacheKey: string,
   fetcher: () => Promise<unknown[]>,
+  options: { stampRules: boolean },
 ): Promise<CachedPayload> {
   const existing = inflightFetches.get(cacheKey);
   if (existing) return existing;
 
   const task = (async () => {
-    const payload: CachedPayload = { results: await fetcher(), fetchedAt: new Date().toISOString() };
+    const payload: CachedPayload = {
+      results: await fetcher(),
+      fetchedAt: new Date().toISOString(),
+      ...(options.stampRules ? { rulesVersion: await getRulesVersion() } : {}),
+    };
     await writeCache(db, cacheKey, payload); // empty result sets are cached too
     return payload;
   })().finally(() => inflightFetches.delete(cacheKey));
@@ -504,6 +591,78 @@ function fetchAndCacheOnce(
 // Handler
 // -----------------------------------------------------------------------------
 
+// -----------------------------------------------------------------------------
+// Curation dependencies: overrides (game_overrides) + collection checks
+// -----------------------------------------------------------------------------
+
+let overridesCache: { at: number; map: ReadonlyMap<number, OverrideAction> } | null = null;
+
+async function getOverrides(): Promise<ReadonlyMap<number, OverrideAction>> {
+  if (overridesCache && Date.now() - overridesCache.at < OVERRIDES_TTL_MS) return overridesCache.map;
+  const { data, error } = await cacheClient().from('game_overrides').select('igdb_id, action');
+  if (error) {
+    // Keep serving the last known overrides rather than failing every request.
+    console.error('[igdb-proxy] overrides read failed', error.message);
+    return overridesCache?.map ?? new Map();
+  }
+  const map = new Map((data ?? []).map((r) => [Number(r.igdb_id), r.action as OverrideAction]));
+  overridesCache = { at: Date.now(), map };
+  return map;
+}
+
+const bundleCheckKey = (bundleId: number) => `bundle-check:${CACHE_VERSION}:igdb:${bundleId}`;
+
+/**
+ * bundle id → is a real collection. Cached per bundle in igdb_cache (30 days);
+ * every uncached bundle in a request is resolved with ONE IGDB query.
+ */
+async function checkCollections(bundleIds: number[]): Promise<ReadonlyMap<number, CollectionInfo>> {
+  const db = cacheClient();
+  const result = new Map<number, CollectionInfo>();
+  const { data: rows } = await db
+    .from('igdb_cache')
+    .select('cache_key, data, updated_at')
+    .in('cache_key', bundleIds.map(bundleCheckKey));
+  const rulesVersion = await getRulesVersion();
+  for (const row of rows ?? []) {
+    const age = Date.now() - new Date(row.updated_at as string).getTime();
+    const cached = (row.data as ({ bundleId?: number; rulesVersion?: string } & Partial<CollectionInfo>) | null) ?? {};
+    if (
+      cacheFreshness({ ageMs: age, ttlMs: BUNDLE_CHECK_TTL_MS, refreshAfterMs: null, rulesVersion: cached.rulesVersion, currentRulesVersion: rulesVersion }) !== 'expired' &&
+      typeof cached.bundleId === 'number' &&
+      typeof cached.isCollection === 'boolean' &&
+      Array.isArray(cached.games)
+    ) {
+      result.set(cached.bundleId, { isCollection: cached.isCollection, basis: cached.basis ?? null, games: cached.games });
+    }
+  }
+
+  const unchecked = bundleIds.filter((id) => !result.has(id));
+  if (unchecked.length === 0) return result;
+
+  const children = await igdbRequest<BundleChild[]>(
+    'games',
+    `fields ${COLLECTION_CHILD_FIELDS}; where bundles = (${unchecked.join(',')}) & version_parent = null & game_type = (${COLLECTION_CHILD_GAME_TYPES.join(',')}); limit 500;`,
+  );
+  const fresh = collectionsFromChildren(unchecked, children);
+  const now = new Date().toISOString();
+  const { error } = await db.from('igdb_cache').upsert(
+    [...fresh].map(([bundleId, info]) => ({ cache_key: bundleCheckKey(bundleId), data: { bundleId, rulesVersion, ...info }, updated_at: now })),
+    { onConflict: 'cache_key' },
+  );
+  if (error) console.error('[igdb-proxy] bundle check cache write failed', error.message);
+  for (const [id, value] of fresh) result.set(id, value);
+  return result;
+}
+
+const curationDeps: CurationDeps = { getOverrides, checkCollections };
+
+/** Overrides added after something was cached still win: re-check excludes on cached results. */
+async function withoutExcluded<T extends { id: number }>(games: T[]): Promise<T[]> {
+  const overrides = await getOverrides();
+  return games.filter((g) => overrides.get(g.id) !== 'exclude');
+}
+
 function gameCacheKey(id: number): string {
   return `game:${CACHE_VERSION}:igdb:${id}`;
 }
@@ -514,11 +673,29 @@ async function cacheGameRecords(
   fetchedAt: string,
 ): Promise<void> {
   if (games.length === 0) return;
+  const rulesVersion = await getRulesVersion();
   const { error } = await db.from('igdb_cache').upsert(
-    games.map((game) => ({ cache_key: gameCacheKey(game.id), data: { results: [game], fetchedAt }, updated_at: fetchedAt })),
+    games.map((game) => ({ cache_key: gameCacheKey(game.id), data: { results: [game], fetchedAt, rulesVersion }, updated_at: fetchedAt })),
     { onConflict: 'cache_key' },
   );
   if (error) console.error('[igdb-proxy] game record cache write failed', error.message);
+
+  // Durable metadata for the Stats page (migration 000014). igdb_cache is
+  // disposable; public.games keeps what the stats_* SQL functions join on.
+  const { error: gamesError } = await db.from('games').upsert(
+    games.map((game) => ({
+      igdb_id: game.id,
+      name: game.name,
+      release_year: game.releaseYear,
+      community_rating: game.rating,
+      genres: game.genres,
+      developers: game.developers,
+      entry_type: game.entryType,
+      updated_at: fetchedAt,
+    })),
+    { onConflict: 'igdb_id' },
+  );
+  if (gamesError) console.error('[igdb-proxy] games table write failed', gamesError.message);
 }
 
 /**
@@ -533,13 +710,17 @@ async function handleLookup(ids: number[]): Promise<Response> {
     .in('cache_key', ids.map(gameCacheKey));
   if (error) console.error('[igdb-proxy] lookup cache read failed', error.message);
 
+  const rulesVersion = await getRulesVersion();
   const fresh = new Map<number, IgdbGameResult>();
   const stale = new Map<number, IgdbGameResult>();
   for (const row of rows ?? []) {
-    const game = (row.data as CachedPayload | null)?.results?.[0] as IgdbGameResult | undefined;
+    const payload = row.data as CachedPayload | null;
+    const game = payload?.results?.[0] as IgdbGameResult | undefined;
     if (!game) continue;
-    const age = Date.now() - new Date(row.updated_at as string).getTime();
-    (age < GAME_RECORD_TTL_MS ? fresh : stale).set(game.id, game);
+    const ageMs = Date.now() - new Date(row.updated_at as string).getTime();
+    const state = cacheFreshness({ ageMs, ttlMs: GAME_RECORD_TTL_MS, refreshAfterMs: null, rulesVersion: payload?.rulesVersion, currentRulesVersion: rulesVersion });
+    // Records from older rules / past TTL are refetched, kept only as an outage fallback.
+    (state === 'expired' ? stale : fresh).set(game.id, game);
   }
 
   const toFetch = ids.filter((id) => !fresh.has(id));
@@ -558,10 +739,11 @@ async function handleLookup(ids: number[]): Promise<Response> {
     }
   }
 
+  const allowed = new Set((await withoutExcluded([...fresh.values(), ...fetched.values()])).map((g) => g.id));
   const results: IgdbGameResult[] = [];
   const missing: number[] = [];
   for (const id of ids) {
-    const game = fresh.get(id) ?? fetched.get(id);
+    const game = allowed.has(id) ? (fresh.get(id) ?? fetched.get(id)) : undefined;
     if (game) results.push(game);
     else missing.push(id);
   }
@@ -577,19 +759,29 @@ async function handleDetail(id: number): Promise<Response> {
   const cached = await readCache(db, cacheKey);
   const cachedGame = cached?.payload.results[0] as IgdbGameDetail | undefined;
 
-  if (cached && cachedGame && cached.ageMs < GAME_RECORD_TTL_MS) {
+  if (cachedGame && (await getOverrides()).get(id) === 'exclude') {
+    throw new HttpError(404, `Game ${id} is not in the GamerCred catalogue`);
+  }
+  const rulesVersion = await getRulesVersion();
+  const state = cached
+    ? cacheFreshness({ ageMs: cached.ageMs, ttlMs: GAME_RECORD_TTL_MS, refreshAfterMs: null, rulesVersion: cached.payload.rulesVersion, currentRulesVersion: rulesVersion })
+    : 'expired';
+  if (cached && cachedGame && state !== 'expired') {
     const data: IgdbDetailResponse = { game: cachedGame, cached: true, fetchedAt: cached.payload.fetchedAt };
     return respond(200, { success: true, data }, { 'X-Cache': 'HIT' });
   }
+  // Refetching only because the IGDB rules changed? RAWG's PC requirements didn't — reuse them (saves RAWG quota).
+  const reuseRequirements =
+    cached && cachedGame && cached.ageMs < GAME_RECORD_TTL_MS ? { requirements: cachedGame.systemRequirements } : undefined;
 
   try {
     const payload = await fetchAndCacheOnce(db, cacheKey, async () => {
-      const game = await fetchGameDetail(id);
-      if (!game) throw new HttpError(404, `No game with id ${id}`);
+      const game = await fetchGameDetail(id, reuseRequirements);
+      if (!game) throw new HttpError(404, `Game ${id} is not in the GamerCred catalogue`);
       // The detail record also refreshes the lightweight per-game record used by lookups.
       await cacheGameRecords(db, [game], new Date().toISOString());
       return [game];
-    });
+    }, { stampRules: true });
     const data: IgdbDetailResponse = { game: payload.results[0] as IgdbGameDetail, cached: false, fetchedAt: payload.fetchedAt };
     return respond(200, { success: true, data }, { 'X-Cache': cached ? 'REFRESH' : 'MISS' });
   } catch (error) {
@@ -611,25 +803,52 @@ async function handle(req: Request): Promise<Response> {
   const cacheKey = `search:${CACHE_VERSION}:${SEARCH_PROVIDER[entityType]}:${entityType}:${limit}:${query}`;
   const cached = await readCache(db, cacheKey);
 
+  const excludeIds = entityType === 'games' ? await getOverrides() : new Map<number, OverrideAction>();
   const build = (payload: CachedPayload, fromCache: boolean): IgdbSearchResponse => ({
     entity_type: entityType,
     query,
-    results: payload.results as IgdbSearchResponse['results'],
+    results: (payload.results as { id: number }[]).filter(
+      (r) => excludeIds.get(r.id) !== 'exclude',
+    ) as IgdbSearchResponse['results'],
     cached: fromCache,
     fetchedAt: payload.fetchedAt,
   });
 
-  if (cached && cached.ageMs < CACHE_TTL_MS[entityType]) {
+  const stampRules = SEARCH_PROVIDER[entityType] === 'igdb';
+  const refresh = () =>
+    fetchAndCacheOnce(
+      db,
+      cacheKey,
+      async () => {
+        const results = await fetchUpstream(entityType, query, limit);
+        // Search hits double as per-game records, so later lookups (Now Playing, reviews) are free.
+        if (entityType === 'games') await cacheGameRecords(db, results as IgdbGameResult[], new Date().toISOString());
+        return results;
+      },
+      { stampRules },
+    );
+
+  const state = cached
+    ? cacheFreshness({
+        ageMs: cached.ageMs,
+        ttlMs: CACHE_TTL_MS[entityType],
+        refreshAfterMs: SEARCH_REFRESH_AFTER_MS[entityType],
+        rulesVersion: cached.payload.rulesVersion,
+        currentRulesVersion: stampRules ? await getRulesVersion() : undefined,
+      })
+    : 'expired';
+
+  if (cached && state === 'fresh') {
     return respond(200, { success: true, data: build(cached.payload, true) }, { 'X-Cache': 'HIT' });
+  }
+  if (cached && state === 'revalidate') {
+    // Stale-while-revalidate: answer instantly, refresh once in the background.
+    runInBackground(refresh(), `refresh of ${cacheKey}`);
+    return respond(200, { success: true, data: build(cached.payload, true) }, { 'X-Cache': 'REVALIDATING' });
   }
 
   try {
-    const payload = await fetchAndCacheOnce(db, cacheKey, async () => {
-      const results = await fetchUpstream(entityType, query, limit);
-      // Search hits double as per-game records, so later lookups (Now Playing, reviews) are free.
-      if (entityType === 'games') await cacheGameRecords(db, results as IgdbGameResult[], new Date().toISOString());
-      return results;
-    });
+    const payload = await refresh();
     return respond(200, { success: true, data: build(payload, false) }, { 'X-Cache': cached ? 'REFRESH' : 'MISS' });
   } catch (error) {
     // Upstream trouble: fall back to stale cache rather than failing the search.

@@ -1,5 +1,6 @@
 import type { PostgrestError } from '@supabase/supabase-js';
 
+import type { FriendReviewRow } from '@/types/database.types';
 import type { IgdbDetailResponse } from '@/types/igdb';
 
 import { invokeProxy } from './igdb';
@@ -30,7 +31,7 @@ export function fetchGameDetail(gameId: number, signal?: AbortSignal): Promise<I
 }
 
 const REVIEW_WITH_AUTHOR = `
-  id, user_id, game_id, rating, rating_input_scale, rating_input, content, published_at, updated_at,
+  id, user_id, game_id, rating, rating_input_scale, rating_input, platform_id, content, published_at, updated_at,
   author:profiles!reviews_user_id_fkey ( id, username, avatar_url )
 ` as const;
 
@@ -58,6 +59,13 @@ export async function fetchGameReviews(gameId: number, page: number): Promise<Ga
 }
 
 /** `average` is on the canonical 1–100 scale; `distribution` has one count per score 1..100. */
+/** Accepted friends' published reviews of a game (migration 000012 RPC). */
+export async function fetchFriendReviewsForGame(gameId: number): Promise<FriendReviewRow[]> {
+  const { data, error } = await supabase.rpc('friend_reviews_for_game', { p_game_id: gameId });
+  if (error) fail(error, "Could not load your friends' ratings.");
+  return data;
+}
+
 export type GameReviewStats = { count: number; average: number | null; distribution: number[] };
 
 /** Aggregate community score (migration 000006 RPC). */

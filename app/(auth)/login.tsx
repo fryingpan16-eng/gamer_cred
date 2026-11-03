@@ -87,7 +87,7 @@ export default function LoginScreen() {
             />
 
             <View className="flex-row items-center justify-between pt-1">
-              <Link href="/register" className="text-retrogamingpc-sm text-retrogamingpc-highlight underline">
+              <Link href="/register" className="text-retrogamingpc-sm text-retrogamingpc-text-bright underline">
                 Create account
               </Link>
               <RetroGamingPCButton

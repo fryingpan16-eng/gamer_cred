@@ -32,7 +32,7 @@ export function FeedItemCard({ item, game, viewerId }: FeedItemCardProps) {
 
       <View className="flex-1 gap-1">
         <Text className="text-retrogamingpc-sm text-retrogamingpc-text">
-          <Text onPress={openActor} className="font-bold text-retrogamingpc-highlight">
+          <Text onPress={openActor} className="font-bold text-retrogamingpc-text-bright">
             {isMe ? 'You' : item.actor_username}
           </Text>
           {item.kind === 'review' ? ' reviewed ' : ' is playing '}

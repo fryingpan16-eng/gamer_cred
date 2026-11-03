@@ -3,12 +3,18 @@
  * client and server can never drift apart.
  */
 export {
+  ENTRY_TYPE_LABELS,
   IGDB_LOOKUP_MAX_IDS,
+  isAddOnEntry,
+  isCollectionEntry,
+  isRankableEntry,
+  RANKABLE_ENTRY_TYPES,
   IGDB_SEARCH_LIMITS,
   igdbImageUrl,
   normalizeSearchQuery,
   SEARCH_PROVIDER,
   type CreatorResult,
+  type EntryType,
   type GameReleaseDate,
   type IgdbDetailRequest,
   type IgdbDetailResponse,

@@ -104,7 +104,7 @@ export function ProfilePlatforms({ userId, isOwner }: { userId: string; isOwner:
 
   if (rows.length === 0) {
     return isOwner ? (
-      <Link href="/settings" className="text-retrogamingpc-xs text-retrogamingpc-highlight underline">
+      <Link href="/settings" className="text-retrogamingpc-xs text-retrogamingpc-text-bright underline">
         + Add your platforms in Settings
       </Link>
     ) : null;

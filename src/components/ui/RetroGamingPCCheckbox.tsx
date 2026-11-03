@@ -25,7 +25,7 @@ export function RetroGamingPCCheckbox({ checked, label, description, onToggle, d
       className={cn('flex-row items-start gap-2', disabled && 'opacity-50', className)}
     >
       <View className="retrogamingpc-bevel-inset mt-px h-4 w-4 items-center justify-center bg-retrogamingpc-dark">
-        {checked ? <Text className="text-retrogamingpc-xs font-bold text-retrogamingpc-highlight">✓</Text> : null}
+        {checked ? <Text className="text-retrogamingpc-xs font-bold text-retrogamingpc-text-bright">✓</Text> : null}
       </View>
       <View className="flex-1 gap-0.5">
         <Text className="text-retrogamingpc-sm text-retrogamingpc-text">{label}</Text>

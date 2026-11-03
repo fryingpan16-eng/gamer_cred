@@ -10,6 +10,7 @@ import { SearchResultList } from '@/components/search/SearchResultList';
 import { UserResultCard } from '@/components/search/UserResultCard';
 import { RetroGamingPCAlert, RetroGamingPCInput, RetroGamingPCTabs, type RetroGamingPCTabItem } from '@/components/ui';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
+import { useMyGameRatings } from '@/hooks/useRatings';
 import { useCompanySearch, useCreatorSearch, useFriendAction, useGameSearch, useUserSearch } from '@/hooks/useSearch';
 import { USER_SEARCH_MIN_LENGTH } from '@/services/users';
 import { IGDB_SEARCH_LIMITS, normalizeSearchQuery } from '@/types/igdb';
@@ -52,6 +53,8 @@ function isActive(term: string, entity: SearchEntity): boolean {
 
 function GameResults({ term, typing }: ResultsProps) {
   const query = useGameSearch(term);
+  // The viewer's ratings for every result on screen, in one request.
+  const ratings = useMyGameRatings((query.data?.results ?? []).map((g) => g.id));
   return (
     <SearchResultList
       query={query}
@@ -63,7 +66,8 @@ function GameResults({ term, typing }: ResultsProps) {
       loadingLabel="Searching IGDB…"
       statusNote={query.data?.cached ? 'cached' : undefined}
       keyExtractor={(g) => String(g.id)}
-      renderItem={(g) => <GameResultCard game={g} />}
+      extraData={ratings.data}
+      renderItem={(g) => <GameResultCard game={g} myRating={ratings.data ? (ratings.data[g.id] ?? null) : undefined} />}
     />
   );
 }

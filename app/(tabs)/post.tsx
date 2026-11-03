@@ -10,7 +10,7 @@ import { useStudioStore } from '@/hooks/useStudioStore';
 /**
  * Post / Review Studio:
  *   1. Now Playing — 4 slots with running notes & preliminary scores
- *   2. Review Studio — publish from a slot, or a standalone quick review
+ *   2. Review Studio — publish from a slot, or review any game
  *   3. Drafts — saved backlog notes to resume
  * Desktop places the studio and drafts side by side beneath the grid.
  */

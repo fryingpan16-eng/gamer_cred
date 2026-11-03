@@ -1,9 +1,10 @@
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { fetchGameDetail, fetchGameReviews, fetchGameReviewStats } from '@/services/games';
+import { fetchFriendReviewsForGame, fetchGameDetail, fetchGameReviews, fetchGameReviewStats } from '@/services/games';
 import { SearchServiceError } from '@/services/igdb';
 import { queryKeys } from '@/utils/queryKeys';
 
+import { useAuthStore } from './useAuth';
 import { primeGameCache } from './useGames';
 
 /** The proxy caches 7 days; within a session, game pages are effectively static. */
@@ -32,6 +33,16 @@ export function useGameReviews(gameId: number | null) {
     queryFn: ({ pageParam }) => fetchGameReviews(gameId!, pageParam),
     initialPageParam: 0,
     getNextPageParam: (last) => last.nextPage,
+  });
+}
+
+/** Friends' published reviews of this game, shown before other community reviews. */
+export function useFriendReviewsForGame(gameId: number | null) {
+  const viewerId = useAuthStore((s) => s.user?.id ?? null);
+  return useQuery({
+    queryKey: queryKeys.games.friendReviews(viewerId ?? 'anonymous', gameId ?? 0),
+    enabled: gameId !== null && viewerId !== null,
+    queryFn: () => fetchFriendReviewsForGame(gameId!),
   });
 }
 

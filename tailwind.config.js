@@ -25,7 +25,8 @@ module.exports = {
           THEME_TOKENS.map((token) => [`retrogamingpc-${token}`, `rgb(var(--rgpc-${token}) / <alpha-value>)`]),
         ),
         // Semantic, not themed.
-        'retrogamingpc-error': '#c45a3c',
+        // Bright enough for ≥ 4.5:1 on every dark theme surface.
+        'retrogamingpc-error': '#ff8a7a',
       },
       fontSize: {
         // Compact, high-density retro type scale

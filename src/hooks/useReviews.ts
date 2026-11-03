@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { clearSlot } from '@/services/nowPlaying';
-import { deleteReview, fetchMyReviewForGame, fetchMyReviews, saveReview } from '@/services/reviews';
+import { deleteReview, fetchMyReviewForGame, fetchMyReviews, fetchReviewById, saveReview } from '@/services/reviews';
 import type { NowPlaying, NowPlayingSlot, Review, ReviewStatus } from '@/types/database.types';
 import type { ReviewFormValues } from '@/utils/reviewSchemas';
 import { queryKeys } from '@/utils/queryKeys';
@@ -10,6 +10,15 @@ import { useAuthStore } from './useAuth';
 
 function useViewerId(): string | null {
   return useAuthStore((s) => s.user?.id ?? null);
+}
+
+/** A single review (with author) for the review page. */
+export function useReview(reviewId: string | null) {
+  return useQuery({
+    queryKey: queryKeys.reviews.detail(reviewId ?? 'none'),
+    queryFn: () => fetchReviewById(reviewId!),
+    enabled: reviewId !== null,
+  });
 }
 
 export function useMyReviews(status?: ReviewStatus) {
@@ -67,6 +76,10 @@ export function useSaveReview() {
       void queryClient.invalidateQueries({ queryKey: queryKeys.feed.all() });
       void queryClient.invalidateQueries({ queryKey: queryKeys.games.reviewsAll() });
       void queryClient.invalidateQueries({ queryKey: queryKeys.games.reviewStatsAll() });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.games.friendReviewsAll() });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.stats.all() });
+      // A review's score is also the user's quick rating (sync trigger, migration 000015).
+      void queryClient.invalidateQueries({ queryKey: queryKeys.ratings.all() });
     },
   });
 }
@@ -101,6 +114,8 @@ export function useDeleteReview() {
       void queryClient.invalidateQueries({ queryKey: queryKeys.feed.all() });
       void queryClient.invalidateQueries({ queryKey: queryKeys.games.reviewsAll() });
       void queryClient.invalidateQueries({ queryKey: queryKeys.games.reviewStatsAll() });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.games.friendReviewsAll() });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.stats.all() });
     },
   });
 }

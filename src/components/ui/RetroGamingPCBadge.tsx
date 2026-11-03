@@ -11,9 +11,9 @@ export type RetroGamingPCBadgeProps = {
 };
 
 const VARIANTS: Record<RetroGamingPCBadgeVariant, { box: string; text: string }> = {
-  main: { box: 'bg-retrogamingpc-highlight border-retrogamingpc-text-bright', text: 'text-retrogamingpc-dark' },
+  main: { box: 'bg-retrogamingpc-highlight border-retrogamingpc-text-bright', text: 'text-retrogamingpc-ink' },
   nowPlaying: { box: 'bg-retrogamingpc-active border-retrogamingpc-highlight', text: 'text-retrogamingpc-text-bright' },
-  published: { box: 'bg-retrogamingpc-panel border-retrogamingpc-highlight', text: 'text-retrogamingpc-highlight' },
+  published: { box: 'bg-retrogamingpc-panel border-retrogamingpc-highlight', text: 'text-retrogamingpc-text-bright' },
   draft: { box: 'bg-retrogamingpc-dark border-retrogamingpc-accent', text: 'text-retrogamingpc-text-muted' },
   neutral: { box: 'bg-retrogamingpc-button border-retrogamingpc-button-border', text: 'text-retrogamingpc-text' },
 };

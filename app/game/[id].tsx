@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 
 import { CommunityReviews } from '@/components/game/CommunityReviews';
+import { CollectionContents } from '@/components/game/EntryTypeBadge';
+import { FriendRatings } from '@/components/game/FriendRatings';
 import { GameActions } from '@/components/game/GameActions';
 import { GameFacts } from '@/components/game/GameFacts';
 import { GameHero } from '@/components/game/GameHero';
@@ -32,7 +34,7 @@ function About({ summary, storyline }: { summary: string | null; storyline: stri
               <Text className="text-retrogamingpc-sm leading-[18px] text-retrogamingpc-text">{storyline}</Text>
             </>
           ) : (
-            <Text onPress={() => setShowStory(true)} className="text-retrogamingpc-xs text-retrogamingpc-highlight underline">
+            <Text onPress={() => setShowStory(true)} className="text-retrogamingpc-xs text-retrogamingpc-text-bright underline">
               Read the storyline
             </Text>
           )
@@ -101,8 +103,19 @@ export default function GameDetailScreen() {
         <View className="gap-3 md:flex-[3]">
           {/* On phones the actions sit right under the hero; on desktop they live in the sidebar. */}
           {!isDesktop ? <GameActions game={game} /> : null}
+          {game.entryType === 'collection' && (game.collectionGames?.length ?? 0) > 0 ? (
+            <RetroGamingPCPanel title={`Included Games (${game.collectionGames.length})`}>
+              <View className="gap-2">
+                <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted">
+                  Each game keeps its own page and ratings. Collections have their own lists and don’t count toward top-game lists.
+                </Text>
+                <CollectionContents games={game.collectionGames} />
+              </View>
+            </RetroGamingPCPanel>
+          ) : null}
           <About summary={game.summary} storyline={game.storyline} />
           <ScreenshotStrip imageIds={game.screenshotIds} gameName={game.name} />
+          <FriendRatings gameId={game.id} />
           <CommunityReviews gameId={game.id} />
         </View>
         <View className="gap-3 md:flex-[2]">

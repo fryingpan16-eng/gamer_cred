@@ -58,12 +58,32 @@ export async function saveReview(userId: string, values: ReviewFormValues): Prom
         ...reviewRatingColumns(values.rating),
         content: values.content.length > 0 ? values.content : null,
         status: values.status,
+        platform_id: values.platformId,
       },
       { onConflict: 'user_id,game_id' },
     )
     .select()
     .single();
   if (error) fail(error, values.status === 'published' ? 'Could not publish the review.' : 'Could not save the draft.');
+  return data;
+}
+
+const REVIEW_DETAIL_SELECT = `
+  id, user_id, game_id, rating, rating_input_scale, rating_input, platform_id, content, status,
+  published_at, updated_at,
+  author:profiles!reviews_user_id_fkey ( id, username, avatar_url )
+` as const;
+
+async function queryReviewById(reviewId: string) {
+  return supabase.from('reviews').select(REVIEW_DETAIL_SELECT).eq('id', reviewId).maybeSingle();
+}
+
+export type ReviewDetail = NonNullable<Awaited<ReturnType<typeof queryReviewById>>['data']>;
+
+/** One review with its author. RLS: published reviews for everyone, drafts only for their author. */
+export async function fetchReviewById(reviewId: string): Promise<ReviewDetail | null> {
+  const { data, error } = await queryReviewById(reviewId);
+  if (error) fail(error, 'Could not load the review.');
   return data;
 }
 

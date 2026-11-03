@@ -16,7 +16,9 @@ import {
   type RetroGamingPCTabItem,
 } from '@/components/ui';
 import { useGameLookup } from '@/hooks/useGames';
-import { usePrimaryRatingScale } from '@/hooks/useAuth';
+import { useAuthStore, usePrimaryRatingScale } from '@/hooks/useAuth';
+import { usePlatforms } from '@/hooks/useProfile';
+import { useMyGameRating } from '@/hooks/useRatings';
 import { useDeleteReview, useMyReviewForGame, useSaveReview } from '@/hooks/useReviews';
 import { useStudioStore, type StudioTarget } from '@/hooks/useStudioStore';
 import type { Review, ReviewStatus } from '@/types/database.types';
@@ -27,6 +29,7 @@ import { reviewRating } from '@/utils/ratingColumns';
 import { REVIEW_MAX_LENGTH, reviewFormSchema, type ReviewFormValues } from '@/utils/reviewSchemas';
 
 import { GamePickerModal } from './GamePickerModal';
+import { PlatformPicker } from './PlatformPicker';
 
 const STATUS_TABS: readonly RetroGamingPCTabItem<ReviewStatus>[] = [
   { key: 'draft', label: 'Save as Draft' },
@@ -35,18 +38,32 @@ const STATUS_TABS: readonly RetroGamingPCTabItem<ReviewStatus>[] = [
 
 type FieldErrors = Partial<Record<keyof ReviewFormValues, string>>;
 
-type EditorProps = { target: StudioTarget; existing: Review | null };
+type EditorProps = {
+  target: StudioTarget;
+  existing: Review | null;
+  /** The viewer's quick rating for this game — the starting score for a new review. */
+  quickRating: StoredRating | null;
+};
 
 /** Keyed by game + existing review version, so initial values never need effect-syncing. */
-function ReviewEditor({ target, existing }: EditorProps) {
+function ReviewEditor({ target, existing, quickRating }: EditorProps) {
   const clearTarget = useStudioStore((s) => s.clearTarget);
   const save = useSaveReview();
   const remove = useDeleteReview();
 
   const primaryScale = usePrimaryRatingScale();
-  // Untouched ratings are saved back exactly as stored; a new input replaces the old one entirely.
-  const [rating, setRating] = useState<StoredRating | null>((existing ? reviewRating(existing) : null) ?? target.seed?.rating ?? null);
+  // One score per game: start from the review's score, else your quick rating, else the Now Playing
+  // "so far" score. Untouched ratings are saved back exactly as stored.
+  const [rating, setRating] = useState<StoredRating | null>(
+    (existing ? reviewRating(existing) : null) ?? quickRating ?? target.seed?.rating ?? null,
+  );
   const [content, setContent] = useState(existing?.content ?? target.seed?.content ?? '');
+  // undefined = untouched: an existing review keeps its platform; a new one defaults to your Main platform.
+  const [platformChoice, setPlatformChoice] = useState<number | null | undefined>(existing ? existing.platform_id : undefined);
+  const viewerId = useAuthStore((s) => s.user?.id ?? null);
+  const roster = usePlatforms(viewerId);
+  const mainPlatformId = roster.data?.find((r) => r.is_main)?.platform_id ?? null;
+  const platformId = platformChoice === undefined ? mainPlatformId : platformChoice;
   const [status, setStatus] = useState<ReviewStatus>(existing?.status ?? 'draft');
   const [freeSlot, setFreeSlot] = useState(true);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
@@ -58,7 +75,7 @@ function ReviewEditor({ target, existing }: EditorProps) {
 
   const submit = () => {
     setSavedAs(null);
-    const parsed = reviewFormSchema.safeParse({ gameId: target.gameId, rating, content, status });
+    const parsed = reviewFormSchema.safeParse({ gameId: target.gameId, rating, content, status, platformId });
     if (!parsed.success) {
       const next: FieldErrors = {};
       for (const issue of parsed.error.issues) {
@@ -102,6 +119,9 @@ function ReviewEditor({ target, existing }: EditorProps) {
         }}
         error={fieldErrors.rating}
       />
+      <Text className="-mt-2 text-retrogamingpc-xs text-retrogamingpc-text-muted">
+        This is your one score for the game: it is also your quick rating, and changing either changes both.
+      </Text>
 
       <RetroGamingPCInput
         label={status === 'published' ? 'Review' : 'Backlog notes'}
@@ -114,9 +134,11 @@ function ReviewEditor({ target, existing }: EditorProps) {
         maxLength={REVIEW_MAX_LENGTH}
         placeholder={status === 'published' ? 'What worked, what didn’t, who should play it…' : 'Quick thoughts to come back to…'}
         error={fieldErrors.content}
-        hint={`${content.length.toLocaleString()} / ${REVIEW_MAX_LENGTH.toLocaleString()} · rating-only quick reviews are fine`}
+        hint={`${content.length.toLocaleString()} / ${REVIEW_MAX_LENGTH.toLocaleString()}`}
         editable={!save.isPending}
       />
+
+      <PlatformPicker value={platformId} onChange={setPlatformChoice} error={fieldErrors.platformId} />
 
       <RetroGamingPCTabs items={STATUS_TABS} value={status} onChange={setStatus} fill />
 
@@ -164,12 +186,17 @@ function ReviewEditor({ target, existing }: EditorProps) {
   );
 }
 
-/** Review Studio: write a review from a Now Playing slot, or a standalone quick review. */
+/**
+ * Review Studio: the place full reviews are written — from a Now Playing slot,
+ * a draft, the game page's "Write a review" button, or "Review a Game…".
+ * (Quick star ratings are separate and never come through here.)
+ */
 export function ReviewStudio() {
-  const { target, modal, openModal, closeModal, startQuickReview } = useStudioStore();
+  const { target, modal, openModal, closeModal, startStandaloneReview } = useStudioStore();
   const gameId = target?.gameId ?? null;
   const games = useGameLookup(gameId ? [gameId] : []);
   const existing = useMyReviewForGame(gameId);
+  const quick = useMyGameRating(gameId);
   const game = gameId ? games.data?.get(gameId) : undefined;
 
   return (
@@ -185,10 +212,10 @@ export function ReviewStudio() {
         <View className="gap-3">
           <Text className="text-retrogamingpc-sm text-retrogamingpc-text">
             Hit <Text className="font-bold text-retrogamingpc-text-bright">Review</Text> on a Now Playing slot to turn your notes
-            into a review, or rate any game directly with a quick review.
+            into a review, or write a review for any game.
           </Text>
           <View className="flex-row justify-end">
-            <RetroGamingPCButton label="Quick Review a Game…" variant="primary" onPress={() => openModal({ kind: 'pickReviewGame' })} />
+            <RetroGamingPCButton label="Review a Game…" variant="primary" onPress={() => openModal({ kind: 'pickReviewGame' })} />
           </View>
         </View>
       ) : (
@@ -205,14 +232,14 @@ export function ReviewStudio() {
                 {game?.name ?? (games.isFetching ? 'Loading…' : `Game #${target.gameId}`)}
               </Text>
               <Text className={cn('text-retrogamingpc-xs text-retrogamingpc-text-muted')}>
-                {target.fromSlot ? `From Now Playing slot ${target.fromSlot}` : 'Quick review'}
+                {target.fromSlot ? `From Now Playing slot ${target.fromSlot}` : 'Review'}
                 {game?.releaseYear ? ` · ${game.releaseYear}` : ''}
               </Text>
             </View>
             <RetroGamingPCButton label="Change" onPress={() => openModal({ kind: 'pickReviewGame' })} />
           </View>
 
-          {existing.isPending ? (
+          {existing.isPending || quick.isPending ? (
             <RetroGamingPCSpinner label="Checking for an existing review…" />
           ) : existing.isError ? (
             <RetroGamingPCAlert message={existing.error.message} />
@@ -222,6 +249,7 @@ export function ReviewStudio() {
               key={`${target.gameId}:${target.fromSlot ?? 'quick'}`}
               target={target}
               existing={existing.data}
+              quickRating={quick.rating}
             />
           )}
         </View>
@@ -232,7 +260,7 @@ export function ReviewStudio() {
         title="Choose a game to review"
         currentGameId={gameId}
         onClose={closeModal}
-        onPick={startQuickReview}
+        onPick={startStandaloneReview}
       />
     </RetroGamingPCPanel>
   );

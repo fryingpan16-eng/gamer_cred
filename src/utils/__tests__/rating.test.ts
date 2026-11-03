@@ -297,13 +297,22 @@ describe('stored-rating consistency & aggregation', () => {
 });
 
 describe('rating validation schemas', () => {
-  const base = { gameId: 1942, content: '', status: 'published' as const };
+  const base = { gameId: 1942, content: '', status: 'published' as const, platformId: null };
 
   it('requires a rating to publish, and a rating or notes for drafts', () => {
     expect(reviewFormSchema.safeParse({ ...base, rating: null }).success).toBe(false);
     expect(reviewFormSchema.safeParse({ ...base, rating: toStoredRating({ scale: 'stars', value: 4.5 }) }).success).toBe(true);
     expect(reviewFormSchema.safeParse({ ...base, status: 'draft', rating: null }).success).toBe(false);
     expect(reviewFormSchema.safeParse({ ...base, status: 'draft', rating: null, content: 'notes' }).success).toBe(true);
+  });
+
+  it('accepts a catalog platform (incl. PC Handheld) or none, and rejects unknown ids', () => {
+    const rating = toStoredRating({ scale: 'numeric', value: 90 });
+    expect(reviewFormSchema.safeParse({ ...base, rating, platformId: 167 }).success).toBe(true); // PS5
+    expect(reviewFormSchema.safeParse({ ...base, rating, platformId: -1 }).success).toBe(true); // PC Handheld
+    expect(reviewFormSchema.safeParse({ ...base, rating, platformId: null }).success).toBe(true);
+    expect(reviewFormSchema.safeParse({ ...base, rating, platformId: 99999 }).success).toBe(false);
+    expect(reviewFormSchema.safeParse({ ...base, rating, platformId: 1.5 }).success).toBe(false);
   });
 
   it('rejects inconsistent or out-of-range stored ratings', () => {

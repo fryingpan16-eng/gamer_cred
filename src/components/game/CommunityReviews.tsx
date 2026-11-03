@@ -5,9 +5,11 @@ import { Pressable, Text, View } from 'react-native';
 import { Thumbnail } from '@/components/search/Thumbnail';
 import { RetroGamingPCAlert, RetroGamingPCBadge, RetroGamingPCButton, RetroGamingPCCard, RetroGamingPCPanel, RetroGamingPCRating, RetroGamingPCSpinner } from '@/components/ui';
 import { useAuthStore } from '@/hooks/useAuth';
-import { useGameReviews, useGameReviewStats } from '@/hooks/useGameDetail';
+import { useFriendReviewsForGame, useGameReviews, useGameReviewStats } from '@/hooks/useGameDetail';
 import type { GameReview, GameReviewStats } from '@/services/games';
-import { bucketByTier, tierDefinition, type StoredRating } from '@/utils/rating';
+
+import { PlayedOnBadge } from './PlayedOnBadge';
+import { bucketByTier, tierDefinition } from '@/utils/rating';
 import { reviewRating } from '@/utils/ratingColumns';
 
 function formatDate(iso: string | null): string {
@@ -41,13 +43,6 @@ function Distribution({ stats }: { stats: GameReviewStats }) {
   );
 }
 
-/** The aggregate shown like a rating (rounded to the canonical integer scale). */
-function averageAsRating(stats: GameReviewStats): StoredRating | null {
-  if (stats.average === null) return null;
-  const numeric = Math.min(100, Math.max(1, Math.round(stats.average)));
-  return { numeric, inputScale: 'numeric', input: String(numeric) };
-}
-
 function ReviewCard({ review, isMine }: { review: GameReview; isMine: boolean }) {
   const [expanded, setExpanded] = useState(false);
   const author = review.author;
@@ -62,12 +57,13 @@ function ReviewCard({ review, isMine }: { review: GameReview; isMine: boolean })
         </Pressable>
         <View className="flex-1 gap-0.5">
           <View className="flex-row items-center gap-1">
-            <Text onPress={openAuthor} className="text-retrogamingpc-base font-bold text-retrogamingpc-highlight" numberOfLines={1}>
+            <Text onPress={openAuthor} className="text-retrogamingpc-base font-bold text-retrogamingpc-text-bright" numberOfLines={1}>
               {author?.username ?? 'Unknown player'}
             </Text>
             {isMine ? <RetroGamingPCBadge label="You" variant="nowPlaying" /> : null}
           </View>
           <RetroGamingPCRating rating={reviewRating(review)} size="compact" />
+          <PlayedOnBadge platformId={review.platform_id} />
           <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted">{formatDate(review.published_at)}</Text>
         </View>
       </View>
@@ -77,34 +73,33 @@ function ReviewCard({ review, isMine }: { review: GameReview; isMine: boolean })
             {review.content}
           </Text>
           {long ? (
-            <Text onPress={() => setExpanded((v) => !v)} className="text-retrogamingpc-xs text-retrogamingpc-highlight underline">
+            <Text onPress={() => setExpanded((v) => !v)} className="text-retrogamingpc-xs text-retrogamingpc-text-bright underline">
               {expanded ? 'Show less' : 'Read more'}
             </Text>
           ) : null}
         </>
       ) : (
-        <Text className="text-retrogamingpc-xs italic text-retrogamingpc-text-muted">Rating-only quick review.</Text>
+        <Text className="text-retrogamingpc-xs italic text-retrogamingpc-text-muted">Score-only review (no written text).</Text>
       )}
     </RetroGamingPCCard>
   );
 }
 
-/** Community score summary + paginated published reviews for one game. */
+/** Tier distribution + paginated published reviews from everyone except your friends (shown above). */
 export function CommunityReviews({ gameId }: { gameId: number }) {
   const viewerId = useAuthStore((s) => s.user?.id ?? null);
   const stats = useGameReviewStats(gameId);
   const reviews = useGameReviews(gameId);
-  const all = reviews.data?.pages.flatMap((p) => p.reviews) ?? [];
+  // Friends' reviews are shown first in FriendRatings, so they're left out here.
+  const friends = useFriendReviewsForGame(gameId);
+  const friendIds = new Set((friends.data ?? []).map((f) => f.user_id));
+  const all = (reviews.data?.pages.flatMap((p) => p.reviews) ?? []).filter((r) => !friendIds.has(r.user_id));
 
   return (
     <RetroGamingPCPanel title={`Community Reviews${stats.data ? ` (${stats.data.count})` : ''}`}>
       <View className="gap-3">
         {stats.data && stats.data.count > 0 ? (
           <View className="retrogamingpc-bevel-inset flex-row items-center gap-3 bg-retrogamingpc-dark p-2">
-            <View className="max-w-[45%] gap-1">
-              <Text className="retrogamingpc-label">Community average</Text>
-              <RetroGamingPCRating rating={averageAsRating(stats.data)} prefix="Avg" />
-            </View>
             <Distribution stats={stats.data} />
           </View>
         ) : null}
@@ -119,7 +114,9 @@ export function CommunityReviews({ gameId }: { gameId: number }) {
             </View>
           </View>
         ) : all.length === 0 ? (
-          <Text className="text-retrogamingpc-sm text-retrogamingpc-text-muted">No community reviews yet. Be the first to post one.</Text>
+          <Text className="text-retrogamingpc-sm text-retrogamingpc-text-muted">
+            {friendIds.size > 0 ? 'No other community reviews yet.' : 'No community reviews yet. Be the first to post one.'}
+          </Text>
         ) : (
           <View className="gap-2">
             {all.map((review) => (

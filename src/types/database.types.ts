@@ -107,6 +107,8 @@ export type Database = {
           rating_input: string | null;
           /** Pre-000007 1–10 score, preserved for audit. */
           legacy_rating_10: number | null;
+          /** Platform played on (catalog id; migration 000012). */
+          platform_id: number | null;
           content: string | null;
           status: Database['public']['Enums']['review_status'];
           created_at: Timestamp;
@@ -122,6 +124,7 @@ export type Database = {
           rating_input_scale?: Database['public']['Enums']['rating_scale'] | null;
           rating_input?: string | null;
           legacy_rating_10?: number | null;
+          platform_id?: number | null;
           content?: string | null;
           status?: Database['public']['Enums']['review_status'];
           created_at?: Timestamp;
@@ -136,6 +139,7 @@ export type Database = {
           rating_input_scale?: Database['public']['Enums']['rating_scale'] | null;
           rating_input?: string | null;
           legacy_rating_10?: number | null;
+          platform_id?: number | null;
           content?: string | null;
           status?: Database['public']['Enums']['review_status'];
           created_at?: Timestamp;
@@ -260,6 +264,95 @@ export type Database = {
         ];
       };
 
+      /**
+       * Quick ratings (migration 000015): one private overall score per (user, game),
+       * separate from reviews. RLS: owner-only. Kept equal to the score on the
+       * user's review of the same game by sync triggers.
+       */
+      game_ratings: {
+        Row: {
+          user_id: string;
+          game_id: number;
+          /** Canonical numeric score 1–100. */
+          rating: number;
+          rating_input_scale: Database['public']['Enums']['rating_scale'];
+          /** Raw input exactly as entered, e.g. "4.5". */
+          rating_input: string;
+          created_at: Timestamp;
+          updated_at: Timestamp;
+        };
+        Insert: {
+          user_id: string;
+          game_id: number;
+          rating: number;
+          rating_input_scale: Database['public']['Enums']['rating_scale'];
+          rating_input: string;
+          created_at?: Timestamp;
+          updated_at?: Timestamp;
+        };
+        Update: {
+          user_id?: string;
+          game_id?: number;
+          rating?: number;
+          rating_input_scale?: Database['public']['Enums']['rating_scale'];
+          rating_input?: string;
+          created_at?: Timestamp;
+          updated_at?: Timestamp;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'game_ratings_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+
+      /** Durable IGDB metadata for Stats (migration 000014). Public read; Edge Function writes. */
+      games: {
+        Row: {
+          igdb_id: number;
+          name: string;
+          release_year: number | null;
+          community_rating: number | null;
+          genres: string[];
+          developers: string[];
+          entry_type: string | null;
+          updated_at: Timestamp;
+        };
+        Insert: {
+          igdb_id: number;
+          name: string;
+          release_year?: number | null;
+          community_rating?: number | null;
+          genres?: string[];
+          developers?: string[];
+          entry_type?: string | null;
+          updated_at?: Timestamp;
+        };
+        Update: {
+          igdb_id?: number;
+          name?: string;
+          release_year?: number | null;
+          community_rating?: number | null;
+          genres?: string[];
+          developers?: string[];
+          entry_type?: string | null;
+          updated_at?: Timestamp;
+        };
+        Relationships: [];
+      };
+
+      /** Curation overrides (migration 000013). Service-role only: RLS has no client policies. */
+      game_overrides: {
+        Row: { igdb_id: number; action: 'include' | 'exclude'; note: string | null; created_at: Timestamp };
+        Insert: { igdb_id: number; action: 'include' | 'exclude'; note?: string | null; created_at?: Timestamp };
+        Update: { igdb_id?: number; action?: 'include' | 'exclude'; note?: string | null; created_at?: Timestamp };
+        Relationships: [];
+      };
+
       igdb_cache: {
         Row: {
           cache_key: string;
@@ -302,11 +395,35 @@ export type Database = {
       game_review_stats: {
         Args: { p_game_id: number };
         Returns: {
+          /** Number of ratings: one score per user, from reviews and quick ratings (migration 000015). */
           review_count: number;
           average_rating: number | null;
           /** Counts per numeric score 1..100 (index 0 = score 1); bucket into tiers via the rubric. */
           distribution: number[];
         }[];
+      };
+      // ---- Stats (migration 000014): all scoped to auth.uid() ----
+      stats_rating_histogram: { Args: Record<string, never>; Returns: { score: number; games: number }[] };
+      stats_platforms: { Args: Record<string, never>; Returns: { platform_id: number | null; games: number }[] };
+      stats_developers: {
+        Args: { p_limit?: number | null };
+        Returns: { developer: string; games: number; total_studios: number }[];
+      };
+      stats_genres: {
+        Args: Record<string, never>;
+        Returns: { genre: string; games: number; rated_games: number; average_rating: number | null }[];
+      };
+      stats_vs_community: { Args: { p_limit?: number }; Returns: Json };
+      stats_release_years: { Args: Record<string, never>; Returns: { release_year: number | null; games: number }[] };
+      stats_logged_over_time: { Args: Record<string, never>; Returns: { month: string; games: number }[] };
+      /** Caller's logged games: reviewed or quick-rated (migration 000015). */
+      my_logged_games: {
+        Args: Record<string, never>;
+        Returns: { game_id: number; first_logged: string; rating: number | null; platform_id: number | null }[];
+      };
+      friend_reviews_for_game: {
+        Args: { p_game_id: number };
+        Returns: FriendReviewRow[];
       };
       activity_feed: {
         Args: {
@@ -327,6 +444,19 @@ export type Database = {
     };
     CompositeTypes: { [_ in never]: never };
   };
+};
+
+/** Row returned by the friend_reviews_for_game RPC (migration 000012). */
+export type FriendReviewRow = {
+  review_id: string;
+  user_id: string;
+  username: string;
+  avatar_url: string | null;
+  rating: number | null;
+  rating_input_scale: RatingScaleValue | null;
+  rating_input: string | null;
+  platform_id: number | null;
+  published_at: Timestamp;
 };
 
 /** Row returned by the activity_feed RPC (migration 000006). */
@@ -370,6 +500,7 @@ export type Enums<T extends keyof PublicSchema['Enums']> = PublicSchema['Enums']
 export type Profile = Tables<'profiles'>;
 export type Friendship = Tables<'friendships'>;
 export type Review = Tables<'reviews'>;
+export type GameRating = Tables<'game_ratings'>;
 export type NowPlaying = Tables<'now_playing'>;
 export type UserFavorite = Tables<'user_favorites'>;
 export type UserPlatform = Tables<'user_platforms'>;

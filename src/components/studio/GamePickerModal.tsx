@@ -8,7 +8,7 @@ import { RetroGamingPCAlert, RetroGamingPCBadge, RetroGamingPCButton, RetroGamin
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { primeGameCache } from '@/hooks/useGames';
 import { useGameSearch } from '@/hooks/useSearch';
-import { IGDB_SEARCH_LIMITS, igdbImageUrl, normalizeSearchQuery, type IgdbGameResult } from '@/types/igdb';
+import { ENTRY_TYPE_LABELS, IGDB_SEARCH_LIMITS, igdbImageUrl, normalizeSearchQuery, type IgdbGameResult } from '@/types/igdb';
 import { cn } from '@/utils/cn';
 import { useThemeColors } from '@/hooks/useTheme';
 
@@ -25,7 +25,7 @@ type GamePickerModalProps = {
   currentGameId?: number | null;
 };
 
-/** Search-and-pick dialog used for Now Playing slots and quick reviews. */
+/** Search-and-pick dialog used for Now Playing slots, favourites and reviews. */
 export function GamePickerModal({ visible, title, onClose, ...bodyProps }: GamePickerModalProps) {
   return (
     <RetroGamingPCModal
@@ -130,6 +130,18 @@ function PickerBody({
                           {[item.releaseYear, item.platforms.slice(0, 3).join(' / ')].filter(Boolean).join(' · ')}
                         </Text>
                         <View className="flex-row gap-1">
+                          {item.entryType && item.entryType !== 'game' ? (
+                            <RetroGamingPCBadge
+                              label={
+                                item.parentGame
+                                  ? `${ENTRY_TYPE_LABELS[item.entryType]} · ${item.parentGame.name}`
+                                  : item.entryType === 'collection' && (item.collectionGames?.length ?? 0) > 0
+                                    ? `Collection · ${item.collectionGames.length} games`
+                                    : ENTRY_TYPE_LABELS[item.entryType]
+                              }
+                              variant="draft"
+                            />
+                          ) : null}
                           {isCurrent ? <RetroGamingPCBadge label="Current" variant="nowPlaying" /> : null}
                           {blockedReason ? <RetroGamingPCBadge label={blockedReason} variant="draft" /> : null}
                           {note && !isCurrent ? <RetroGamingPCBadge label={note} /> : null}

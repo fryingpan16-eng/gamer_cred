@@ -8,6 +8,8 @@ import { usePublishedReviews } from '@/hooks/useProfile';
 import { igdbImageUrl } from '@/types/igdb';
 import { reviewRating } from '@/utils/ratingColumns';
 
+import { PlayedOnBadge } from '@/components/game/PlayedOnBadge';
+
 function formatDate(iso: string | null): string {
   return iso ? new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '';
 }
@@ -36,7 +38,7 @@ export function PublishedReviews({ userId, isOwner }: { userId: string; isOwner:
                 key={review.id}
                 className="flex-row gap-3"
                 accessibilityLabel={`Review of ${game?.name ?? 'game'}`}
-                onPress={() => router.push({ pathname: '/game/[id]', params: { id: String(review.game_id) } })}
+                onPress={() => router.push({ pathname: '/review/[id]', params: { id: review.id } })}
               >
                 <Thumbnail
                   uri={game?.coverImageId ? igdbImageUrl(game.coverImageId, 'cover_small', true) : null}
@@ -49,6 +51,7 @@ export function PublishedReviews({ userId, isOwner }: { userId: string; isOwner:
                     {game?.name ?? `Game #${review.game_id}`}
                   </Text>
                   <RetroGamingPCRating rating={reviewRating(review)} size="compact" />
+                  <PlayedOnBadge platformId={review.platform_id} />
                   {review.content ? (
                     <Text className="text-retrogamingpc-xs text-retrogamingpc-text" numberOfLines={3}>
                       {review.content}

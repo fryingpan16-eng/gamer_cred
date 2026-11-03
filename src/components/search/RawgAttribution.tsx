@@ -7,7 +7,7 @@ export function RawgAttribution() {
     <View className="flex-row justify-center py-2">
       <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted">
         People data provided by{' '}
-        <Link href="https://rawg.io" target="_blank" className="text-retrogamingpc-xs text-retrogamingpc-highlight underline">
+        <Link href="https://rawg.io" target="_blank" className="text-retrogamingpc-xs text-retrogamingpc-text-bright underline">
           RAWG
         </Link>
       </Text>

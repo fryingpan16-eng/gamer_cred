@@ -22,6 +22,8 @@ type SearchResultListProps<T> = {
   statusNote?: string;
   /** Rendered beneath the results (e.g. data-provider attribution). */
   footer?: ReactElement;
+  /** Re-render rows when this changes (FlatList only re-renders on `data` otherwise), e.g. the viewer's ratings. */
+  extraData?: unknown;
 };
 
 function SkeletonCard() {
@@ -62,6 +64,7 @@ export function SearchResultList<T>({
   renderItem,
   statusNote,
   footer,
+  extraData,
 }: SearchResultListProps<T>) {
   if (!active) {
     return (
@@ -101,6 +104,7 @@ export function SearchResultList<T>({
       data={data}
       keyExtractor={keyExtractor}
       renderItem={({ item }) => renderItem(item)}
+      extraData={extraData}
       className={isPlaceholderData ? 'opacity-60' : undefined}
       contentContainerClassName="gap-2 p-3"
       keyboardShouldPersistTaps="handled"
