@@ -11,7 +11,8 @@ import { useThemeColors } from '@/hooks/useTheme';
 
 
 /**
- * 5-tab navigator: bottom bar on mobile, permanent left sidebar on desktop.
+ * 5-tab navigator: permanent left sidebar on desktop; on phones the single bottom
+ * nav is drawn by the root layout (RetroGamingPCBottomNav), beneath every page.
  * The same navigator instance is kept across breakpoints (only tabBarPosition
  * changes), so crossing the breakpoint never remounts screens or loses state.
  */
@@ -24,7 +25,9 @@ export default function TabsLayout() {
   return (
     <>
       <Tabs
-        tabBar={(props) => <RetroGamingPCTabBar {...props} variant={isDesktop ? 'sidebar' : 'bottom'} />}
+        // Desktop: the sidebar. Phones: no bar here — the root layout's single
+        // RetroGamingPCBottomNav sits beneath every page, tabs included.
+        tabBar={(props) => (isDesktop ? <RetroGamingPCTabBar {...props} variant="sidebar" /> : null)}
         screenOptions={{
           tabBarPosition: isDesktop ? 'left' : 'bottom',
           header: ({ options, route }) => <RetroGamingPCHeaderBar title={options.title ?? route.name} />,

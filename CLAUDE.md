@@ -25,7 +25,7 @@ The core app features a bottom navigation bar (migrating to a desktop sidebar on
 1. **Home (\`app/(tabs)/index.tsx\`)**: one top tab bar (\`?tab=\`): **Community** (trending games + trending posts, migration 000020, then the community feed), **Friends** (friends' activity) and **Lists** (Curated Lists pinned by app admins via \`app_admins\` + \`set_list_pin\`, Your Lists with New List, Browse Lists). Lists: \`lists\` + \`list_items\` (migration 000019), page \`app/list/[id].tsx\`, searchable in the Search tab.
 2. **Search (\`app/(tabs)/search.tsx\`)**: Unified search interface with tabs/filters for:
    - **Games**: Title, genre, and platform database search (via IGDB Edge Function cache).
-   - **Studios & Directors**: Developers, publishers, and key game creators (via IGDB Edge Function cache).
+   - **Creators** (sub-tabs Studios · Directors & People): Developers, publishers, and key game creators (via IGDB Edge Function cache).
      Tapping a studio opens \`app/studio/[id].tsx\`: the company plus every game it developed or published (proxy action \`company\`), each linking to its game page.
    - **Users / Friends**: Search community profiles by username to view profiles and send friend requests.
 3. **Now Playing tab — Post / Review Studio (\`app/(tabs)/post.tsx\`)**: 

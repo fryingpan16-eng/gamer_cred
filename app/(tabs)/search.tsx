@@ -23,12 +23,13 @@ import { useThemeColors } from '@/hooks/useTheme';
 
 const ENTITY_TABS: readonly RetroGamingPCTabItem<SearchEntity>[] = [
   { key: 'games', label: 'Games' },
-  { key: 'companies', label: 'Studios & Directors' },
+  // Short label so all four fit one row on a phone; the sub-tabs split Studios / People.
+  { key: 'companies', label: 'Creators' },
   { key: 'users', label: 'Users' },
   { key: 'lists', label: 'Lists' },
 ];
 
-/** Sub-modes of the "Studios & Directors" tab: IGDB companies vs RAWG people. */
+/** Sub-modes of the "Creators" tab: IGDB companies (studios) vs RAWG people. */
 type IndustryMode = 'studios' | 'people';
 
 const INDUSTRY_TABS: readonly RetroGamingPCTabItem<IndustryMode>[] = [
@@ -198,8 +199,9 @@ export default function SearchScreen() {
 
   return (
     <View className="flex-1 bg-retrogamingpc-dark">
+      {/* Same header strip as Home: full-width folder tabs, then the search box. */}
       <View className="gap-2 border-b border-b-retrogamingpc-accent px-3 pt-3 pb-2">
-        <RetroGamingPCTabs items={ENTITY_TABS} value={entity} onChange={setEntity} />
+        <RetroGamingPCTabs items={ENTITY_TABS} value={entity} onChange={setEntity} fill />
         <RetroGamingPCInput
           value={term}
           onChangeText={setTerm}

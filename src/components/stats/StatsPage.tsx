@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
-import { RetroGamingPCPanel } from '@/components/ui';
+import { RetroGamingPCPanel, RetroGamingPCTabs } from '@/components/ui';
 import { useIsDesktop } from '@/hooks/useIsDesktop';
 import { cn } from '@/utils/cn';
 
@@ -48,8 +48,9 @@ export function StatsPage({ selectedId, onSelect, stats = STATS }: StatsPageProp
   const Selected = selected.component;
 
   const menu = stats.map((s) => (
-    <MenuItem key={s.id} stat={s} active={s.id === selected.id} onPress={() => onSelect(s.id)} vertical={isDesktop} />
+    <MenuItem key={s.id} stat={s} active={s.id === selected.id} onPress={() => onSelect(s.id)} vertical />
   ));
+  const tabItems = stats.map((s) => ({ key: s.id, label: s.title }));
 
   return (
     <View className={cn('flex-1 bg-retrogamingpc-dark', isDesktop && 'flex-row')}>
@@ -59,15 +60,13 @@ export function StatsPage({ selectedId, onSelect, stats = STATS }: StatsPageProp
           {menu}
         </View>
       ) : (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          accessibilityRole="tablist"
-          className="max-h-[44px] flex-grow-0 border-b border-b-retrogamingpc-accent"
-          contentContainerClassName="items-center gap-1 px-3 py-2"
-        >
-          {menu}
-        </ScrollView>
+        // Same header strip as Home; many charts, so the tabs scroll with ◀ / ▶ hints.
+        <View className="gap-1 border-b border-b-retrogamingpc-accent px-3 pt-3 pb-2">
+          <RetroGamingPCTabs items={tabItems} value={selected.id} onChange={onSelect} />
+          <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted">
+            {stats.length} charts · swipe or use ◀ ▶ to see more
+          </Text>
+        </View>
       )}
 
       <ScrollView className="flex-1" contentContainerClassName="gap-3 p-3">

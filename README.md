@@ -51,7 +51,7 @@ Search covers three kinds of thing:
 | Kind | What it searches | Source |
 |---|---|---|
 | **Games** | Title, genre, platform | IGDB |
-| **Studios & Directors** | Developers, publishers and key creators | IGDB and RAWG |
+| **Creators** (Studios · Directors & People) | Developers, publishers and key creators; tap a studio for its page | IGDB and RAWG |
 | **Users** | Player profiles by username, with friend requests | Supabase |
 | **Lists** | Public game lists, by title or description | Supabase |
 
