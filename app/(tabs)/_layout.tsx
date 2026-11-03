@@ -1,7 +1,7 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router/js-tabs';
-import type { ComponentProps } from 'react';
 
+import { APP_TABS } from '@/components/navigation/appTabs';
 import { RetroGamingPCHeaderBar } from '@/components/navigation/RetroGamingPCHeaderBar';
 import { RetroGamingPCTabBar } from '@/components/navigation/RetroGamingPCTabBar';
 import { useIsDesktop } from '@/hooks/useIsDesktop';
@@ -9,15 +9,6 @@ import { TermsGate } from '@/components/safety/TermsGate';
 import { useApplyPendingRating } from '@/hooks/useRatings';
 import { useThemeColors } from '@/hooks/useTheme';
 
-type IconName = ComponentProps<typeof MaterialCommunityIcons>['name'];
-
-const TABS: readonly { name: 'index' | 'search' | 'post' | 'stats' | 'profile'; title: string; icon: IconName }[] = [
-  { name: 'index', title: 'Home', icon: 'home-outline' },
-  { name: 'search', title: 'Search', icon: 'magnify' },
-  { name: 'post', title: 'Now Playing', icon: 'gamepad-variant-outline' },
-  { name: 'stats', title: 'Stats', icon: 'chart-bar' },
-  { name: 'profile', title: 'Profile', icon: 'account-outline' },
-];
 
 /**
  * 5-tab navigator: bottom bar on mobile, permanent left sidebar on desktop.
@@ -41,7 +32,7 @@ export default function TabsLayout() {
           animation: 'none',
         }}
       >
-        {TABS.map((tab) => (
+        {APP_TABS.map((tab) => (
           <Tabs.Screen
             key={tab.name}
             name={tab.name}

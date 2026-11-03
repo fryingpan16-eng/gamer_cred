@@ -12,7 +12,7 @@ const SCALE_TABS: readonly RetroGamingPCTabItem<RatingScale>[] = RATING_SCALES.m
 
 const SCALE_EXAMPLES: Record<RatingScale, string> = {
   numeric: 'Rate with an exact score from 1 to 100.',
-  tier: 'Rate with a tier: S**, S, A+, A, B, C, D or F.',
+  tier: 'Rate with a tier: gold S (a perfect 100), S, A+, A, B, C, D or F.',
   stars: 'Rate with ½ to 5 stars.',
   rounded: 'Rate with 5–10, or NOT GOOD.',
 };

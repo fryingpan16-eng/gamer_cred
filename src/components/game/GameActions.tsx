@@ -2,10 +2,10 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
-import { RetroGamingPCAlert, RetroGamingPCBadge, RetroGamingPCButton, RetroGamingPCModal, RetroGamingPCPanel, RetroGamingPCSpinner } from '@/components/ui';
+import { RetroGamingPCAlert, RetroGamingPCBadge, RetroGamingPCButton, RetroGamingPCModal, RetroGamingPCSpinner } from '@/components/ui';
 import { useGameLookup } from '@/hooks/useGames';
 import { useNowPlaying, useUpdateNowPlayingSlot } from '@/hooks/useNowPlaying';
-import { useMyReviewForGame } from '@/hooks/useReviews';
+import { showToast } from '@/hooks/useToastStore';
 import { NOW_PLAYING_SLOTS } from '@/services/nowPlaying';
 import type { NowPlayingSlot } from '@/types/database.types';
 import type { IgdbGameResult } from '@/types/igdb';
@@ -77,41 +77,35 @@ function SlotChooserModal({ visible, game, onClose, onAssigned }: SlotChooserPro
 }
 
 /**
- * Library status + "Assign to Now Playing Slot" for a game page. (The review
- * entry point is the hero's "Write a review" button.)
+ * Game page hero button: "Add to Now Playing" (opens the slot chooser), or, when the
+ * game already sits in a slot, "Now Playing · Slot N" which opens the Review Studio.
  */
-export function GameActions({ game }: { game: IgdbGameResult }) {
+export function NowPlayingButton({ game }: { game: IgdbGameResult }) {
   const nowPlaying = useNowPlaying();
-  const myReview = useMyReviewForGame(game.id);
   const [choosing, setChoosing] = useState(false);
-  const [assignedTo, setAssignedTo] = useState<NowPlayingSlot | null>(null);
-
   const inSlot = nowPlaying.data?.find((r) => r.game_id === game.id);
-  const review = myReview.data;
 
   return (
-    <RetroGamingPCPanel title="Your Library">
-      <View className="gap-2">
-        {assignedTo ? <RetroGamingPCAlert tone="success" message={`Added to Now Playing slot ${assignedTo}.`} /> : null}
-        <View className="flex-row flex-wrap gap-1">
-          {inSlot ? <RetroGamingPCBadge label={`Now Playing · Slot ${inSlot.slot_index}`} variant="nowPlaying" /> : null}
-          {review ? <RetroGamingPCBadge label={review.status === 'published' ? 'Reviewed' : 'Draft saved'} variant={review.status === 'published' ? 'published' : 'draft'} /> : null}
-        </View>
-        {inSlot ? (
-          <RetroGamingPCButton variant="navigate" label="Open in Review Studio" onPress={() => router.push('/post')} />
-        ) : (
-          <RetroGamingPCButton variant="create" label="Assign to Now Playing Slot" onPress={() => setChoosing(true)} />
-        )}
-      </View>
+    <>
+      {inSlot ? (
+        <RetroGamingPCButton variant="navigate" label={`Now Playing · Slot ${inSlot.slot_index}`} onPress={() => router.push('/post')} />
+      ) : (
+        <RetroGamingPCButton
+          variant="create"
+          label="Add to Now Playing"
+          disabled={nowPlaying.isPending}
+          onPress={() => setChoosing(true)}
+        />
+      )}
       <SlotChooserModal
         visible={choosing}
         game={game}
         onClose={() => setChoosing(false)}
         onAssigned={(slot) => {
           setChoosing(false);
-          setAssignedTo(slot);
+          showToast(`Added to Now Playing slot ${slot}.`, 'success');
         }}
       />
-    </RetroGamingPCPanel>
+    </>
   );
 }

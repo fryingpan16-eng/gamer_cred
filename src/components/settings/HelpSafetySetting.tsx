@@ -4,7 +4,7 @@ import { Text, View } from 'react-native';
 import { RetroGamingPCButton } from '@/components/ui';
 import { SUPPORT_EMAIL } from '@/constants/legal';
 import { useIsAdmin } from '@/hooks/useLists';
-import { useAdminReports } from '@/hooks/useSafety';
+import { useAdminReports, useHeldAvatars } from '@/hooks/useSafety';
 
 /** Terms, support contact, and (for admins) the moderation queue. */
 export function HelpSafetySetting() {
@@ -24,6 +24,7 @@ export function HelpSafetySetting() {
 
 function ModerationButton() {
   const open = useAdminReports('open');
-  const count = open.data?.length ?? 0;
+  const held = useHeldAvatars();
+  const count = (open.data?.length ?? 0) + (held.data?.length ?? 0);
   return <RetroGamingPCButton variant="navigate" label={`Moderation queue${count > 0 ? ` (${count})` : ''}`} onPress={() => router.push('/admin/reports')} />;
 }

@@ -40,7 +40,7 @@ describe('game page score box scales', () => {
   it('score boxes take the tier colour of their score; unrated boxes stay plain', () => {
     const olive = themePalette('olive');
     expect(tierBoxStyle({ numeric: 92, inputScale: 'numeric', input: '92' }, olive)?.borderColor).toBe('#3A7FC1'); // A+
-    expect(tierBoxStyle({ numeric: 100, inputScale: 'numeric', input: '100' }, olive)?.borderColor).toBe('#7B3FE4'); // S**
+    expect(tierBoxStyle({ numeric: 100, inputScale: 'numeric', input: '100' }, olive)?.borderColor).toBe('#5A2BB0'); // perfect (gold S)
     expect(tierBoxStyle(null, olive)).toBeUndefined();
   });
 

@@ -1,4 +1,5 @@
-import { F_STAR_BANDS, NOT_GOOD, RATING_TIERS, type RoundedValue, type TierCode } from '@/constants/ratingRubric';
+import { F_STAR_BANDS, NOT_GOOD, PERFECT_TIER_GOLD, RATING_TIERS, type RoundedValue, type TierCode } from '@/constants/ratingRubric';
+import { contrast as contrastRatio } from '@/utils/color';
 import { reviewFormSchema, slotDetailsSchema, storedRatingSchema } from '@/utils/reviewSchemas';
 import {
   bucketByTier,
@@ -49,10 +50,17 @@ describe('rubric integrity', () => {
     });
   });
 
+  it('the perfect tier shows as a gold S on deep purple; every other label is its code', () => {
+    const perfect = RATING_TIERS.find((t) => t.tier === 'S**')!;
+    expect(perfect).toMatchObject({ label: 'S', perfect: true, textColor: PERFECT_TIER_GOLD });
+    expect(contrastRatio(perfect.textColor, perfect.color)).toBeGreaterThanOrEqual(4.5);
+    for (const t of RATING_TIERS.filter((x) => !x.perfect)) expect(t.label).toBe(t.tier);
+  });
+
   it('uses the specified badge colours, with S** distinct from S', () => {
     const colors = Object.fromEntries(RATING_TIERS.map((t) => [t.tier, t.color]));
     expect(colors).toEqual({
-      'S**': '#7B3FE4',
+      'S**': '#5A2BB0',
       S: '#9B7FD4',
       'A+': '#3A7FC1',
       A: '#9CCB8A',
@@ -114,11 +122,11 @@ describe('other scales → numeric (top of range)', () => {
   });
 
   it.each<[number, number]>([
-    [5, 99],
     [4.5, 95],
     [4, 89],
     [3.5, 79],
     [3, 69],
+    [5, 100], // five stars is a perfect score (gold S)
     [2.5, 59],
     [2, 49],
     [1.5, 36],
@@ -151,8 +159,8 @@ describe('S** is only reachable at exactly 100', () => {
     for (let n = 1; n <= 100; n++) expect(numericToTier(n) === 'S**').toBe(n === 100);
   });
 
-  it('5 stars and rounded 10 map to S (99), never S**', () => {
-    expect(numericToTier(starsToNumeric(5))).toBe('S');
+  it('5 stars is a perfect 100 (gold S); rounded 10 stays plain S (99)', () => {
+    expect(numericToTier(starsToNumeric(5))).toBe('S**');
     expect(numericToTier(roundedToNumeric(10))).toBe('S');
   });
 
@@ -271,7 +279,8 @@ describe('stored-rating consistency & aggregation', () => {
     expect(isConsistentStoredRating({ numeric: 90, inputScale: 'tier', input: 'A+' })).toBe(false);
     // S** must be exactly 100
     expect(isConsistentStoredRating({ numeric: 99, inputScale: 'tier', input: 'S**' })).toBe(false);
-    expect(isConsistentStoredRating({ numeric: 100, inputScale: 'stars', input: '5' })).toBe(false);
+    expect(isConsistentStoredRating({ numeric: 100, inputScale: 'stars', input: '5' })).toBe(true);
+    expect(isConsistentStoredRating({ numeric: 99, inputScale: 'stars', input: '5' })).toBe(false);
     expect(isConsistentStoredRating({ numeric: 0, inputScale: 'numeric', input: '0' })).toBe(false);
   });
 

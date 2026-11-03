@@ -1,43 +1,63 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { CommunityReviews } from '@/components/game/CommunityReviews';
 import { CollectionContents } from '@/components/game/EntryTypeBadge';
 import { FriendRatings } from '@/components/game/FriendRatings';
-import { GameActions } from '@/components/game/GameActions';
 import { GameFacts } from '@/components/game/GameFacts';
 import { GameHero } from '@/components/game/GameHero';
 import { ScreenshotStrip } from '@/components/game/ScreenshotStrip';
 import { SystemRequirementsPanel } from '@/components/game/SystemRequirementsPanel';
 import { RetroGamingPCAlert, RetroGamingPCButton, RetroGamingPCPanel, RetroGamingPCSpinner } from '@/components/ui';
 import { useGameDetail, useGameReviewStats } from '@/hooks/useGameDetail';
-import { useIsDesktop } from '@/hooks/useIsDesktop';
 import { SearchServiceError } from '@/services/igdb';
 import type { IgdbGameResult } from '@/types/igdb';
+import { TOUCH_SLOP } from '@/utils/platform';
 import { queryKeys } from '@/utils/queryKeys';
 
 const PC_PLATFORMS = new Set(['PC', 'Mac', 'Linux']);
 
+/** Summaries shorter than this fit in the 3 collapsed lines on a phone, so they get no toggle. */
+const ABOUT_TOGGLE_MIN_CHARS = 140;
+const ABOUT_COLLAPSED_LINES = 3;
+
+/** Summary clamped to 3 lines; "Show more" reveals the rest (and the storyline), "Show less" folds it back. */
 function About({ summary, storyline }: { summary: string | null; storyline: string | null }) {
-  const [showStory, setShowStory] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   if (!summary && !storyline) return null;
+  const lead = summary ?? storyline ?? '';
+  const extraStory = summary ? storyline : null;
+  const canToggle = lead.length > ABOUT_TOGGLE_MIN_CHARS || Boolean(extraStory);
+
   return (
     <RetroGamingPCPanel title="About This Game">
       <View className="gap-2">
-        {summary ? <Text className="text-retrogamingpc-sm leading-[18px] text-retrogamingpc-text">{summary}</Text> : null}
-        {storyline ? (
-          showStory ? (
-            <>
-              <Text className="retrogamingpc-label">Storyline</Text>
-              <Text className="text-retrogamingpc-sm leading-[18px] text-retrogamingpc-text">{storyline}</Text>
-            </>
-          ) : (
-            <Text onPress={() => setShowStory(true)} className="text-retrogamingpc-xs text-retrogamingpc-text-bright underline">
-              Read the storyline
+        <Text
+          numberOfLines={expanded ? undefined : ABOUT_COLLAPSED_LINES}
+          className="text-retrogamingpc-sm leading-[18px] text-retrogamingpc-text"
+        >
+          {lead}
+        </Text>
+        {expanded && extraStory ? (
+          <>
+            <Text className="retrogamingpc-label">Storyline</Text>
+            <Text className="text-retrogamingpc-sm leading-[18px] text-retrogamingpc-text">{extraStory}</Text>
+          </>
+        ) : null}
+        {canToggle ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityState={{ expanded }}
+            hitSlop={TOUCH_SLOP}
+            onPress={() => setExpanded((v) => !v)}
+            className="self-start"
+          >
+            <Text className="text-retrogamingpc-xs font-bold text-retrogamingpc-text-bright underline">
+              {expanded ? '▲ Show less' : '▼ Show more'}
             </Text>
-          )
+          </Pressable>
         ) : null}
       </View>
     </RetroGamingPCPanel>
@@ -46,7 +66,7 @@ function About({ summary, storyline }: { summary: string | null; storyline: stri
 
 /**
  * Retro store-style game page (RetroGamingPC theme).
- * Desktop: main column (hero, about, friends' ratings, media, reviews) + sidebar (actions, facts, requirements).
+ * Desktop: main column (hero, about, friends' ratings, media, reviews) + sidebar (facts, requirements).
  */
 export default function GameDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -54,7 +74,6 @@ export default function GameDetailScreen() {
   const valid = Number.isSafeInteger(gameId) && gameId > 0;
 
   const queryClient = useQueryClient();
-  const isDesktop = useIsDesktop();
   const detail = useGameDetail(valid ? gameId : null);
   const stats = useGameReviewStats(valid ? gameId : null);
   // Light record from search / slots: instant title while the full page loads.
@@ -101,8 +120,6 @@ export default function GameDetailScreen() {
       <GameHero game={game} stats={stats.data} />
       <View className="gap-3 md:flex-row md:items-start">
         <View className="gap-3 md:flex-[3]">
-          {/* On phones the actions sit right under the hero; on desktop they live in the sidebar. */}
-          {!isDesktop ? <GameActions game={game} /> : null}
           {game.entryType === 'collection' && (game.collectionGames?.length ?? 0) > 0 ? (
             <RetroGamingPCPanel title={`Included Games (${game.collectionGames.length})`}>
               <View className="gap-2">
@@ -119,7 +136,6 @@ export default function GameDetailScreen() {
           <CommunityReviews gameId={game.id} />
         </View>
         <View className="gap-3 md:flex-[2]">
-          {isDesktop ? <GameActions game={game} /> : null}
           <GameFacts game={game} />
           <SystemRequirementsPanel requirements={game.systemRequirements} hasPc={hasPc} />
         </View>

@@ -3,8 +3,9 @@
  * in src/constants/ratingRubric.ts — no ranges are hardcoded here.
  *
  *   numeric → other scales: exact, by rubric range.
- *   other scales → numeric: the TOP of the input's range, except that S** is
- *   only reachable via numeric 100 or picking the S** tier (5★ / rounded 10 → S = 99).
+ *   other scales → numeric: the TOP of the input's range, except that the perfect
+ *   tier (stored S**, shown as a gold S) is only reachable via numeric 100, picking
+ *   it, or 5★ (= 100). Rounded 10 → plain S = 99.
  */
 import {
   F_STAR_BANDS,
@@ -105,6 +106,22 @@ export function tierDefinitionForNumeric(numeric: number): TierDefinition {
   return RATING_TIERS.find((t) => numeric >= t.min && numeric <= t.max)!;
 }
 
+/** What users see for a tier code (the perfect `S**` shows as "S", in gold). */
+export function tierLabel(tier: TierCode): string {
+  return tierDefinition(tier).label;
+}
+
+/** Screen-reader name: "perfect S" for the gold S, otherwise the label. */
+export function tierSpokenName(tier: TierCode): string {
+  const def = tierDefinition(tier);
+  return def.perfect ? `perfect ${def.label}` : def.label;
+}
+
+/** Badge border: gold for the perfect S, a soft dark edge otherwise. */
+export function tierBorderColor(tier: TierCode): string {
+  return tierDefinition(tier).perfect ? tierDefinition(tier).textColor : 'rgba(0,0,0,0.35)';
+}
+
 export function tierDefinition(tier: TierCode): TierDefinition {
   return RATING_TIERS.find((t) => t.tier === tier)!;
 }
@@ -140,7 +157,7 @@ export function deriveAllScales(numeric: number): DerivedRating {
 }
 
 // -----------------------------------------------------------------------------
-// other scales → numeric (top of range; S** only explicitly)
+// other scales → numeric (top of range; the perfect 100 only via 100, its tier or 5★)
 // -----------------------------------------------------------------------------
 
 /** Numeric ranges that may be targeted by coarse (stars / rounded) input. */
@@ -159,6 +176,8 @@ export function tierToNumeric(tier: TierCode): number {
 
 export function starsToNumeric(stars: number): number {
   if (!isValidStars(stars)) throw new RangeError(`Stars must be 0.5–5 in half steps, got ${stars}`);
+  // Five stars is a perfect score (the gold S), not the top of the plain S range.
+  if (stars === STARS_MAX) return NUMERIC_MAX;
   return Math.max(...coarseTargets().filter((t) => t.stars === stars).map((t) => t.max));
 }
 
@@ -253,7 +272,7 @@ export function isNumericApproximate(rating: StoredRating): boolean {
   return rating.inputScale !== 'numeric' && rating.numeric !== NUMERIC_MAX;
 }
 
-/** "87" when typed, "~89" when derived from tier/stars/rounded, "100" for S**. */
+/** "87" when typed, "~89" when derived from tier/stars/rounded, "100" for the perfect S. */
 export function formatNumeric(rating: StoredRating): string {
   return `${isNumericApproximate(rating) ? '~' : ''}${rating.numeric}`;
 }
@@ -278,7 +297,7 @@ export function formatRatingInScale(rating: StoredRating, scale: RatingScale): s
     case 'numeric':
       return formatNumeric(rating);
     case 'tier':
-      return storedRatingInScale(rating, 'tier').value as TierCode;
+      return tierLabel(storedRatingInScale(rating, 'tier').value as TierCode);
     case 'stars':
       return formatStars(storedRatingInScale(rating, 'stars').value as number);
     case 'rounded':

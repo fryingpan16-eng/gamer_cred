@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { TERMS_VERSION } from '@/constants/legal';
 import { signOut } from '@/services/auth';
+import { decideHeldAvatar, fetchHeldAvatars } from '@/services/avatar';
 import {
   acceptTerms,
   adminDeleteUser,
@@ -121,6 +122,25 @@ export function useDeleteAccount() {
       await deleteMyAccount();
       await signOut(); // the session belongs to a deleted user; drop it on this device
       queryClient.clear();
+    },
+  });
+}
+
+// ---- profile picture screening (avatar Edge Function) ------------------------------
+
+/** Admin: pictures the automatic check held for a human decision. */
+export function useHeldAvatars(enabled = true) {
+  return useQuery({ queryKey: queryKeys.safety.heldAvatars(), queryFn: fetchHeldAvatars, enabled });
+}
+
+/** Admin: approve (publish) or reject a held picture. */
+export function useDecideHeldAvatar() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ userId, approve }: { userId: string; approve: boolean }) => decideHeldAvatar(userId, approve),
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.safety.heldAvatars() });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.profiles.all() });
     },
   });
 }

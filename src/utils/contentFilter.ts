@@ -9,7 +9,11 @@
  * stopped before it is saved. Anything that gets past it can be reported and
  * removed by an admin.
  */
-import { englishDataset, englishRecommendedTransformers, RegExpMatcher } from 'obscenity';
+// `require`, not `import`: on web an `import` resolves to obscenity's ESM wrapper (dist/index.mjs),
+// which Metro bundles with an undefined default ("Cannot read properties of undefined (reading
+// 'DataSet')"). `require` picks the CommonJS build on every platform.
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { englishDataset, englishRecommendedTransformers, RegExpMatcher } = require('obscenity') as typeof import('obscenity');
 
 /**
  * Tuned for games: "dick" is dropped (Dick Grayson, Philip K. Dick) and words

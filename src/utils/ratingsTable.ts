@@ -21,12 +21,11 @@ export type RatingsTableRow = {
   year: number | null;
   genres: string[];
   developers: string[];
-  community: number | null;
   ratedAt: string;
   reviewId: string | null;
 };
 
-export type SortKey = 'name' | 'score' | 'platform' | 'year' | 'genre' | 'developer' | 'community' | 'rated' | 'review';
+export type SortKey = 'name' | 'score' | 'platform' | 'year' | 'genre' | 'developer' | 'rated' | 'review';
 export type SortDir = 'asc' | 'desc';
 export type TableSort = { key: SortKey; dir: SortDir };
 
@@ -94,7 +93,6 @@ export function toTableRow(src: RatingsTableSource, fallbackName?: string): Rati
     year: src.release_year,
     genres: src.genres.length > 0 ? src.genres : [UNKNOWN_LABEL],
     developers: src.developers.length > 0 ? src.developers : [UNKNOWN_LABEL],
-    community: src.community_rating,
     ratedAt: src.rated_at,
     reviewId: src.review_id,
   };
@@ -128,8 +126,6 @@ function sortValue(row: RatingsTableRow, key: SortKey): string | number | null {
       return row.genres[0] === UNKNOWN_LABEL ? null : row.genres[0]!.toLowerCase();
     case 'developer':
       return row.developers[0] === UNKNOWN_LABEL ? null : row.developers[0]!.toLowerCase();
-    case 'community':
-      return row.community;
     case 'rated':
       return row.ratedAt;
     case 'review':

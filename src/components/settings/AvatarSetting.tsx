@@ -20,6 +20,7 @@ export function AvatarSetting() {
   const [confirmRemove, setConfirmRemove] = useState(false);
 
   const busy = preparing || mutation.isPending;
+  const held = mutation.isSuccess && mutation.data.status === 'held';
   const shown = preview ?? profile?.avatar_url ?? null;
   const initial = (profile?.username ?? '?').slice(0, 1).toUpperCase();
 
@@ -67,9 +68,18 @@ export function AvatarSetting() {
           ) : null}
         </View>
         <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted">
-          {mutation.isPending ? 'Uploading…' : 'JPG, PNG or WebP. Cropped to a square and resized automatically.'}
+          {mutation.isPending
+            ? 'Uploading and checking…'
+            : 'JPG, PNG or WebP. Cropped to a square and resized automatically. Pictures are checked automatically and must follow the Community Guidelines.'}
         </Text>
-        <RetroGamingPCSaveStatus pending={false} savedAt={mutation.isSuccess ? mutation.submittedAt : null} />
+        {held ? (
+          <RetroGamingPCAlert
+            tone="info"
+            message="Thanks! Your new picture is waiting for a quick review and will appear once it’s approved. Your current picture stays until then."
+          />
+        ) : (
+          <RetroGamingPCSaveStatus pending={false} savedAt={mutation.isSuccess ? mutation.submittedAt : null} />
+        )}
         {pickError ? <RetroGamingPCAlert message={pickError} /> : null}
         {mutation.isError ? <RetroGamingPCAlert message={mutation.error.message} /> : null}
       </View>

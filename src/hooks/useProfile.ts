@@ -20,7 +20,7 @@ import {
   updateProfile,
   updateUiTheme,
 } from '@/services/profile';
-import { removeAvatar, uploadAvatar, type PreparedAvatar } from '@/services/avatar';
+import { removeAvatar, uploadAvatar, type AvatarUploadResult, type PreparedAvatar } from '@/services/avatar';
 import {
   removeFriendship,
   respondToFriendRequest,
@@ -174,16 +174,21 @@ export function useUpdateNowPlayingVisibility() {
   });
 }
 
-/** Upload a prepared picture, or remove it (`null`); syncs the auth snapshot and profile cache. */
+/**
+ * Upload a prepared picture (screened server-side), or remove it (`null`); syncs the
+ * auth snapshot and profile cache. Resolves `held` when the picture awaits an admin.
+ */
 export function useAvatarMutation() {
   const queryClient = useQueryClient();
   const viewerId = useViewerId();
   return useMutation({
-    mutationFn: (avatar: PreparedAvatar | null) => {
+    mutationFn: async (avatar: PreparedAvatar | null): Promise<AvatarUploadResult> => {
       if (!viewerId) throw new Error('You must be signed in.');
-      return avatar ? uploadAvatar(viewerId, avatar) : removeAvatar(viewerId);
+      return avatar ? uploadAvatar(viewerId, avatar) : { status: 'approved', profile: await removeAvatar(viewerId) };
     },
-    onSuccess: (profile) => {
+    onSuccess: (result) => {
+      if (result.status !== 'approved') return;
+      const { profile } = result;
       useAuthStore.setState({ profile });
       queryClient.setQueryData(queryKeys.profiles.detail(profile.id), profile);
       // Avatars appear in search results, reviews and the feed.

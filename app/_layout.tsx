@@ -1,18 +1,20 @@
 import '../global.css';
 
 import { QueryClientProvider } from '@tanstack/react-query';
-import { SplashScreen, Stack } from 'expo-router';
+import { SplashScreen, Stack, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, type ReactNode } from 'react';
 import { View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { RetroGamingPCGlobalTabBar } from '@/components/navigation/RetroGamingPCGlobalTabBar';
 import { retroGamingPCStackHeader } from '@/components/navigation/retroGamingPCStackHeader';
 import { RetroGamingPCBootScreen } from '@/components/RetroGamingPCBootScreen';
 import { RetroGamingPCErrorBoundary } from '@/components/RetroGamingPCErrorBoundary';
 import { RetroGamingPCWindowFrame } from '@/components/RetroGamingPCWindowFrame';
 import { RetroGamingPCToastHost } from '@/components/ui';
 import { useAuthStore } from '@/hooks/useAuth';
+import { useIsDesktop } from '@/hooks/useIsDesktop';
 import { queryClient } from '@/services/queryClient';
 import { useThemeColors, useThemeStore, useThemeVars } from '@/hooks/useTheme';
 
@@ -82,6 +84,8 @@ function RootNavigator() {
   // The root SafeAreaView skips the bottom edge (the tab bar pads itself), so
   // full-screen pages keep their last row clear of the home indicator here.
   const insets = useSafeAreaInsets();
+  const isDesktop = useIsDesktop();
+  const segments = useSegments();
 
   useEffect(() => {
     if (status !== 'loading') SplashScreen.hide();
@@ -90,38 +94,55 @@ function RootNavigator() {
   if (status === 'loading') return <RetroGamingPCBootScreen />;
 
   const isSignedIn = status === 'signedIn';
+  // Phones: keep the bottom tab bar on every signed-in page. Tab screens draw their
+  // own; every other page (game, player, list, settings…) gets the global copy.
+  const showGlobalTabBar = isSignedIn && !isDesktop && segments[0] !== '(tabs)';
 
   return (
-    <Stack
-      screenOptions={{
-        header: retroGamingPCStackHeader,
-        // iOS 26 defaults Stack headers to transparent (Liquid Glass); keep ours opaque.
-        headerTransparent: false,
-        contentStyle: { backgroundColor: themeColors.dark, paddingBottom: insets.bottom },
-      }}
-    >
-      <Stack.Protected guard={isSignedIn} redirectTo="/login">
-        {/* Groups render their own navigator chrome. */}
-        <Stack.Screen name="(tabs)" options={{ headerShown: false, contentStyle: { backgroundColor: themeColors.dark } }} />
-        <Stack.Screen name="game/[id]" options={{ title: 'Game' }} />
-        <Stack.Screen name="user/[id]" options={{ title: 'Player' }} />
-        <Stack.Screen name="settings" options={{ title: 'Settings' }} />
-        <Stack.Screen name="review/[id]" options={{ title: 'Review' }} />
-        <Stack.Screen name="ratings/[userId]" options={{ title: 'Ratings' }} />
-        <Stack.Screen name="list/[id]" options={{ title: 'List' }} />
-        <Stack.Screen name="studio/[id]" options={{ title: 'Studio' }} />
-        <Stack.Screen name="admin/reports" options={{ title: 'Moderation' }} />
-      </Stack.Protected>
+    <View className="flex-1">
+      <Stack
+        screenOptions={{
+          header: retroGamingPCStackHeader,
+          // iOS 26 defaults Stack headers to transparent (Liquid Glass); keep ours opaque.
+          headerTransparent: false,
+          // The global tab bar pads the home indicator itself; otherwise the page does.
+          contentStyle: {
+            backgroundColor: themeColors.dark,
+            paddingBottom: showGlobalTabBar ? 0 : insets.bottom,
+          },
+        }}
+      >
+        <Stack.Protected guard={isSignedIn} redirectTo="/login">
+          {/* Groups render their own navigator chrome. */}
+          <Stack.Screen
+            name="(tabs)"
+            options={{
+              headerShown: false,
+              contentStyle: { backgroundColor: themeColors.dark },
+            }}
+          />
+          <Stack.Screen name="game/[id]" options={{ title: 'Game' }} />
+          <Stack.Screen name="user/[id]" options={{ title: 'Player' }} />
+          <Stack.Screen name="settings" options={{ title: 'Settings' }} />
+          <Stack.Screen name="review/[id]" options={{ title: 'Review' }} />
+          <Stack.Screen name="ratings/[userId]" options={{ title: 'Ratings' }} />
+          <Stack.Screen name="list/[id]" options={{ title: 'List' }} />
+          <Stack.Screen name="studio/[id]" options={{ title: 'Studio' }} />
+          <Stack.Screen name="friends/[userId]" options={{ title: 'Friends' }} />
+          <Stack.Screen name="admin/reports" options={{ title: 'Moderation' }} />
+        </Stack.Protected>
 
-      <Stack.Protected guard={!isSignedIn} redirectTo="/">
-        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-      </Stack.Protected>
+        <Stack.Protected guard={!isSignedIn} redirectTo="/">
+          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+        </Stack.Protected>
 
-      {/* Reachable in both states: finishes OAuth / email-link redirects. */}
-      <Stack.Screen name="auth/callback" options={{ headerShown: false }} />
-      {/* Public in both states: linked from sign-up, Settings and the store listings. */}
-      <Stack.Screen name="terms" options={{ title: 'Terms & Community Guidelines' }} />
-      <Stack.Screen name="delete-account" options={{ title: 'Delete your account' }} />
-    </Stack>
+        {/* Reachable in both states: finishes OAuth / email-link redirects. */}
+        <Stack.Screen name="auth/callback" options={{ headerShown: false }} />
+        {/* Public in both states: linked from sign-up, Settings and the store listings. */}
+        <Stack.Screen name="terms" options={{ title: 'Terms & Community Guidelines' }} />
+        <Stack.Screen name="delete-account" options={{ title: 'Delete your account' }} />
+      </Stack>
+      {showGlobalTabBar ? <RetroGamingPCGlobalTabBar /> : null}
+    </View>
   );
 }

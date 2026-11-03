@@ -7,7 +7,7 @@ import { RATING_TIERS, type TierCode } from '@/constants/ratingRubric';
 import { useThemeColors } from '@/hooks/useTheme';
 import { cn } from '@/utils/cn';
 import { noZoomInputStyle } from '@/utils/platform';
-import { formatStars, tierDefinition } from '@/utils/rating';
+import { formatStars, tierDefinition, tierBorderColor, tierSpokenName } from '@/utils/rating';
 import {
   activeFilterCount,
   applyTable,
@@ -34,7 +34,6 @@ const COLUMNS: readonly Column[] = [
   { key: 'year', label: 'Year', width: 50, sort: 'year', align: 'right' },
   { key: 'genre', label: 'Genre', width: 130, sort: 'genre' },
   { key: 'developer', label: 'Developer', width: 140, sort: 'developer' },
-  { key: 'community', label: 'IGDB', width: 50, sort: 'community', align: 'right' },
   { key: 'rated', label: 'Rated', width: 88, sort: 'rated', align: 'right' },
   { key: 'review', label: 'Review', width: 62, sort: 'review', align: 'center' },
 ];
@@ -128,7 +127,7 @@ function Filters({ rows, filters, onChange }: { rows: readonly RatingsTableRow[]
         {RATING_TIERS.map((t) => (
           <FilterChip
             key={t.tier}
-            label={t.tier}
+            label={t.label}
             count={tierCounts.get(t.tier) ?? 0}
             color={t.color}
             textColor={t.textColor}
@@ -212,7 +211,7 @@ function Row({ row, index }: { row: RatingsTableRow; index: number }) {
   return (
     <Pressable
       accessibilityRole="link"
-      accessibilityLabel={`${row.name}: ${row.score} out of 100, tier ${row.tier}, played on ${row.platform}. Open game page`}
+      accessibilityLabel={`${row.name}: ${row.score} out of 100, tier ${tierSpokenName(row.tier)}, played on ${row.platform}. Open game page`}
       onPress={() => router.push({ pathname: '/game/[id]', params: { id: String(row.gameId) } })}
       style={{ height: ROW_HEIGHT, borderBottomColor: DIVIDER }}
       className={cn('flex-row border-b', index % 2 === 1 ? 'bg-retrogamingpc-card' : 'bg-retrogamingpc-dark')}
@@ -226,9 +225,9 @@ function Row({ row, index }: { row: RatingsTableRow; index: number }) {
         <Text className="font-mono text-retrogamingpc-sm font-bold text-retrogamingpc-text-bright">{row.score}</Text>
       </Cell>
       <Cell width={COLUMNS[2]!.width} align="center">
-        <View className="min-w-[30px] items-center border px-1" style={{ backgroundColor: tier.color, borderColor: 'rgba(0,0,0,0.35)' }}>
+        <View className="min-w-[30px] items-center border px-1" style={{ backgroundColor: tier.color, borderColor: tierBorderColor(row.tier) }}>
           <Text className="font-mono text-retrogamingpc-xs font-bold" style={{ color: tier.textColor }}>
-            {row.tier}
+            {tier.label}
           </Text>
         </View>
       </Cell>
@@ -254,14 +253,11 @@ function Row({ row, index }: { row: RatingsTableRow; index: number }) {
         </Text>
       </Cell>
       <Cell width={COLUMNS[8]!.width} align="right">
-        <Text className={cn(cellText, 'font-mono')}>{row.community ?? '—'}</Text>
-      </Cell>
-      <Cell width={COLUMNS[9]!.width} align="right">
         <Text className={cn(cellText, 'font-mono')} numberOfLines={1}>
           {fmtDate(row.ratedAt)}
         </Text>
       </Cell>
-      <Cell width={COLUMNS[10]!.width} align="center">
+      <Cell width={COLUMNS[9]!.width} align="center">
         {row.reviewId ? (
           <Text
             accessibilityRole="link"

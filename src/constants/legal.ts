@@ -47,6 +47,7 @@ export const TERMS_SECTIONS: readonly LegalSection[] = [
     paragraphs: [
       'You keep ownership of what you post. By posting public content you allow GamerCred to display it in the app to other users.',
       'Ratings, published reviews, public lists and your profile are visible to other users. Drafts and private lists are only visible to you.',
+      'Profile pictures are checked automatically (using Google Cloud Vision) before other players can see them. Pictures the check isn’t sure about are reviewed by the GamerCred team.',
     ],
   },
   {

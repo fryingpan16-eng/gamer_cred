@@ -125,7 +125,7 @@ Every rating is stored once, as a canonical score from **1 to 100**, together wi
 
 | Tier | 1–100 | Stars | Rounded | Descriptor |
 |---|---|---|---|---|
-| **S\*\*** | 100 | 5 | 10 | Masterpiece. Only reachable by entering exactly 100 or picking S**. |
+| **S** (gold) | 100 | 5 | 10 | Masterpiece, a perfect score. Shown as a **gold S** (stored as `S**`). Reached by entering exactly 100, picking the gold S, or giving 5★. |
 | **S** | 96–99 | 5 | 10 | Masterpiece |
 | **A+** | 90–95 | 4.5 | 9 | Classic |
 | **A** | 80–89 | 4 | 8 | Excellent–Fantastic |
@@ -139,7 +139,7 @@ Every rating is stored once, as a canonical score from **1 to 100**, together wi
   - **tier:** tap a tier chip;
   - **rounded:** tap 5–10 or NOT GOOD;
   - **1–100:** type a score, or use − / +.
-- **Converting the other way:** a star, tier or rounded value maps to the top of its 1–100 range. For example, 4★ becomes 89.
+- **Converting the other way:** a star, tier or rounded value maps to the top of its 1–100 range. For example, 4★ becomes 89. The exception is 5★, which becomes 100 (the gold S); rounded 10 stays 99.
 - **Tier colours:** every tier has its own colour. They're used on tier badges, on every chart that shows ratings, and on the score boxes on game pages.
 
 ---

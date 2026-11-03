@@ -25,8 +25,7 @@ import {
   tierDefinitionForNumeric,
   toStoredRating,
   type RatingInput,
-  type StoredRating,
-} from '@/utils/rating';
+  type StoredRating, tierLabel, tierSpokenName } from '@/utils/rating';
 
 export type QuickRatingProps = {
   gameId: number;
@@ -59,7 +58,7 @@ function inputLabel(input: RatingInput): string {
     case 'stars':
       return `${input.value} of 5 stars`;
     case 'tier':
-      return `Tier ${input.value}, ${tierDefinition(input.value).descriptor}`;
+      return `Tier ${tierSpokenName(input.value)}, ${tierDefinition(input.value).descriptor}`;
     case 'rounded':
       return input.value === NOT_GOOD ? 'Not good' : `${input.value} out of 10`;
   }
@@ -330,7 +329,13 @@ export function QuickRating({
             ? tierDefinition(input.value)
             : tierDefinitionForNumeric(roundedToNumeric(input.scale === 'rounded' ? input.value : NOT_GOOD));
         const text =
-          input.scale === 'rounded' && input.value === NOT_GOOD ? (size === 'compact' ? 'NG' : NOT_GOOD) : String(input.value);
+          input.scale === 'rounded' && input.value === NOT_GOOD
+            ? size === 'compact'
+              ? 'NG'
+              : NOT_GOOD
+            : input.scale === 'tier'
+              ? tierLabel(input.value)
+              : String(input.value);
         return (
           <Chip
             key={String(input.value)}

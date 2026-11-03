@@ -1,7 +1,7 @@
 import { Link, router } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
 
-import { RetroGamingPCAlert, RetroGamingPCBadge, RetroGamingPCPanel, RetroGamingPCRating, RetroGamingPCSpinner } from '@/components/ui';
+import { RetroGamingPCAlert, RetroGamingPCBadge, RetroGamingPCButton, RetroGamingPCPanel, RetroGamingPCRating, RetroGamingPCSpinner } from '@/components/ui';
 import { useGameLookup } from '@/hooks/useGames';
 import { useNowPlaying } from '@/hooks/useNowPlaying';
 import { useFriendRelation } from '@/hooks/useProfile';
@@ -42,9 +42,7 @@ export function NowPlayingShowcase({ userId, isOwner, visibility }: NowPlayingSh
             {visibility !== 'public' ? (
               <RetroGamingPCBadge label={NOW_PLAYING_VISIBILITY_OPTIONS[visibility].badge} variant="draft" />
             ) : null}
-            <Link href="/post" className="text-retrogamingpc-xs text-retrogamingpc-text-bright underline">
-              Manage
-            </Link>
+            <RetroGamingPCButton variant="navigate" label="Manage" onPress={() => router.push('/post')} />
           </View>
         ) : undefined
       }
@@ -70,8 +68,8 @@ export function NowPlayingShowcase({ userId, isOwner, visibility }: NowPlayingSh
         <RetroGamingPCSpinner label="Loading…" />
       ) : nowPlaying.isError ? (
         <RetroGamingPCAlert message={nowPlaying.error.message} />
-      ) : rows.length === 0 ? (
-        <Text className="text-retrogamingpc-sm text-retrogamingpc-text-muted">{isOwner ? 'Nothing in your Now Playing slots yet.' : 'Not playing anything right now.'}</Text>
+      ) : rows.length === 0 && !isOwner ? (
+        <Text className="text-retrogamingpc-sm text-retrogamingpc-text-muted">Not playing anything right now.</Text>
       ) : (
         <View className="flex-row gap-2">
           {NOW_PLAYING_SLOTS.map((slot) => {
@@ -86,6 +84,13 @@ export function NowPlayingShowcase({ userId, isOwner, visibility }: NowPlayingSh
                     onPress={() => router.push({ pathname: '/game/[id]', params: { id: String(row.game_id) } })}
                   >
                     <CoverTile game={game} gameId={row.game_id} loading={games.isFetching} />
+                  </Pressable>
+                ) : isOwner ? (
+                  // Your own empty slot: straight to the Now Playing tab to fill it.
+                  <Pressable accessibilityRole="link" accessibilityLabel={`Empty slot ${slot}. Open Now Playing to add a game`} onPress={() => router.push('/post')}>
+                    {({ pressed }) => (
+                      <CoverTile game={undefined} gameId={null} emptyLabel="+ Add" className={pressed ? 'opacity-70' : undefined} />
+                    )}
                   </Pressable>
                 ) : (
                   <CoverTile game={game} gameId={null} loading={games.isFetching} emptyLabel="—" />

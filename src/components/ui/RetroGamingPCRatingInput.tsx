@@ -19,8 +19,7 @@ import {
   tierDefinition,
   toStoredRating,
   type RatingInput,
-  type StoredRating,
-} from '@/utils/rating';
+  type StoredRating, tierSpokenName } from '@/utils/rating';
 
 import { RetroGamingPCRating } from './RetroGamingPCRating';
 import { RetroGamingPCStarRating } from './RetroGamingPCStarRating';
@@ -149,10 +148,10 @@ export function RetroGamingPCRatingInput({ label, value, onChange, scale, error,
           {TIER_CODES.map((tier) => {
             const def = tierDefinition(tier);
             return (
-              <Chip key={tier} label={`Tier ${tier}, ${def.descriptor}`} selected={shown?.value === tier} onPress={() => emit({ scale: 'tier', value: tier })}>
+              <Chip key={tier} label={`Tier ${tierSpokenName(tier)}, ${def.descriptor}`} selected={shown?.value === tier} onPress={() => emit({ scale: 'tier', value: tier })}>
                 <View className="absolute inset-0" style={{ backgroundColor: def.color, opacity: shown?.value === tier ? 1 : 0.55 }} />
                 <Text className="font-mono text-retrogamingpc-sm font-bold" style={{ color: def.textColor }}>
-                  {tier}
+                  {def.label}
                 </Text>
               </Chip>
             );

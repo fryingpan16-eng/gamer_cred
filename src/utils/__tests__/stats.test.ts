@@ -40,18 +40,21 @@ describe('rating histogram', () => {
 
     // tier list, best → worst: S** … F; 100 is S** only, 92/95 are A+.
     expect(tier!.orientation).toBe('horizontal');
-    expect(tier!.bars.map((b) => b.label)).toEqual(['S**', 'S', 'A+', 'A', 'B', 'C', 'D', 'F']);
-    expect(tier!.bars[0]).toMatchObject({ color: '#7B3FE4', labelTextColor: '#FFFFFF' });
-    expect(Object.fromEntries(tier!.bars.map((b) => [b.label, b.value]))).toMatchObject({ F: 2, 'A+': 2, 'S**': 1, S: 0 });
+    // The perfect tier is labelled "S" in gold; plain S (96–99) follows it.
+    expect(tier!.bars.map((b) => b.label)).toEqual(['S', 'S', 'A+', 'A', 'B', 'C', 'D', 'F']);
+    expect(tier!.bars[0]).toMatchObject({ color: '#5A2BB0', labelTextColor: '#FFD54A', value: 1 });
+    expect(tier!.bars[1]).toMatchObject({ value: 0 });
+    expect(Object.fromEntries(tier!.bars.map((b) => [b.label, b.value]))).toMatchObject({ F: 2, 'A+': 2 });
     expect(tier!.averageLabel).toBe('B · Good–Great'); // 73
 
     expect(stars!.bars).toHaveLength(10);
     // every rating chart is in tier colours: a bar is the colour of its tier
-    const tierColor = Object.fromEntries(tier!.bars.map((b) => [b.label, b.color]));
+    // Keyed by stored tier code (two bars are labelled "S"; bar keys are `t<code>`).
+    const tierColor = Object.fromEntries(tier!.bars.map((b) => [b.key.slice(1), b.color]));
     expect(numeric!.bars.find((b) => b.label === '92')!.color).toBe(tierColor['A+']);
     expect(numeric!.bars.find((b) => b.label === '100')!.color).toBe(tierColor['S**']);
     expect(numeric!.bars.find((b) => b.label === '40')!.color).toBe(tierColor.F);
-    expect(stars!.bars.find((b) => b.label === '5★')!.color).toBe(tierColor.S);
+    expect(stars!.bars.find((b) => b.label === '5★')!.color).toBe(tierColor['S**']); // 5★ = a perfect 100
     expect(stars!.bars.find((b) => b.label === '4.5★')!.color).toBe(tierColor['A+']);
     expect(stars!.bars.find((b) => b.label === '2★')!.color).toBe(tierColor.F);
     expect(rounded!.bars.find((b) => b.label === '8')!.color).toBe(tierColor.A);

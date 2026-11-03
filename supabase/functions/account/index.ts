@@ -63,6 +63,9 @@ Deno.serve(async (req) => {
         if (error) throw error;
       },
       deleteAuthUser: async (userId) => {
+        // Pictures waiting in the private screening bucket (migration 000022). Best effort:
+        // there is usually nothing there.
+        await admin.storage.from('avatar-uploads').remove([`${userId}/pending.jpg`, `held/${userId}.jpg`]);
         const { error } = await admin.auth.admin.deleteUser(userId);
         if (error) throw error;
       },

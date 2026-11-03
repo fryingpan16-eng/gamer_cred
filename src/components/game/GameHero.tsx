@@ -14,6 +14,7 @@ import type { StoredRating } from '@/utils/rating';
 
 import { EntryTypeBadge } from './EntryTypeBadge';
 import { SCALE_DIVIDER, ScoreScales, TierScoreBox } from './ScoreScales';
+import { NowPlayingButton } from './GameActions';
 import { WriteReviewButton } from './WriteReviewButton';
 
 type GameHeroProps = { game: IgdbGameDetail; stats: GameReviewStats | undefined };
@@ -92,8 +93,10 @@ export function GameHero({ game, stats }: GameHeroProps) {
           </Text>
         </TierScoreBox>
       </View>
-      <View className="flex-row pt-1">
+      {/* Review on the left, Now Playing bottom-right of the hero card. */}
+      <View className="flex-row flex-wrap items-center justify-between gap-2 pt-1">
         <WriteReviewButton gameId={game.id} />
+        <NowPlayingButton game={game} />
       </View>
     </>
   );

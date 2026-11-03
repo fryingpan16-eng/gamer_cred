@@ -48,7 +48,8 @@ type FavoritesShowcaseProps = { userId: string; editable: boolean };
 
 /**
  * Top 4 all-time favorites. A filled slot opens the game's page; owners pick a
- * game for an empty slot, and reorder (◀ ▶), replace (⇄) or clear (✕) entries.
+ * game for an empty slot, and reorder (◀ ▶) or clear (✕) entries. To change a game, clear it
+ * and pick a new one for the freed slot.
  */
 export function FavoritesShowcase({ userId, editable }: FavoritesShowcaseProps) {
   const favorites = useFavorites(userId);
@@ -112,7 +113,6 @@ export function FavoritesShowcase({ userId, editable }: FavoritesShowcaseProps) 
                         disabled={rank === 1}
                         onPress={() => mutation.mutate({ action: 'swap', a: rank, b: (rank - 1) as FavoriteRank })}
                       />
-                      <TinyButton label="⇄" a11y={`Replace favorite #${rank}`} onPress={() => setPickingRank(rank)} />
                       <TinyButton label="✕" tone={ACTION_COLORS.cancel.text} a11y={`Remove favorite #${rank}`} onPress={() => mutation.mutate({ action: 'remove', rank })} />
                       <TinyButton
                         label="▶"

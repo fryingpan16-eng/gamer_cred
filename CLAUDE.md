@@ -12,7 +12,7 @@ The app MUST target **iOS, Android, and Desktop (Web/Electron wrappers)**.
 - **Mobile Mode**: Collapses into single-column flows with standard bottom navigation bars.
 - **Phone rules** (keep these when adding UI):
   - Touch targets ≥ ~40px: use \`TOUCH_SLOP\` / \`hitSlop\` on compact controls; \`RetroGamingPCButton\` and tabs already have it.
-  - Text ≥ 10px (\`text-retrogamingpc-xs\`).
+  - Text ≥ 10px (\`text-retrogamingpc-xs\`). Below \`md\` (phones) the whole \`text-retrogamingpc-*\` scale is 10% larger, set once in \`tailwind.config.js\` (\`FONT_SIZES\`, \`MOBILE_FONT_SCALE\`). Use those classes, not fixed px sizes.
   - Every \`TextInput\` gets \`noZoomInputStyle\` (\`src/utils/platform.ts\`), so phone browsers don't zoom on focus.
   - Dialogs go through \`RetroGamingPCModal\`, which avoids the keyboard and scrolls when taller than the screen. Pass \`scrollable={false}\` only for bodies with their own list.
   - Scrolling screens with inputs set \`automaticallyAdjustKeyboardInsets\` + \`keyboardShouldPersistTaps="handled"\`.
@@ -110,6 +110,7 @@ UNDER NO CIRCUMSTANCES create, modify, or output \`.js\` or \`.jsx\` source file
 - **User-content safety (store requirements)**:
   - Every new kind of public content needs a ⚑ Report entry point (\`ReportLink\`, a \`content_reports\` target).
   - It also needs a restrictive \`… hide blocked\` select policy (migration 000021), so blocking hides it.
+  - Profile pictures are screened before anyone sees them (migration 000022 + \`avatar\` Edge Function, Google Cloud Vision SafeSearch). The app uploads to the private \`avatar-uploads/<uid>/pending.jpg\`. Only the function publishes to \`avatars\` or sets \`profiles.avatar_url\` (a trigger blocks clients). Borderline pictures, or pictures sent while the check is unavailable, are held for admins in Moderation → Pictures.
   - Account deletion is the \`account\` Edge Function. New user tables must cascade from \`profiles\` / \`auth.users\`.
   - Contact and terms live in \`src/constants/legal.ts\`. Bump \`TERMS_VERSION\` when the terms change.
 

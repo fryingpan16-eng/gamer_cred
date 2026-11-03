@@ -2,7 +2,7 @@ import { Text, View } from 'react-native';
 
 import type { TierCode } from '@/constants/ratingRubric';
 import { cn } from '@/utils/cn';
-import { tierDefinition } from '@/utils/rating';
+import { tierBorderColor, tierDefinition, tierSpokenName } from '@/utils/rating';
 
 export type RetroGamingPCTierBadgeProps = {
   tier: TierCode;
@@ -12,17 +12,17 @@ export type RetroGamingPCTierBadgeProps = {
   className?: string;
 };
 
-/** Tier badge in the rubric colour. S** has its own colour so perfect scores stand out. */
+/** Tier badge in the rubric colour. A perfect 100 is a gold S with a gold edge. */
 export function RetroGamingPCTierBadge({ tier, showDescriptor = true, size = 'regular', className }: RetroGamingPCTierBadgeProps) {
   const def = tierDefinition(tier);
   return (
     <View
       className={cn('flex-row items-center self-start border', size === 'compact' ? 'px-1' : 'px-1.5 py-px', className)}
-      style={{ backgroundColor: def.color, borderColor: def.tier === 'S**' ? '#E6D8FF' : 'rgba(0,0,0,0.35)' }}
-      accessibilityLabel={`Tier ${tier}, ${def.descriptor}`}
+      style={{ backgroundColor: def.color, borderColor: tierBorderColor(tier) }}
+      accessibilityLabel={`Tier ${tierSpokenName(tier)}, ${def.descriptor}`}
     >
       <Text className="font-mono text-retrogamingpc-xs font-bold" style={{ color: def.textColor }}>
-        {tier}
+        {def.label}
       </Text>
       {showDescriptor ? (
         <Text className="text-retrogamingpc-xs" style={{ color: def.textColor }}>

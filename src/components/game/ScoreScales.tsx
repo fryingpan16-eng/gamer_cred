@@ -13,8 +13,7 @@ import {
   formatStars,
   tierDefinition,
   tierDefinitionForNumeric,
-  type StoredRating,
-} from '@/utils/rating';
+  type StoredRating, tierBorderColor, tierSpokenName } from '@/utils/rating';
 
 /** Light hairline between the scales in a score box. */
 export const SCALE_DIVIDER = 'rgba(255,255,255,0.16)';
@@ -72,10 +71,10 @@ function ScaleValue({
         <View className="flex-row flex-wrap items-center gap-1.5">
           <View
             className={cn('items-center justify-center border', big ? 'min-w-[48px] px-2 py-0.5' : 'min-w-[34px] px-1.5 py-px')}
-            style={{ backgroundColor: def.color, borderColor: def.tier === 'S**' ? '#E6D8FF' : 'rgba(0,0,0,0.35)' }}
+            style={{ backgroundColor: def.color, borderColor: tierBorderColor(def.tier) }}
           >
             <Text className={cn('font-mono font-bold', big ? 'text-[24px] leading-[28px]' : 'text-[15px] leading-[18px]')} style={{ color: def.textColor }}>
-              {def.tier}
+              {def.label}
             </Text>
           </View>
           <Text className={cn('text-retrogamingpc-text', big ? 'text-retrogamingpc-lg' : 'text-retrogamingpc-base')}>{def.descriptor}</Text>
@@ -154,7 +153,7 @@ export function TierScoreBox({ rating, title, children }: { rating: StoredRating
     <View
       className={cn('min-w-[200px] flex-1 bg-retrogamingpc-dark px-2 pb-1 pt-2', style ? 'border-2 border-l-[6px]' : 'retrogamingpc-bevel-inset')}
       style={style}
-      accessibilityLabel={tierLabel ? `${title}, tier ${tierLabel.tier}` : title}
+      accessibilityLabel={tierLabel ? `${title}, tier ${tierSpokenName(tierLabel.tier)}` : title}
     >
       {children}
     </View>

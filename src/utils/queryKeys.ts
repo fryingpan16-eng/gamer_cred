@@ -71,6 +71,8 @@ export const queryKeys = {
     blocked: (userId: string) => [...queryKeys.safety.all(), 'blocked', userId] as const,
     blockState: (viewerId: string, otherId: string) => [...queryKeys.safety.all(), 'blockState', viewerId, otherId] as const,
     reports: (status: string) => [...queryKeys.safety.all(), 'reports', status] as const,
+    /** Admin: profile pictures held by the screening check (migration 000022). */
+    heldAvatars: () => [...queryKeys.safety.all(), 'heldAvatars'] as const,
     terms: (userId: string, version: string) => [...queryKeys.safety.all(), 'terms', userId, version] as const,
   },
 
@@ -82,6 +84,8 @@ export const queryKeys = {
     relation: (viewerId: string, otherId: string) =>
       [...queryKeys.friendships.all(), viewerId, 'relation', otherId] as const,
     count: (userId: string) => [...queryKeys.friendships.all(), 'count', userId] as const,
+    /** A player's friends page (plus pending requests when it's your own). */
+    list: (userId: string) => [...queryKeys.friendships.all(), 'list', userId] as const,
   },
 
   feed: {

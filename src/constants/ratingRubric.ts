@@ -14,7 +14,7 @@ export const DEFAULT_RATING_SCALE: RatingScale = 'numeric';
 
 export const RATING_SCALE_LABELS: Record<RatingScale, string> = {
   numeric: 'Numeric (1–100)',
-  tier: 'Tier (S**–F)',
+  tier: 'Tier (S–F)',
   stars: 'Stars (½–5)',
   rounded: 'Rounded (5–10)',
 };
@@ -30,8 +30,14 @@ export const STARS_MIN = 0.5;
 export const STARS_MAX = 5;
 export const STARS_STEP = 0.5;
 
+/** Gold used for the perfect-score S (stored code `S**`, exactly 100). */
+export const PERFECT_TIER_GOLD = '#FFD54A';
+
 export type TierDefinition = {
+  /** Stored code (reviews / ratings keep `S**` for a perfect 100). */
   tier: TierCode;
+  /** What users see. The perfect tier shows as a gold "S". */
+  label: string;
   /** Inclusive numeric range. */
   min: number;
   max: number;
@@ -43,22 +49,25 @@ export type TierDefinition = {
   color: string;
   textColor: string;
   /**
-   * Only reachable by entering exactly 100 or choosing the tier directly —
-   * never by top-of-range mapping from stars or rounded input.
+   * Only reachable by entering exactly 100, choosing the tier directly or giving
+   * 5 stars — never by top-of-range mapping from rounded input.
    */
   explicitOnly?: true;
+  /** The perfect score: shown as a gold S. */
+  perfect?: true;
 };
 
 /** Ordered best → worst. Ranges are contiguous and cover 1–100 exactly once. */
 export const RATING_TIERS: readonly TierDefinition[] = [
-  { tier: 'S**', min: 100, max: 100, descriptor: 'Masterpiece', stars: 5, rounded: 10, color: '#7B3FE4', textColor: '#FFFFFF', explicitOnly: true },
-  { tier: 'S', min: 96, max: 99, descriptor: 'Masterpiece', stars: 5, rounded: 10, color: '#9B7FD4', textColor: '#1B1530' },
-  { tier: 'A+', min: 90, max: 95, descriptor: 'Classic', stars: 4.5, rounded: 9, color: '#3A7FC1', textColor: '#FFFFFF' },
-  { tier: 'A', min: 80, max: 89, descriptor: 'Excellent–Fantastic', stars: 4, rounded: 8, color: '#9CCB8A', textColor: '#1C2A16' },
-  { tier: 'B', min: 70, max: 79, descriptor: 'Good–Great', stars: 3.5, rounded: 7, color: '#D9EBC9', textColor: '#26331C' },
-  { tier: 'C', min: 60, max: 69, descriptor: 'Decent', stars: 3, rounded: 6, color: '#FFE082', textColor: '#3A2F00' },
-  { tier: 'D', min: 50, max: 59, descriptor: 'Mediocre', stars: 2.5, rounded: 5, color: '#F4A96B', textColor: '#3A1F07' },
-  { tier: 'F', min: 1, max: 49, descriptor: 'Not Good', stars: null, rounded: NOT_GOOD, color: '#E57373', textColor: '#3A0E0E' },
+  // Perfect 100: a gold S on deep purple (gold ≥ 4.5:1 on it).
+  { tier: 'S**', label: 'S', min: 100, max: 100, descriptor: 'Masterpiece', stars: 5, rounded: 10, color: '#5A2BB0', textColor: PERFECT_TIER_GOLD, explicitOnly: true, perfect: true },
+  { tier: 'S', label: 'S', min: 96, max: 99, descriptor: 'Masterpiece', stars: 5, rounded: 10, color: '#9B7FD4', textColor: '#1B1530' },
+  { tier: 'A+', label: 'A+', min: 90, max: 95, descriptor: 'Classic', stars: 4.5, rounded: 9, color: '#3A7FC1', textColor: '#FFFFFF' },
+  { tier: 'A', label: 'A', min: 80, max: 89, descriptor: 'Excellent–Fantastic', stars: 4, rounded: 8, color: '#9CCB8A', textColor: '#1C2A16' },
+  { tier: 'B', label: 'B', min: 70, max: 79, descriptor: 'Good–Great', stars: 3.5, rounded: 7, color: '#D9EBC9', textColor: '#26331C' },
+  { tier: 'C', label: 'C', min: 60, max: 69, descriptor: 'Decent', stars: 3, rounded: 6, color: '#FFE082', textColor: '#3A2F00' },
+  { tier: 'D', label: 'D', min: 50, max: 59, descriptor: 'Mediocre', stars: 2.5, rounded: 5, color: '#F4A96B', textColor: '#3A1F07' },
+  { tier: 'F', label: 'F', min: 1, max: 49, descriptor: 'Not Good', stars: null, rounded: NOT_GOOD, color: '#E57373', textColor: '#3A0E0E' },
 ];
 
 /** F (1–49) is split into four star bands; every other tier has one star value. */

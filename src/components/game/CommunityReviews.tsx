@@ -1,3 +1,4 @@
+import { PERFECT_TIER_GOLD } from '@/constants/ratingRubric';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
@@ -10,21 +11,21 @@ import { useFriendReviewsForGame, useGameReviews, useGameReviewStats } from '@/h
 import type { GameReview, GameReviewStats } from '@/services/games';
 
 import { PlayedOnBadge } from './PlayedOnBadge';
-import { bucketByTier, tierDefinition } from '@/utils/rating';
+import { bucketByTier, tierDefinition, tierLabel, tierSpokenName } from '@/utils/rating';
 import { reviewRating } from '@/utils/ratingColumns';
 
 function formatDate(iso: string | null): string {
   return iso ? new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '';
 }
 
-/** Tier histogram (F → S**), bars in the rubric's tier colours. */
+/** Tier histogram (F → perfect S), bars in the rubric's tier colours. */
 function Distribution({ stats }: { stats: GameReviewStats }) {
   const buckets = bucketByTier(stats.distribution).reverse();
   const max = Math.max(1, ...buckets.map((b) => b.count));
   return (
     <View
       className="h-16 flex-1 flex-row items-end gap-px"
-      accessibilityLabel={`Tier distribution: ${buckets.map((b) => `${b.tier} ${b.count}`).join(', ')}`}
+      accessibilityLabel={`Tier distribution: ${buckets.map((b) => `${tierSpokenName(b.tier)} ${b.count}`).join(', ')}`}
     >
       {buckets.map(({ tier, count }) => (
         <View key={tier} className="flex-1 items-center justify-end">
@@ -37,7 +38,12 @@ function Distribution({ stats }: { stats: GameReviewStats }) {
               opacity: count === 0 ? 0.25 : 1,
             }}
           />
-          <Text className="font-mono text-retrogamingpc-xs text-retrogamingpc-text-muted">{tier}</Text>
+          <Text
+            className="font-mono text-retrogamingpc-xs text-retrogamingpc-text-muted"
+            style={tierDefinition(tier).perfect ? { color: PERFECT_TIER_GOLD, fontWeight: 'bold' } : undefined}
+          >
+            {tierLabel(tier)}
+          </Text>
         </View>
       ))}
     </View>

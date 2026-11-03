@@ -8,7 +8,7 @@ import { useThemeColors } from '@/hooks/useTheme';
 
 type RetroGamingPCTabBarProps = BottomTabBarProps & { variant: 'bottom' | 'sidebar' };
 
-function TabItem({
+export function TabItem({
   label,
   focused,
   sidebar,

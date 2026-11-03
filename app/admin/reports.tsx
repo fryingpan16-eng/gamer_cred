@@ -1,6 +1,6 @@
 import { router, Stack } from 'expo-router';
 import { useState } from 'react';
-import { FlatList, Text, View } from 'react-native';
+import { FlatList, Image, Text, View } from 'react-native';
 
 import { REPORT_REASONS } from '@/components/safety/ReportModal';
 import {
@@ -15,15 +15,83 @@ import {
 } from '@/components/ui';
 import { REPORT_RESPONSE_HOURS } from '@/constants/legal';
 import { useIsAdmin } from '@/hooks/useLists';
-import { useAdminReports, useModerate, type ModerationAction } from '@/hooks/useSafety';
+import { useAdminReports, useDecideHeldAvatar, useHeldAvatars, useModerate, type ModerationAction } from '@/hooks/useSafety';
+import type { HeldPicture } from '@/services/avatar';
 import type { AdminReport } from '@/services/safety';
 
 type Status = 'open' | 'actioned' | 'dismissed';
-const TABS: readonly RetroGamingPCTabItem<Status>[] = [
-  { key: 'open', label: 'Open' },
-  { key: 'actioned', label: 'Actioned' },
-  { key: 'dismissed', label: 'Dismissed' },
-];
+/** Report statuses, plus profile pictures held by the automatic check. */
+type Tab = Status | 'pictures';
+
+const HELD_REASON: Record<string, string> = {
+  possible_adult: 'Possible nudity',
+  possibly_racy: 'Possibly suggestive',
+  possible_violence: 'Possibly violent',
+  check_unavailable: 'Automatic check unavailable',
+};
+
+/** A held profile picture: approve publishes it, reject discards it (the player keeps their old picture). */
+function HeldPictureCard({ picture, busy, onDecide }: { picture: HeldPicture; busy: boolean; onDecide: (approve: boolean) => void }) {
+  return (
+    <RetroGamingPCCard className="flex-row flex-wrap gap-3">
+      <View className="retrogamingpc-bevel-inset h-32 w-32 items-center justify-center overflow-hidden bg-retrogamingpc-dark">
+        {picture.imageUrl ? (
+          <Image source={{ uri: picture.imageUrl }} className="h-full w-full" resizeMode="cover" accessibilityLabel={`Held picture from ${picture.username ?? 'a player'}`} />
+        ) : (
+          <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted">No preview</Text>
+        )}
+      </View>
+      <View className="min-w-[180px] flex-1 gap-1">
+        <View className="flex-row flex-wrap gap-1">
+          <RetroGamingPCBadge label={HELD_REASON[picture.reason] ?? picture.reason} variant="nowPlaying" />
+          {hoursSince(picture.createdAt) > REPORT_RESPONSE_HOURS ? <RetroGamingPCBadge label={`Over ${REPORT_RESPONSE_HOURS}h`} variant="draft" /> : null}
+        </View>
+        <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted">
+          {fmt(picture.createdAt)} · <Text className="font-bold text-retrogamingpc-text-bright">{picture.username ?? 'deleted user'}</Text>
+        </Text>
+        {picture.scores ? (
+          <Text className="font-mono text-retrogamingpc-xs text-retrogamingpc-text-muted">
+            adult {picture.scores.adult.toLowerCase()} · racy {picture.scores.racy.toLowerCase()} · violence {picture.scores.violence.toLowerCase()}
+          </Text>
+        ) : null}
+        <View className="flex-row flex-wrap gap-2 pt-1">
+          <RetroGamingPCButton variant="save" label="Approve" disabled={busy} onPress={() => onDecide(true)} />
+          <RetroGamingPCButton variant="danger" label="Reject" disabled={busy} onPress={() => onDecide(false)} />
+        </View>
+      </View>
+    </RetroGamingPCCard>
+  );
+}
+
+function HeldPictures() {
+  const held = useHeldAvatars();
+  const decide = useDecideHeldAvatar();
+  if (held.isPending) return <RetroGamingPCSpinner label="Loading pictures…" className="p-3" />;
+  if (held.isError) {
+    return (
+      <View className="p-3">
+        <RetroGamingPCAlert message={held.error.message} />
+      </View>
+    );
+  }
+  return (
+    <FlatList
+      data={held.data}
+      keyExtractor={(p) => p.userId}
+      contentContainerClassName="gap-2 p-3 md:max-w-[860px] md:w-full md:self-center"
+      ListHeaderComponent={decide.isError ? <RetroGamingPCAlert message={decide.error.message} /> : undefined}
+      renderItem={({ item }) => (
+        <HeldPictureCard
+          picture={item}
+          busy={decide.isPending && decide.variables?.userId === item.userId}
+          onDecide={(approve) => decide.mutate({ userId: item.userId, approve })}
+        />
+      )}
+      ListEmptyComponent={<RetroGamingPCAlert tone="success" message="No pictures waiting. All clear." />}
+    />
+  );
+}
+
 
 const REASON_LABEL = Object.fromEntries(REPORT_REASONS.map((r) => [r.key, r.label]));
 const TYPE_LABEL = { review: 'Review', list: 'List', rating: 'Rating', user: 'Player' } as const;
@@ -91,8 +159,16 @@ const CONFIRM: Record<ModerationAction['action'], { title: string; message: stri
 /** Admin moderation queue: reports on reviews, lists, ratings and players, oldest first. */
 export default function ModerationScreen() {
   const isAdmin = useIsAdmin();
-  const [status, setStatus] = useState<Status>('open');
+  const [tab, setTab] = useState<Tab>('open');
+  const status: Status = tab === 'pictures' ? 'open' : tab;
   const reports = useAdminReports(status);
+  const held = useHeldAvatars(isAdmin.data === true);
+  const tabs: RetroGamingPCTabItem<Tab>[] = [
+    { key: 'open', label: 'Open' },
+    { key: 'pictures', label: 'Pictures', count: held.data?.length || undefined },
+    { key: 'actioned', label: 'Actioned' },
+    { key: 'dismissed', label: 'Dismissed' },
+  ];
   const moderate = useModerate();
   const [pending, setPending] = useState<ModerationAction | null>(null);
 
@@ -111,10 +187,16 @@ export default function ModerationScreen() {
     <View className="flex-1 bg-retrogamingpc-dark">
       <Stack.Screen options={{ title: 'Moderation' }} />
       <View className="gap-1 px-3 pt-3">
-        <RetroGamingPCTabs items={TABS} value={status} onChange={setStatus} fill />
-        <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted">Aim to act on every report within {REPORT_RESPONSE_HOURS} hours (store requirement).</Text>
+        <RetroGamingPCTabs items={tabs} value={tab} onChange={setTab} />
+        <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted">
+          {tab === 'pictures'
+            ? 'Profile pictures the automatic check wasn’t sure about. Nobody else sees them until you approve.'
+            : `Aim to act on every report within ${REPORT_RESPONSE_HOURS} hours (store requirement).`}
+        </Text>
       </View>
-      {reports.isPending ? (
+      {tab === 'pictures' ? (
+        <HeldPictures />
+      ) : reports.isPending ? (
         <RetroGamingPCSpinner label="Loading reports…" className="p-3" />
       ) : reports.isError ? (
         <View className="p-3">

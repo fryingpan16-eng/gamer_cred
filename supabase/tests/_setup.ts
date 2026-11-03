@@ -17,6 +17,11 @@ const BASE_SCHEMA = `
   create schema auth;
   create schema extensions;
   create extension pg_trgm with schema extensions;
+  -- Supabase Storage stand-in (000022 adds a bucket + object policies).
+  create schema storage;
+  create table storage.buckets (id text primary key, name text, public boolean, file_size_limit bigint, allowed_mime_types text[]);
+  create table storage.objects (id uuid primary key default gen_random_uuid(), bucket_id text, name text);
+  alter table storage.objects enable row level security;
   create function auth.uid() returns uuid language sql stable
     as $$ select nullif(current_setting('test.uid', true), '')::uuid $$;
   create type public.review_status as enum ('draft', 'published');
@@ -62,6 +67,7 @@ const BASE_SCHEMA = `
   -- Profile-owned tables that 000021 adds block filtering to (columns trimmed).
   alter table public.profiles enable row level security;
   create policy "profiles: public read" on public.profiles for select using (true);
+  create policy "profiles: owner update" on public.profiles for update to authenticated using ((select auth.uid()) = id) with check ((select auth.uid()) = id);
   create table public.now_playing (user_id uuid not null references public.profiles (id) on delete cascade, slot_index smallint not null, game_id bigint not null, primary key (user_id, slot_index));
   create table public.user_favorites (user_id uuid not null references public.profiles (id) on delete cascade, rank smallint not null, game_id bigint not null, primary key (user_id, rank));
   create table public.user_platforms (user_id uuid not null references public.profiles (id) on delete cascade, platform_id bigint not null, primary key (user_id, platform_id));
@@ -77,7 +83,8 @@ const BASE_SCHEMA = `
 `;
 
 const GRANTS = `
-  grant usage on schema public, auth to authenticated;
+  grant usage on schema public, auth, storage to authenticated;
+  grant all on all tables in schema storage to authenticated;
   grant all on all tables in schema public to authenticated;
   grant execute on all functions in schema public, auth to authenticated;
 `;
@@ -85,19 +92,20 @@ const GRANTS = `
 const migration = (name: string) => Deno.readTextFile(new URL(`../migrations/${name}`, import.meta.url));
 
 /** Fresh database. `beforeMigrations` runs between the stub schema and 000014 (e.g. cache rows for the backfill). */
-export async function freshDb(opts: { beforeMigrations?: string; through?: 14 | 15 | 16 | 17 | 19 | 20 | 21 } = {}): Promise<PGlite> {
+export async function freshDb(opts: { beforeMigrations?: string; through?: 14 | 15 | 16 | 17 | 19 | 20 | 21 | 22 } = {}): Promise<PGlite> {
   const db = new PGlite({ extensions: { pg_trgm } });
   await db.exec(BASE_SCHEMA);
   await db.exec(`insert into public.profiles (id, username) values ('${ME}', 'me'), ('${OTHER}', 'other'), ('${THIRD}', 'third');`);
   if (opts.beforeMigrations) await db.exec(opts.beforeMigrations);
   await db.exec(await migration('000014_games_and_stats.sql'));
-  const through = opts.through ?? 21;
+  const through = opts.through ?? 22;
   if (through >= 15) await db.exec(await migration('000015_quick_ratings.sql'));
   if (through >= 16) await db.exec(await migration('000016_public_ratings_and_platform.sql'));
   if (through >= 17) await db.exec(await migration('000017_user_ratings_table.sql'));
   if (through >= 19) await db.exec(await migration('000019_lists.sql'));
   if (through >= 20) await db.exec(await migration('000020_trending.sql'));
   if (through >= 21) await db.exec(await migration('000021_safety.sql'));
+  if (through >= 22) await db.exec(await migration('000022_avatar_moderation.sql'));
   await db.exec(GRANTS);
   return db;
 }

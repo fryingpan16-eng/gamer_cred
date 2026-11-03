@@ -124,7 +124,7 @@ export function distributionsByScale(rows: readonly HistogramRow[]): ScaleDistri
   for (const r of valid) tierCounts.set(numericToTier(r.score), (tierCounts.get(numericToTier(r.score)) ?? 0) + r.games);
   const tierBars: BarDatum[] = RATING_TIERS.map((t) => ({
     key: `t${t.tier}`,
-    label: t.tier,
+    label: t.label,
     value: tierCounts.get(t.tier) ?? 0,
     detail: t.descriptor,
     color: t.color,

@@ -1,13 +1,19 @@
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 
+import { FunctionsHttpError } from '@supabase/supabase-js';
+
+import type { ApiEnvelope } from '@/types/api';
 import type { Profile } from '@/types/database.types';
 import { base64ToBytes } from '@/utils/base64';
 
 import { supabase } from './supabase';
 
-/** Storage bucket + per-user path (policies in migration 000011 restrict writes to `<uid>/`). */
+/** Public bucket the `avatar` function publishes to (users can only delete their own file). */
 const AVATAR_BUCKET = 'avatars';
+/** Private screening bucket (migration 000022): users may only write <uid>/pending.jpg. */
+const AVATAR_UPLOAD_BUCKET = 'avatar-uploads';
+const pendingPath = (userId: string) => `${userId}/pending.jpg`;
 const AVATAR_SIZE = 512;
 const avatarPath = (userId: string) => `${userId}/avatar.jpg`;
 
@@ -57,27 +63,65 @@ export async function pickAvatarImage(): Promise<PreparedAvatar | null> {
   }
 }
 
-/** Uploads (replacing any previous picture) and points the profile at it. */
-export async function uploadAvatar(userId: string, avatar: PreparedAvatar): Promise<Profile> {
+/** What happened to an uploaded picture (decided server-side by the `avatar` function). */
+export type AvatarUploadResult =
+  | { status: 'approved'; profile: Profile }
+  /** Borderline or the check was unavailable: an admin decides. The old picture stays meanwhile. */
+  | { status: 'held' };
+
+export type HeldPicture = {
+  userId: string;
+  username: string | null;
+  reason: string;
+  scores: { adult: string; racy: string; violence: string } | null;
+  createdAt: string;
+  /** Short-lived signed URL (private bucket). */
+  imageUrl: string | null;
+};
+
+type AvatarFunctionRequest = { action: 'submit' } | { action: 'admin_list' } | { action: 'admin_decide'; user_id: string; approve: boolean };
+
+async function invokeAvatar<T>(body: AvatarFunctionRequest): Promise<T> {
+  const { data, error } = await supabase.functions.invoke<ApiEnvelope<T>>('avatar', { body });
+  if (error) {
+    if (error instanceof FunctionsHttpError) {
+      const envelope = (await (error.context as Response).json().catch(() => null)) as { error?: string } | null;
+      throw new AvatarError(envelope?.error ?? 'The picture check failed. Try again.');
+    }
+    throw new AvatarError('Couldn’t reach GamerCred. Check your connection and try again.');
+  }
+  if (!data?.success) throw new AvatarError(data?.error ?? 'The picture check failed. Try again.');
+  return data.data;
+}
+
+export const REJECTED_AVATAR_MESSAGE =
+  'That picture can’t be used. Profile pictures must follow the Community Guidelines (no nudity, sexual or graphic content).';
+
+/**
+ * Uploads to the private screening bucket, then asks the `avatar` function to check it.
+ * Clean pictures go live at once; rejected ones throw; borderline ones wait for an admin.
+ */
+export async function uploadAvatar(userId: string, avatar: PreparedAvatar): Promise<AvatarUploadResult> {
   const bytes = base64ToBytes(avatar.base64);
   const { error: uploadError } = await supabase.storage
-    .from(AVATAR_BUCKET)
+    .from(AVATAR_UPLOAD_BUCKET)
     // ArrayBuffer body, as in Supabase's React Native upload guidance.
-    .upload(avatarPath(userId), bytes.buffer as ArrayBuffer, { contentType: 'image/jpeg', upsert: true, cacheControl: '3600' });
+    .upload(pendingPath(userId), bytes.buffer as ArrayBuffer, { contentType: 'image/jpeg', upsert: true });
   if (uploadError) throw new AvatarError(uploadError.message || 'Upload failed. Try again.');
 
-  // Same path on every upload, so bust caches with a version parameter.
-  const { data } = supabase.storage.from(AVATAR_BUCKET).getPublicUrl(avatarPath(userId));
-  const url = `${data.publicUrl}?v=${Date.now()}`;
+  const result = await invokeAvatar<{ status: 'approved'; profile: Profile } | { status: 'rejected' } | { status: 'held' }>({ action: 'submit' });
+  if (result.status === 'rejected') throw new AvatarError(REJECTED_AVATAR_MESSAGE);
+  return result;
+}
 
-  const { data: profile, error } = await supabase
-    .from('profiles')
-    .update({ avatar_url: url })
-    .eq('id', userId)
-    .select()
-    .single();
-  if (error) throw new AvatarError(error.message || 'Could not save your profile picture.');
-  return profile;
+/** Admin: pictures waiting for a decision (oldest first). */
+export async function fetchHeldAvatars(): Promise<HeldPicture[]> {
+  return (await invokeAvatar<{ pictures: HeldPicture[] }>({ action: 'admin_list' })).pictures;
+}
+
+/** Admin: publish (approve) or discard a held picture. */
+export async function decideHeldAvatar(userId: string, approve: boolean): Promise<void> {
+  await invokeAvatar({ action: 'admin_decide', user_id: userId, approve });
 }
 
 /** Clears the profile picture (and deletes the uploaded file, if any). */
