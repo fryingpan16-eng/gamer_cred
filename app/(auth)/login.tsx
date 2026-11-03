@@ -36,6 +36,7 @@ export default function LoginScreen() {
   return (
     <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView
+      automaticallyAdjustKeyboardInsets
         className="flex-1 bg-retrogamingpc-dark"
         contentContainerClassName="flex-grow items-center justify-center p-4"
         keyboardShouldPersistTaps="handled"

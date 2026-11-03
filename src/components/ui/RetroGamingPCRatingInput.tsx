@@ -10,6 +10,7 @@ import {
   type RatingScale,
 } from '@/constants/ratingRubric';
 import { cn } from '@/utils/cn';
+import { noZoomInputStyle } from '@/utils/platform';
 import { useThemeColors } from '@/hooks/useTheme';
 import {
   formatRounded,
@@ -82,6 +83,7 @@ function NumericControl({ current, onInput }: { current: number | null; onInput:
           <Text className="font-bold text-retrogamingpc-text-bright">−</Text>
         </Pressable>
         <TextInput
+          style={noZoomInputStyle}
           value={text}
           onChangeText={commit}
           keyboardType="number-pad"

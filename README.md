@@ -28,8 +28,22 @@ The look is an original early-2000s desktop game-client style: dark, high-contra
 The app has five tabs. Phones get a bottom tab bar; tablets and desktop get a permanent left sidebar inside a centred, fixed-width window.
 
 ### Home
-- An activity feed of reviews, with **Friends** and **Community** views.
-- Shortcuts to find friends or switch to the community feed when your feed is empty.
+One tab bar at the top switches between three views:
+- **Community** (the default):
+  - **Trending Games:** the games the most players rated or reviewed in the last 14 days.
+  - **Trending Posts:** recent reviews of those trending games.
+  - **Latest from the Community:** everyone's newest reviews, loading more as you scroll.
+- **Friends:** your friends' reviews and Now Playing activity.
+- **Lists:**
+  - **Curated Lists:** hand-picked by the app's admins.
+  - **Your Lists:** with **New List**.
+  - **Browse Lists:** recently updated community lists, or search them by title or description.
+
+### Lists
+- Anyone can make a list: give it a **title** and a **description**, then search the game database to add games (up to 250).
+- **Ranked** lists show #1, #2, #3…; the owner reorders with ▲ ▼ and removes with ✕.
+- Lists are **public** (on your profile and in search) or **private** (only you).
+- **Admins** feature public lists on Home and choose their order. Featured lists must stay public.
 
 ### Search
 Search covers three kinds of thing:
@@ -39,6 +53,7 @@ Search covers three kinds of thing:
 | **Games** | Title, genre, platform | IGDB |
 | **Studios & Directors** | Developers, publishers and key creators | IGDB and RAWG |
 | **Users** | Player profiles by username, with friend requests | Supabase |
+| **Lists** | Public game lists, by title or description | Supabase |
 
 - All IGDB and RAWG traffic goes through a Supabase Edge Function with a PostgreSQL cache. The app never calls IGDB or RAWG directly.
 - Every game result has an inline **quick rating** and a **"Played on"** platform picker. You rate without leaving search: no navigation and no popup.
@@ -63,6 +78,7 @@ Every chart shows the exact value when you tap a bar, and has a table view that 
 - **Ratings:** your most recent ratings. Tap **Ratings ▸** for a spreadsheet of every game you've rated.
   - It has sortable columns, search, and filters for tier, score range, platform, genre and whether you've reviewed the game.
   - Only you and your friends can sort and filter it.
+- **Lists:** your game lists. Others see only your public ones.
 - **Reviews:** your published reviews.
 - **Hardware & Platforms:** the consoles you own, with one **Main** platform, PC specs, and devices such as PC handhelds.
 
@@ -160,6 +176,7 @@ app/                         Expo Router routes only
   game/[id].tsx              game page
   user/[id].tsx              public profile
   ratings/[userId].tsx       a player's full ratings spreadsheet
+  list/[id].tsx              one game list (owner: add, reorder, edit, delete; admin: feature)
   review/[id].tsx            one review
   settings.tsx               settings
   auth/callback.tsx          OAuth / email-link landing
@@ -197,6 +214,9 @@ Every table has row-level security with explicit read and write policies.
 | `now_playing` | The four Now Playing slots, with notes and "so far" scores |
 | `user_favorites` | Top 4 favourites |
 | `user_platforms` | Owned platforms, Main platform, PC specs, devices |
+| `lists` | Game lists: title, description, ranked, public / private, Home pin position (admins only) |
+| `list_items` | The games on each list, in order (up to 250) |
+| `app_admins` | App admins, who can pin lists to Home. Each user can only see their own row. |
 | `games` | A durable copy of IGDB metadata used by Stats and the ratings list |
 | `igdb_cache` | The proxy's response cache (`cache_key`, `data` JSONB, `updated_at`) |
 | `game_overrides` | Manual include/exclude overrides for catalogue curation |
@@ -207,6 +227,8 @@ There's also a public `avatars` storage bucket; each user can only write to thei
 - **Feed and game stats:** the activity feed, `game_review_stats` (the Gamer Cred average, one score per user) and `friend_ratings_for_game`.
 - **Stats:** `stats_*` aggregates, built on `my_logged_games()`. A game counts as "logged" if you've rated or reviewed it.
 - **Ratings list:** `user_ratings_table` returns a player's full ratings list with game details in one call.
+- **Lists:** `add_list_item`, `move_list_item` (renumbers 1..n), `set_list_pin` (admins only) and `is_app_admin`.
+- **Trending:** `trending_games` and `trending_posts` (last 14 days of ratings and published reviews).
 - **Profiles:** atomic helpers for favourites and platforms.
 
 ### Migrations
@@ -222,6 +244,8 @@ There's also a public `avatars` storage bucket; each user can only write to thei
 | 000016 | Public ratings, "played on" platform, friends' ratings |
 | 000017 | `user_ratings_table` (ratings spreadsheet) |
 | 000018 | Blue (Mega) as the default theme |
+| 000019 | Game lists, list items, app admins and Home pinning |
+| 000020 | Trending games and trending posts |
 
 ### igdb-proxy Edge Function
 - **Actions:**
@@ -342,19 +366,28 @@ Never edit a migration that has already been pushed. Add a new numbered migratio
   - **deep red with ⚠:** delete or discard;
   - **blue:** go somewhere.
 - **Brand-safe:** no third-party logos, fonts or artwork. Product names only appear when they refer to that real product (for example a "Steam Deck" device entry).
+- **Phones:**
+  - Touch targets of about 40px or more, using `TOUCH_SLOP`.
+  - Text of 10px or more.
+  - `noZoomInputStyle` on every text input.
+  - Dialogs that avoid the keyboard and scroll.
+  - Wide content wraps or scrolls sideways.
+
+  Details are in `CLAUDE.md`.
 - **Adding a stat:** see [`src/components/stats/README.md`](src/components/stats/README.md).
 
 ---
 
 ## Status & open items
 
-Phases 1–8 are complete: setup, auth, search, Review Studio, profiles, game pages and feed, stats, quick ratings, public ratings and the ratings spreadsheet. Still open:
+Phases 1–9 are complete: setup, auth, search, Review Studio, profiles, game pages and feed, stats, quick ratings, public ratings, the ratings spreadsheet, and game lists. Still open:
 
 - Confirm the IGDB platform id for Nintendo Switch 2 (currently `508`, unverified).
 - Decide how standalone expansions should be grouped.
 - Add rate limiting to the proxy.
 - Ratings don't appear in the activity feed yet; only reviews do.
-- Home dashboard extras from the original plan: featured games and trending lists.
+- Trending posts are ranked by how popular their game is, because the app has no likes or comments yet.
+- Lists: an "Add to list" button on game pages (today games are added from the list page).
 
 ---
 

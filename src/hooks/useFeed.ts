@@ -1,6 +1,6 @@
-import { useInfiniteQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 
-import { fetchFeedPage, type FeedCursor, type FeedScope } from '@/services/feed';
+import { fetchFeedPage, fetchTrendingGames, fetchTrendingPosts, type FeedCursor, type FeedScope } from '@/services/feed';
 import { queryKeys } from '@/utils/queryKeys';
 
 import { useAuthStore } from './useAuth';
@@ -16,4 +16,12 @@ export function useActivityFeed(scope: FeedScope) {
     enabled: viewerId !== null,
     staleTime: 30_000,
   });
+}
+
+export function useTrendingGames() {
+  return useQuery({ queryKey: queryKeys.feed.trendingGames(), queryFn: () => fetchTrendingGames(), staleTime: 5 * 60_000 });
+}
+
+export function useTrendingPosts() {
+  return useQuery({ queryKey: queryKeys.feed.trendingPosts(), queryFn: () => fetchTrendingPosts(), staleTime: 5 * 60_000 });
 }

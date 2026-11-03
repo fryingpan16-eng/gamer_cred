@@ -1,7 +1,9 @@
 import { Feather } from '@expo/vector-icons';
+import { useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Pressable, View } from 'react-native';
 
+import { ListCard } from '@/components/lists/ListCard';
 import { CompanyResultCard } from '@/components/search/CompanyResultCard';
 import { CreatorResultCard } from '@/components/search/CreatorResultCard';
 import { RawgAttribution } from '@/components/search/RawgAttribution';
@@ -10,7 +12,10 @@ import { SearchResultList } from '@/components/search/SearchResultList';
 import { UserResultCard } from '@/components/search/UserResultCard';
 import { RetroGamingPCAlert, RetroGamingPCInput, RetroGamingPCTabs, type RetroGamingPCTabItem } from '@/components/ui';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
+import { useGameLookup } from '@/hooks/useGames';
+import { useListSearch } from '@/hooks/useLists';
 import { useMyGameRatings } from '@/hooks/useRatings';
+import { listSearchPattern } from '@/services/lists';
 import { useCompanySearch, useCreatorSearch, useFriendAction, useGameSearch, useUserSearch } from '@/hooks/useSearch';
 import { USER_SEARCH_MIN_LENGTH } from '@/services/users';
 import { IGDB_SEARCH_LIMITS, normalizeSearchQuery } from '@/types/igdb';
@@ -21,6 +26,7 @@ const ENTITY_TABS: readonly RetroGamingPCTabItem<SearchEntity>[] = [
   { key: 'games', label: 'Games' },
   { key: 'companies', label: 'Studios & Directors' },
   { key: 'users', label: 'Users' },
+  { key: 'lists', label: 'Lists' },
 ];
 
 /** Sub-modes of the "Studios & Directors" tab: IGDB companies vs RAWG people. */
@@ -35,6 +41,7 @@ const PLACEHOLDERS: Record<SearchEntity, string> = {
   games: 'Search games by title…',
   companies: 'Search studios, developers, publishers…',
   users: 'Search players by username…',
+  lists: 'Search lists by title or description…',
 };
 const PEOPLE_PLACEHOLDER = 'Search directors, writers, composers…';
 
@@ -43,6 +50,7 @@ const SEARCH_DEBOUNCE_MS = 350;
 type ResultsProps = { term: string; typing: boolean };
 
 function isActive(term: string, entity: SearchEntity): boolean {
+  if (entity === 'lists') return listSearchPattern(term) !== null;
   return entity === 'users'
     ? term.trim().length >= USER_SEARCH_MIN_LENGTH
     : normalizeSearchQuery(term).length >= IGDB_SEARCH_LIMITS.minQueryLength;
@@ -152,9 +160,36 @@ function UserResults({ term, typing }: ResultsProps) {
   );
 }
 
+function ListResults({ term, typing }: ResultsProps) {
+  const query = useListSearch(term);
+  const lists = query.data;
+  const games = useGameLookup((lists ?? []).flatMap((l) => l.previewGameIds));
+  return (
+    <SearchResultList
+      query={query}
+      items={lists}
+      term={term}
+      active={isActive(term, 'lists')}
+      typing={typing}
+      idleHint="Find public game lists made by the community."
+      loadingLabel="Searching lists…"
+      keyExtractor={(l) => l.id}
+      extraData={games.data}
+      renderItem={(l) => <ListCard list={l} games={games.data} />}
+    />
+  );
+}
+
 export default function SearchScreen() {
   const themeColors = useThemeColors();
-  const [entity, setEntity] = useState<SearchEntity>('games');
+  // ?tab=lists (e.g. Home → Your Lists → Browse) opens that tab.
+  const { tab } = useLocalSearchParams<{ tab?: string }>();
+  const [entity, setEntity] = useState<SearchEntity>(ENTITY_TABS.some((t) => t.key === tab) ? (tab as SearchEntity) : 'games');
+  const [lastTab, setLastTab] = useState(tab);
+  if (tab !== lastTab) {
+    setLastTab(tab);
+    if (ENTITY_TABS.some((t) => t.key === tab)) setEntity(tab as SearchEntity);
+  }
   const [industryMode, setIndustryMode] = useState<IndustryMode>('studios');
   const [term, setTerm] = useState('');
   const debouncedTerm = useDebouncedValue(term, SEARCH_DEBOUNCE_MS);
@@ -201,6 +236,7 @@ export default function SearchScreen() {
           <PeopleResults term={debouncedTerm} typing={typing} onSearchGames={searchGamesFor} />
         ) : null}
         {entity === 'users' ? <UserResults term={debouncedTerm} typing={typing} /> : null}
+        {entity === 'lists' ? <ListResults term={debouncedTerm} typing={typing} /> : null}
       </View>
     </View>
   );

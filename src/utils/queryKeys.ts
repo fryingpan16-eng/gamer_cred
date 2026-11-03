@@ -5,7 +5,7 @@ import { normalizeSearchQuery, type IgdbEntityType } from '@/types/igdb';
  * Every useQuery/useMutation/invalidateQueries call MUST build its key here.
  */
 /** Search tabs: IGDB-backed `games` / `companies`, Supabase-backed `users`. */
-export type SearchEntity = 'games' | 'companies' | 'users';
+export type SearchEntity = 'games' | 'companies' | 'users' | 'lists';
 
 export const queryKeys = {
   all: ['gamercred'] as const,
@@ -53,6 +53,18 @@ export const queryKeys = {
     table: (userId: string) => [...queryKeys.ratings.ofUserAll(), userId, 'table'] as const,
   },
 
+  /** Game lists (migration 000019). */
+  lists: {
+    all: () => [...queryKeys.all, 'lists'] as const,
+    pinned: () => [...queryKeys.lists.all(), 'pinned'] as const,
+    /** Recently updated public lists (Home → Lists browser, before a search). */
+    recent: () => [...queryKeys.lists.all(), 'recent'] as const,
+    byUser: (userId: string) => [...queryKeys.lists.all(), 'user', userId] as const,
+    detail: (listId: string) => [...queryKeys.lists.all(), 'detail', listId] as const,
+    search: (term: string) => [...queryKeys.lists.all(), 'search', term] as const,
+    isAdmin: (userId: string) => [...queryKeys.lists.all(), 'isAdmin', userId] as const,
+  },
+
   friendships: {
     all: () => [...queryKeys.all, 'friendships'] as const,
     byUser: (userId: string) => [...queryKeys.friendships.all(), userId] as const,
@@ -67,6 +79,9 @@ export const queryKeys = {
     all: () => [...queryKeys.all, 'feed'] as const,
     community: () => [...queryKeys.feed.all(), 'community'] as const,
     friends: (userId: string) => [...queryKeys.feed.all(), 'friends', userId] as const,
+    /** Home → Community (migration 000020). */
+    trendingGames: () => [...queryKeys.feed.all(), 'trendingGames'] as const,
+    trendingPosts: () => [...queryKeys.feed.all(), 'trendingPosts'] as const,
   },
 
   /** Stats page aggregates — always the signed-in user's own (keyed per viewer). */

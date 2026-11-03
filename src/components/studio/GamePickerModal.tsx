@@ -1,7 +1,7 @@
 import { Feather } from '@expo/vector-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { FlatList, Pressable, Text, View } from 'react-native';
+import { FlatList, Pressable, Text, useWindowDimensions, View } from 'react-native';
 
 import { Thumbnail } from '@/components/search/Thumbnail';
 import { RetroGamingPCAlert, RetroGamingPCBadge, RetroGamingPCButton, RetroGamingPCInput, RetroGamingPCModal, RetroGamingPCSpinner } from '@/components/ui';
@@ -23,17 +23,20 @@ type GamePickerModalProps = {
   annotations?: ReadonlyMap<number, string>;
   /** Shown as a badge on the current game when swapping. */
   currentGameId?: number | null;
+  /** Footer button label; "Done" for pickers that stay open to add several games. */
+  closeLabel?: string;
 };
 
 /** Search-and-pick dialog used for Now Playing slots, favourites and reviews. */
-export function GamePickerModal({ visible, title, onClose, ...bodyProps }: GamePickerModalProps) {
+export function GamePickerModal({ visible, title, onClose, closeLabel = 'Cancel', ...bodyProps }: GamePickerModalProps) {
   return (
     <RetroGamingPCModal
       visible={visible}
       title={title}
       onClose={onClose}
       className="max-w-[520px]"
-      footer={<RetroGamingPCButton variant="cancel" label="Cancel" onPress={onClose} />}
+      scrollable={false}
+      footer={<RetroGamingPCButton variant="cancel" label={closeLabel} onPress={onClose} />}
     >
       {/* Mounted only while open, so every opening starts with an empty search box. */}
       {visible ? <PickerBody {...bodyProps} /> : null}
@@ -49,6 +52,9 @@ function PickerBody({
 }: Pick<GamePickerModalProps, 'onPick' | 'unavailable' | 'annotations' | 'currentGameId'>) {
   const themeColors = useThemeColors();
   const queryClient = useQueryClient();
+  // 320px on tall screens; shorter phones (and an open keyboard) get less.
+  const { height } = useWindowDimensions();
+  const listHeight = Math.max(180, Math.min(320, height * 0.42));
   const [term, setTerm] = useState('');
   const debounced = useDebouncedValue(term, 350);
   const search = useGameSearch(debounced);
@@ -74,7 +80,7 @@ function PickerBody({
         trailing={search.isFetching ? <RetroGamingPCSpinner /> : null}
       />
 
-      <View className="h-[320px]">
+      <View style={{ height: listHeight }}>
         {!active ? (
           <Text className="py-6 text-center text-retrogamingpc-sm text-retrogamingpc-text-muted">
             Type at least {IGDB_SEARCH_LIMITS.minQueryLength} characters to search IGDB.

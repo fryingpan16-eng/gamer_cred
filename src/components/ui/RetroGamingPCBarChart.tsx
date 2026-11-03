@@ -33,7 +33,7 @@ export type RetroGamingPCBarChartProps = {
 
 const VERTICAL_HEIGHT = 150;
 const SCROLL_VERTICAL_AFTER = 12; // more bars than this → fixed-width bars in a horizontal scroll
-const VERTICAL_BAR_WIDTH = 30;
+const VERTICAL_BAR_WIDTH = 34; // fits a 10px label like "NOT GOOD" over two lines
 
 /**
  * Reusable retro bar chart (plain Views, works on iOS/Android/web, no chart lib).
@@ -182,19 +182,19 @@ export function RetroGamingPCBarChart({
                 className="h-full items-center justify-end"
                 style={scroll ? { width: VERTICAL_BAR_WIDTH } : { flex: 1 }}
               >
-                <Text className="font-mono text-[9px] leading-[11px] text-retrogamingpc-text-bright">{d.value > 0 ? formatValue(d.value) : ''}</Text>
+                <Text className="font-mono text-retrogamingpc-xs text-retrogamingpc-text-bright">{d.value > 0 ? formatValue(d.value) : ''}</Text>
                 <View
                   className={cn('w-full', !d.color && 'bg-retrogamingpc-highlight', selected === d.key && 'opacity-70')}
                   style={{ height: `${Math.max(d.value > 0 ? 3 : 1, (d.value / max) * 80)}%`, ...(d.color ? { backgroundColor: d.color } : {}) }}
                 />
                 {d.color && d.labelTextColor ? (
-                  <View className="mt-px h-6 w-full items-center justify-center border" style={{ backgroundColor: d.color, borderColor: 'rgba(0,0,0,0.35)' }}>
-                    <Text className="text-center font-mono text-[9px] font-bold leading-[11px]" style={{ color: d.labelTextColor }} numberOfLines={2}>
+                  <View className="mt-px h-7 w-full items-center justify-center border" style={{ backgroundColor: d.color, borderColor: 'rgba(0,0,0,0.35)' }}>
+                    <Text className="text-center font-mono text-retrogamingpc-xs font-bold" style={{ color: d.labelTextColor }} numberOfLines={2}>
                       {d.label}
                     </Text>
                   </View>
                 ) : (
-                  <Text className="h-6 text-center text-[9px] leading-[11px] text-retrogamingpc-text" numberOfLines={2}>
+                  <Text className="h-7 text-center text-retrogamingpc-xs text-retrogamingpc-text" numberOfLines={2}>
                     {d.label}
                   </Text>
                 )}

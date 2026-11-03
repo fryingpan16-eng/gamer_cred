@@ -6,6 +6,7 @@
  * RLS policies apply exactly as they do through the API.
  */
 import { PGlite } from '@electric-sql/pglite';
+import { pg_trgm } from '@electric-sql/pglite/contrib/pg_trgm';
 
 export const ME = '00000000-0000-0000-0000-00000000000a';
 export const OTHER = '00000000-0000-0000-0000-00000000000b';
@@ -14,6 +15,8 @@ export const THIRD = '00000000-0000-0000-0000-00000000000c';
 const BASE_SCHEMA = `
   create role authenticated; create role anon;
   create schema auth;
+  create schema extensions;
+  create extension pg_trgm with schema extensions;
   create function auth.uid() returns uuid language sql stable
     as $$ select nullif(current_setting('test.uid', true), '')::uuid $$;
   create type public.review_status as enum ('draft', 'published');
@@ -38,6 +41,7 @@ const BASE_SCHEMA = `
     platform_id bigint,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now(),
+    published_at timestamptz, -- 000004 (set by trigger in the real schema)
     unique (user_id, game_id),
     constraint reviews_rating_fields_together check (
       (rating is null) = (rating_input_scale is null) and (rating is null) = (rating_input is null)
@@ -66,16 +70,18 @@ const GRANTS = `
 const migration = (name: string) => Deno.readTextFile(new URL(`../migrations/${name}`, import.meta.url));
 
 /** Fresh database. `beforeMigrations` runs between the stub schema and 000014 (e.g. cache rows for the backfill). */
-export async function freshDb(opts: { beforeMigrations?: string; through?: 14 | 15 | 16 | 17 } = {}): Promise<PGlite> {
-  const db = new PGlite();
+export async function freshDb(opts: { beforeMigrations?: string; through?: 14 | 15 | 16 | 17 | 19 | 20 } = {}): Promise<PGlite> {
+  const db = new PGlite({ extensions: { pg_trgm } });
   await db.exec(BASE_SCHEMA);
   await db.exec(`insert into public.profiles (id, username) values ('${ME}', 'me'), ('${OTHER}', 'other'), ('${THIRD}', 'third');`);
   if (opts.beforeMigrations) await db.exec(opts.beforeMigrations);
   await db.exec(await migration('000014_games_and_stats.sql'));
-  const through = opts.through ?? 17;
+  const through = opts.through ?? 20;
   if (through >= 15) await db.exec(await migration('000015_quick_ratings.sql'));
   if (through >= 16) await db.exec(await migration('000016_public_ratings_and_platform.sql'));
   if (through >= 17) await db.exec(await migration('000017_user_ratings_table.sql'));
+  if (through >= 19) await db.exec(await migration('000019_lists.sql'));
+  if (through >= 20) await db.exec(await migration('000020_trending.sql'));
   await db.exec(GRANTS);
   return db;
 }

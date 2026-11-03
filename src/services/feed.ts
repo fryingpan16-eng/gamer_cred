@@ -40,3 +40,37 @@ export async function fetchFeedPage(scope: FeedScope, cursor: FeedCursor | null)
     next: data.length === FEED_PAGE_SIZE && last ? { before: last.occurred_at, beforeKey: last.item_key } : null,
   };
 }
+
+/** How far back "trending" looks. */
+export const TRENDING_DAYS = 14;
+
+export type TrendingGame = {
+  gameId: number;
+  /** Different players who rated or reviewed it in the window. */
+  players: number;
+  activity: number;
+  /** Average of everyone's current score (1–100), or null. */
+  averageRating: number | null;
+};
+
+/** Games most players rated or reviewed in the last TRENDING_DAYS days (000020). */
+export async function fetchTrendingGames(limit = 12): Promise<TrendingGame[]> {
+  const { data, error } = await supabase.rpc('trending_games', { p_days: TRENDING_DAYS, p_limit: limit });
+  if (error) throw new FeedError(error.message || 'Could not load trending games.');
+  return data.map((r) => ({
+    gameId: r.game_id,
+    players: r.players,
+    activity: r.activity,
+    averageRating: r.average_rating === null ? null : Number(r.average_rating),
+  }));
+}
+
+/**
+ * Trending posts: recent published reviews of trending games (no likes or
+ * comments exist yet, so a post trends with its game). Same rows as the feed.
+ */
+export async function fetchTrendingPosts(limit = 10): Promise<ActivityFeedRow[]> {
+  const { data, error } = await supabase.rpc('trending_posts', { p_days: TRENDING_DAYS, p_limit: limit });
+  if (error) throw new FeedError(error.message || 'Could not load trending posts.');
+  return data;
+}

@@ -4,6 +4,7 @@ import { ActivityIndicator, Pressable, Text, View, type PressableProps } from 'r
 
 import { ACTION_COLORS, isActionKind, type ActionKind } from '@/constants/actionColors';
 import { cn } from '@/utils/cn';
+import { TOUCH_SLOP } from '@/utils/platform';
 import { useThemeColors } from '@/hooks/useTheme';
 
 /**
@@ -69,6 +70,8 @@ export function RetroGamingPCButton({
       accessibilityState={{ disabled, busy: loading }}
       // The ⚠ glyph on danger buttons is decoration; screen readers hear the label.
       accessibilityLabel={label}
+      // 26px tall chrome, ~42px touch area on phones.
+      hitSlop={TOUCH_SLOP}
       disabled={disabled}
       {...rest}
       onPressIn={(e) => {

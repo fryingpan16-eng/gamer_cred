@@ -5,7 +5,7 @@ import { SplashScreen, Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, type ReactNode } from 'react';
 import { View } from 'react-native';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { retroGamingPCStackHeader } from '@/components/navigation/retroGamingPCStackHeader';
 import { RetroGamingPCBootScreen } from '@/components/RetroGamingPCBootScreen';
@@ -79,6 +79,9 @@ function ThemeRoot({ children }: { children: ReactNode }) {
 function RootNavigator() {
   const themeColors = useThemeColors();
   const status = useAuthStore((s) => s.status);
+  // The root SafeAreaView skips the bottom edge (the tab bar pads itself), so
+  // full-screen pages keep their last row clear of the home indicator here.
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     if (status !== 'loading') SplashScreen.hide();
@@ -94,17 +97,18 @@ function RootNavigator() {
         header: retroGamingPCStackHeader,
         // iOS 26 defaults Stack headers to transparent (Liquid Glass); keep ours opaque.
         headerTransparent: false,
-        contentStyle: { backgroundColor: themeColors.dark },
+        contentStyle: { backgroundColor: themeColors.dark, paddingBottom: insets.bottom },
       }}
     >
       <Stack.Protected guard={isSignedIn} redirectTo="/login">
         {/* Groups render their own navigator chrome. */}
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false, contentStyle: { backgroundColor: themeColors.dark } }} />
         <Stack.Screen name="game/[id]" options={{ title: 'Game' }} />
         <Stack.Screen name="user/[id]" options={{ title: 'Player' }} />
         <Stack.Screen name="settings" options={{ title: 'Settings' }} />
         <Stack.Screen name="review/[id]" options={{ title: 'Review' }} />
         <Stack.Screen name="ratings/[userId]" options={{ title: 'Ratings' }} />
+        <Stack.Screen name="list/[id]" options={{ title: 'List' }} />
       </Stack.Protected>
 
       <Stack.Protected guard={!isSignedIn} redirectTo="/">

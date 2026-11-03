@@ -1,116 +1,106 @@
-import { router } from 'expo-router';
-import { useMemo, useState } from 'react';
-import { FlatList, RefreshControl, Text, View } from 'react-native';
+import { useQueryClient } from '@tanstack/react-query';
+import { router, useLocalSearchParams } from 'expo-router';
+import type { ReactNode } from 'react';
+import { ScrollView, Text, View } from 'react-native';
 
-import { FeedItemCard } from '@/components/feed/FeedItemCard';
-import { RetroGamingPCAlert, RetroGamingPCButton, RetroGamingPCCard, RetroGamingPCSpinner, RetroGamingPCTabs, type RetroGamingPCTabItem } from '@/components/ui';
-import { useAuth } from '@/hooks/useAuth';
-import { useActivityFeed } from '@/hooks/useFeed';
-import { useGameLookup } from '@/hooks/useGames';
-import type { FeedScope } from '@/services/feed';
-import { useThemeColors } from '@/hooks/useTheme';
+import { HomeFeed } from '@/components/home/HomeFeed';
+import { TrendingGames } from '@/components/home/TrendingGames';
+import { TrendingPosts } from '@/components/home/TrendingPosts';
+import { FeaturedListsPanel, ListBrowser, YourListsPanel } from '@/components/lists/HomeLists';
+import { RetroGamingPCButton, RetroGamingPCTabs, type RetroGamingPCTabItem } from '@/components/ui';
+import { queryKeys } from '@/utils/queryKeys';
 
-const SCOPE_TABS: readonly RetroGamingPCTabItem<FeedScope>[] = [
-  { key: 'friends', label: 'Friends' },
+type HomeTab = 'community' | 'friends' | 'lists';
+
+const HOME_TABS: readonly RetroGamingPCTabItem<HomeTab>[] = [
   { key: 'community', label: 'Community' },
+  { key: 'friends', label: 'Friends' },
+  { key: 'lists', label: 'Lists' },
 ];
 
-function FeedSkeleton() {
+const isHomeTab = (v: string | undefined): v is HomeTab => HOME_TABS.some((t) => t.key === v);
+
+function EmptyBox({ title, body, children }: { title: string; body?: string; children?: ReactNode }) {
   return (
-    <View className="gap-2">
-      <RetroGamingPCSpinner label="Loading activity…" />
-      {[0, 1, 2].map((i) => (
-        <RetroGamingPCCard key={i} className="flex-row gap-3 opacity-60">
-          <View className="retrogamingpc-bevel-inset h-12 w-12 bg-retrogamingpc-dark" />
-          <View className="flex-1 gap-2 py-1">
-            <View className="h-3 w-3/4 bg-retrogamingpc-panel" />
-            <View className="h-2 w-1/3 bg-retrogamingpc-panel" />
-          </View>
-          <View className="retrogamingpc-bevel-inset h-16 w-12 bg-retrogamingpc-dark" />
-        </RetroGamingPCCard>
-      ))}
+    <View className="retrogamingpc-bevel-inset items-center gap-2 bg-retrogamingpc-dark px-4 py-6">
+      <Text className="text-retrogamingpc-base font-bold text-retrogamingpc-text">{title}</Text>
+      {body ? <Text className="text-center text-retrogamingpc-sm text-retrogamingpc-text-muted">{body}</Text> : null}
+      {children}
     </View>
   );
 }
 
-/** Home: retro activity stream — what friends are playing and reviewing, or the whole community. */
-export default function HomeScreen() {
-  const themeColors = useThemeColors();
-  const { user, profile } = useAuth();
-  const [scope, setScope] = useState<FeedScope>('friends');
-  const feed = useActivityFeed(scope);
-
-  const items = useMemo(() => feed.data?.pages.flatMap((p) => p.items) ?? [], [feed.data]);
-  const games = useGameLookup(items.map((i) => i.game_id));
-
-  const empty =
-    scope === 'friends' ? (
-      <View className="retrogamingpc-bevel-inset items-center gap-2 bg-retrogamingpc-dark px-4 py-6">
-        <Text className="text-retrogamingpc-base font-bold text-retrogamingpc-text">No friend activity yet</Text>
-        <Text className="text-center text-retrogamingpc-sm text-retrogamingpc-text-muted">
-          Add friends to see what they&apos;re playing and reviewing — or browse the community feed.
-        </Text>
-        <View className="flex-row gap-2">
-          <RetroGamingPCButton variant="navigate" label="Find Friends" onPress={() => router.push('/search')} />
-          <RetroGamingPCButton variant="navigate" label="Community Feed" onPress={() => setScope('community')} />
-        </View>
-      </View>
-    ) : (
-      <View className="retrogamingpc-bevel-inset items-center gap-2 bg-retrogamingpc-dark px-4 py-6">
-        <Text className="text-retrogamingpc-base font-bold text-retrogamingpc-text">Nothing published yet</Text>
-        <RetroGamingPCButton variant="create" label="Write the first review" onPress={() => router.push('/post')} />
-      </View>
-    );
-
+/** Community: trending games, trending posts, then everyone's latest reviews. */
+function CommunityTab() {
+  const queryClient = useQueryClient();
   return (
-    <FlatList
-      className="flex-1 bg-retrogamingpc-dark"
-      contentContainerClassName="w-full gap-2 self-center p-3 md:max-w-[860px]"
-      data={feed.isPending || feed.isError ? [] : items}
-      keyExtractor={(item) => item.item_key}
-      renderItem={({ item }) => <FeedItemCard item={item} game={games.data?.get(item.game_id)} viewerId={user?.id ?? null} />}
-      onEndReachedThreshold={0.5}
-      onEndReached={() => {
-        if (feed.hasNextPage && !feed.isFetchingNextPage) void feed.fetchNextPage();
+    <HomeFeed
+      scope="community"
+      onRefreshHeader={() => {
+        void queryClient.invalidateQueries({ queryKey: queryKeys.feed.trendingGames() });
+        void queryClient.invalidateQueries({ queryKey: queryKeys.feed.trendingPosts() });
       }}
-      refreshControl={
-        <RefreshControl
-          refreshing={feed.isRefetching && !feed.isFetchingNextPage}
-          onRefresh={() => void feed.refetch()}
-          tintColor={themeColors.highlight}
-          colors={[themeColors.highlight]}
-        />
-      }
-      ListHeaderComponent={
-        <View className="gap-2 pb-1">
-          <Text className="text-retrogamingpc-sm text-retrogamingpc-text-muted">
-            Welcome back, <Text className="font-bold text-retrogamingpc-text-bright">{profile?.username ?? 'player'}</Text>.
-          </Text>
-          <RetroGamingPCTabs items={SCOPE_TABS} value={scope} onChange={setScope} />
-          {feed.isError && items.length > 0 ? <RetroGamingPCAlert message={`Couldn't refresh — ${feed.error.message}`} /> : null}
+      header={
+        <View className="gap-2">
+          <TrendingGames />
+          <TrendingPosts />
+          <Text className="retrogamingpc-heading pt-1">Latest from the Community</Text>
         </View>
       }
-      ListEmptyComponent={
-        feed.isPending ? (
-          <FeedSkeleton />
-        ) : feed.isError ? (
-          <View className="gap-2">
-            <RetroGamingPCAlert message={feed.error.message} />
-            <View className="flex-row justify-end">
-              <RetroGamingPCButton label="Retry" onPress={() => void feed.refetch()} />
-            </View>
-          </View>
-        ) : (
-          empty
-        )
-      }
-      ListFooterComponent={
-        feed.isFetchingNextPage ? (
-          <RetroGamingPCSpinner label="Loading older activity…" className="justify-center py-2" />
-        ) : items.length > 0 && !feed.hasNextPage ? (
-          <Text className="py-2 text-center text-retrogamingpc-xs text-retrogamingpc-text-muted">— End of activity —</Text>
-        ) : undefined
+      empty={
+        <EmptyBox title="Nothing published yet">
+          <RetroGamingPCButton variant="create" label="Write the first review" onPress={() => router.push('/post')} />
+        </EmptyBox>
       }
     />
+  );
+}
+
+/** Friends: what your friends are playing and reviewing. */
+function FriendsTab() {
+  return (
+    <HomeFeed
+      scope="friends"
+      empty={
+        <EmptyBox title="No friend activity yet" body="Add friends to see what they're playing and reviewing.">
+          <RetroGamingPCButton variant="navigate" label="Find Friends" onPress={() => router.push({ pathname: '/search', params: { tab: 'users' } })} />
+        </EmptyBox>
+      }
+    />
+  );
+}
+
+/** Lists: curated lists, your lists (+ New List), and a browser for community lists. */
+function ListsTab() {
+  return (
+    <ScrollView
+      automaticallyAdjustKeyboardInsets className="flex-1" contentContainerClassName="w-full gap-3 self-center p-3 md:max-w-[860px]" keyboardShouldPersistTaps="handled">
+      <FeaturedListsPanel />
+      <YourListsPanel />
+      <ListBrowser />
+    </ScrollView>
+  );
+}
+
+/**
+ * Home: one tab bar at the top — Community (trending + latest), Friends
+ * (friends' activity) and Lists (curated, yours, browse). `?tab=` deep-links.
+ */
+export default function HomeScreen() {
+  const { tab } = useLocalSearchParams<{ tab?: string }>();
+  const active: HomeTab = isHomeTab(tab) ? tab : 'community';
+
+  return (
+    <View className="flex-1 bg-retrogamingpc-dark">
+      <View className="border-b border-b-retrogamingpc-accent px-3 pt-3 pb-2">
+        <View className="w-full self-center md:max-w-[860px]">
+          <RetroGamingPCTabs items={HOME_TABS} value={active} onChange={(next) => router.setParams({ tab: next })} fill />
+        </View>
+      </View>
+      {/* Only the visible tab is mounted, so only its data loads. */}
+      {active === 'community' ? <CommunityTab /> : null}
+      {active === 'friends' ? <FriendsTab /> : null}
+      {active === 'lists' ? <ListsTab /> : null}
+    </View>
   );
 }

@@ -314,6 +314,77 @@ export type Database = {
         ];
       };
 
+      /** App admins (migration 000019): may pin lists to Home. Readable only for your own row. */
+      app_admins: {
+        Row: { user_id: string; created_at: Timestamp };
+        Insert: { user_id: string; created_at?: Timestamp };
+        Update: { user_id?: string; created_at?: Timestamp };
+        Relationships: [];
+      };
+
+      /** Game lists (migration 000019). Public lists readable by all; private by the owner only. */
+      lists: {
+        Row: {
+          id: string;
+          user_id: string;
+          title: string;
+          description: string | null;
+          /** Show positions as #1, #2 … */
+          is_ranked: boolean;
+          is_public: boolean;
+          /** Home "Featured Lists" position (admin-only); null = not pinned. */
+          pinned_rank: number | null;
+          created_at: Timestamp;
+          updated_at: Timestamp;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          title: string;
+          description?: string | null;
+          is_ranked?: boolean;
+          is_public?: boolean;
+          pinned_rank?: number | null;
+          created_at?: Timestamp;
+          updated_at?: Timestamp;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          title?: string;
+          description?: string | null;
+          is_ranked?: boolean;
+          is_public?: boolean;
+          pinned_rank?: number | null;
+          created_at?: Timestamp;
+          updated_at?: Timestamp;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'lists_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+
+      list_items: {
+        Row: { list_id: string; game_id: number; position: number; added_at: Timestamp };
+        Insert: { list_id: string; game_id: number; position: number; added_at?: Timestamp };
+        Update: { list_id?: string; game_id?: number; position?: number; added_at?: Timestamp };
+        Relationships: [
+          {
+            foreignKeyName: 'list_items_list_id_fkey';
+            columns: ['list_id'];
+            isOneToOne: false;
+            referencedRelation: 'lists';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+
       /** Durable IGDB metadata for Stats (migration 000014). Public read; Edge Function writes. */
       games: {
         Row: {
@@ -429,6 +500,17 @@ export type Database = {
         Args: { p_game_id: number };
         Returns: FriendReviewRow[];
       };
+      is_app_admin: { Args: Record<string, never>; Returns: boolean };
+      /** Games most players rated or reviewed recently (migration 000020). */
+      trending_games: {
+        Args: { p_days?: number; p_limit?: number };
+        Returns: { game_id: number; players: number; activity: number; average_rating: number | null; last_activity: string }[];
+      };
+      /** Recent published reviews of trending games (migration 000020). */
+      trending_posts: { Args: { p_days?: number; p_limit?: number }; Returns: ActivityFeedRow[] };
+      add_list_item: { Args: { p_list_id: string; p_game_id: number }; Returns: undefined };
+      move_list_item: { Args: { p_list_id: string; p_game_id: number; p_to: number }; Returns: undefined };
+      set_list_pin: { Args: { p_list_id: string; p_rank: number | null }; Returns: undefined };
       /** A player's whole ratings list with game metadata (migration 000016). */
       user_ratings_table: {
         Args: { p_user_id: string };
@@ -541,6 +623,8 @@ export type Profile = Tables<'profiles'>;
 export type Friendship = Tables<'friendships'>;
 export type Review = Tables<'reviews'>;
 export type GameRating = Tables<'game_ratings'>;
+export type GameList = Tables<'lists'>;
+export type ListItem = Tables<'list_items'>;
 export type NowPlaying = Tables<'now_playing'>;
 export type UserFavorite = Tables<'user_favorites'>;
 export type UserPlatform = Tables<'user_platforms'>;

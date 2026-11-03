@@ -18,6 +18,7 @@ export default function SettingsScreen() {
 
   return (
     <ScrollView
+      automaticallyAdjustKeyboardInsets
       className="flex-1 bg-retrogamingpc-dark"
       contentContainerClassName="w-full gap-3 self-center p-3 md:max-w-[720px]"
       keyboardShouldPersistTaps="handled"

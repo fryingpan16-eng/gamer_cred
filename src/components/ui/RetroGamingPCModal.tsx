@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { Modal, Pressable, Text, View } from 'react-native';
+import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, useWindowDimensions, View } from 'react-native';
 
 import { ACTION_COLORS } from '@/constants/actionColors';
 import { cn } from '@/utils/cn';
@@ -15,6 +15,11 @@ export type RetroGamingPCModalProps = {
   footer?: ReactNode;
   /** Close when the dimmed backdrop is tapped. Default true. */
   dismissOnBackdrop?: boolean;
+  /**
+   * Scroll the body when it is taller than the screen (default). Pass false for
+   * bodies that manage their own scrolling list (e.g. the game picker).
+   */
+  scrollable?: boolean;
   className?: string;
 };
 
@@ -26,7 +31,8 @@ function TitlebarCloseButton({ onPress }: { onPress: () => void }) {
     <Pressable
       accessibilityRole="button"
       accessibilityLabel="Close dialog"
-      hitSlop={8}
+      // 18px chrome, ~42px touch area.
+      hitSlop={12}
       onPress={onPress}
       onPressIn={() => setPressed(true)}
       onPressOut={() => setPressed(false)}
@@ -55,11 +61,16 @@ export function RetroGamingPCModal({
   children,
   footer,
   dismissOnBackdrop = true,
+  scrollable = true,
   className,
 }: RetroGamingPCModalProps) {
+  const { height } = useWindowDimensions();
+  // Leave room for the title bar, footer and screen margins on short phones.
+  const bodyMaxHeight = Math.max(200, height * 0.72);
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
-      <View className="flex-1 items-center justify-center p-4">
+      {/* Lifts the dialog above the on-screen keyboard (Android resizes the window itself). */}
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} className="flex-1 items-center justify-center p-4">
         <Pressable
           accessibilityLabel="Dismiss dialog"
           className="absolute inset-0 bg-black/60"
@@ -78,14 +89,20 @@ export function RetroGamingPCModal({
             </Text>
             <TitlebarCloseButton onPress={onClose} />
           </View>
-          <View className="bg-retrogamingpc-card p-3">{children}</View>
+          {scrollable ? (
+            <ScrollView style={{ maxHeight: bodyMaxHeight }} className="bg-retrogamingpc-card" contentContainerClassName="p-3" keyboardShouldPersistTaps="handled">
+              {children}
+            </ScrollView>
+          ) : (
+            <View className="bg-retrogamingpc-card p-3">{children}</View>
+          )}
           {footer ? (
             <View className="flex-row justify-end gap-2 border-t border-t-retrogamingpc-accent bg-retrogamingpc-card px-3 py-2">
               {footer}
             </View>
           ) : null}
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }

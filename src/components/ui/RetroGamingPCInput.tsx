@@ -2,6 +2,7 @@ import { useState, type ComponentRef, type ReactNode, type Ref } from 'react';
 import { Text, TextInput, View, type TextInputProps } from 'react-native';
 
 import { cn } from '@/utils/cn';
+import { noZoomInputStyle } from '@/utils/platform';
 import { useThemeColors } from '@/hooks/useTheme';
 
 export type RetroGamingPCInputProps = Omit<TextInputProps, 'style' | 'placeholderTextColor'> & {
@@ -59,6 +60,7 @@ export function RetroGamingPCInput({
       >
         {icon ? <View className="opacity-80">{icon}</View> : null}
         <TextInput
+          style={noZoomInputStyle}
           ref={ref}
           editable={editable}
           placeholderTextColor={themeColors.textMuted}

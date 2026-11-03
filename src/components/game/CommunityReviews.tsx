@@ -22,12 +22,12 @@ function Distribution({ stats }: { stats: GameReviewStats }) {
   const max = Math.max(1, ...buckets.map((b) => b.count));
   return (
     <View
-      className="h-14 flex-1 flex-row items-end gap-px"
+      className="h-16 flex-1 flex-row items-end gap-px"
       accessibilityLabel={`Tier distribution: ${buckets.map((b) => `${b.tier} ${b.count}`).join(', ')}`}
     >
       {buckets.map(({ tier, count }) => (
         <View key={tier} className="flex-1 items-center justify-end">
-          <Text className="font-mono text-[8px] leading-[10px] text-retrogamingpc-text-muted">{count > 0 ? count : ''}</Text>
+          <Text className="font-mono text-retrogamingpc-xs text-retrogamingpc-text-muted">{count > 0 ? count : ''}</Text>
           <View
             className="w-full"
             style={{
@@ -36,7 +36,7 @@ function Distribution({ stats }: { stats: GameReviewStats }) {
               opacity: count === 0 ? 0.25 : 1,
             }}
           />
-          <Text className="font-mono text-[9px] leading-[11px] text-retrogamingpc-text-muted">{tier}</Text>
+          <Text className="font-mono text-retrogamingpc-xs text-retrogamingpc-text-muted">{tier}</Text>
         </View>
       ))}
     </View>

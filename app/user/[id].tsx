@@ -5,6 +5,7 @@ import { FavoritesShowcase } from '@/components/profile/FavoritesShowcase';
 import { FriendButton } from '@/components/profile/FriendButton';
 import { NowPlayingShowcase } from '@/components/profile/NowPlayingShowcase';
 import { ProfileHeader } from '@/components/profile/ProfileHeader';
+import { ProfileLists } from '@/components/profile/ProfileLists';
 import { ProfileRatings } from '@/components/profile/ProfileRatings';
 import { PublishedReviews } from '@/components/profile/PublishedReviews';
 import { RetroGamingPCAlert, RetroGamingPCButton, RetroGamingPCPanel, RetroGamingPCSpinner } from '@/components/ui';
@@ -63,6 +64,7 @@ export default function UserProfileScreen() {
         </View>
         <View className="gap-3 md:flex-[2]">
           <ProfileRatings userId={player.id} isOwner={false} />
+          <ProfileLists userId={player.id} isOwner={false} />
           <PublishedReviews userId={player.id} isOwner={false} />
         </View>
       </View>

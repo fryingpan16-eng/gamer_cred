@@ -32,6 +32,7 @@ export default function PostScreen() {
 
   return (
     <ScrollView
+      automaticallyAdjustKeyboardInsets
       ref={scrollRef}
       className="flex-1 bg-retrogamingpc-dark"
       contentContainerClassName="gap-3 p-3"

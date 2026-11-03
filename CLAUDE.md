@@ -10,10 +10,18 @@ The app MUST target **iOS, Android, and Desktop (Web/Electron wrappers)**.
 - **Responsive Architecture**: The UI must automatically scale and adapt layout structures based on target viewports using responsive utilities (Tailwind's \`md:\`, \`lg:\` breakpoints).
 - **Desktop/Tablet Mode**: Mimics a retro early-2000s desktop game-client window (fixed-width constrained centered shells, multi-column master-detail views, and permanent sidebar navigation).
 - **Mobile Mode**: Collapses into single-column flows with standard bottom navigation bars.
+- **Phone rules** (keep these when adding UI):
+  - Touch targets ≥ ~40px: use \`TOUCH_SLOP\` / \`hitSlop\` on compact controls; \`RetroGamingPCButton\` and tabs already have it.
+  - Text ≥ 10px (\`text-retrogamingpc-xs\`).
+  - Every \`TextInput\` gets \`noZoomInputStyle\` (\`src/utils/platform.ts\`), so phone browsers don't zoom on focus.
+  - Dialogs go through \`RetroGamingPCModal\`, which avoids the keyboard and scrolls when taller than the screen. Pass \`scrollable={false}\` only for bodies with their own list.
+  - Scrolling screens with inputs set \`automaticallyAdjustKeyboardInsets\` + \`keyboardShouldPersistTaps="handled"\`.
+  - Anything wider than ~300px either wraps (\`flex-wrap\`) or scrolls sideways.
+  - Full-screen pages keep the bottom safe-area inset (set in \`app/_layout.tsx\`).
 
 ## 📱 BOTTOM NAVIGATION & CORE WORKFLOWS
 The core app features a bottom navigation bar (migrating to a desktop sidebar on wider viewports) with five tabs (Stats sits between Post and Profile):
-1. **Home (\`app/(tabs)/index.tsx\`)**: Dashboard with featured games, latest community activity, friend feed, and trending lists.
+1. **Home (\`app/(tabs)/index.tsx\`)**: one top tab bar (\`?tab=\`): **Community** (trending games + trending posts, migration 000020, then the community feed), **Friends** (friends' activity) and **Lists** (Curated Lists pinned by app admins via \`app_admins\` + \`set_list_pin\`, Your Lists with New List, Browse Lists). Lists: \`lists\` + \`list_items\` (migration 000019), page \`app/list/[id].tsx\`, searchable in the Search tab.
 2. **Search (\`app/(tabs)/search.tsx\`)**: Unified search interface with tabs/filters for:
    - **Games**: Title, genre, and platform database search (via IGDB Edge Function cache).
    - **Studios & Directors**: Developers, publishers, and key game creators (via IGDB Edge Function cache).

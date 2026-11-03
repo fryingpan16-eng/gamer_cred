@@ -6,6 +6,7 @@ import { RetroGamingPCButton, RetroGamingPCTabs, type RetroGamingPCTabItem } fro
 import { RATING_TIERS, type TierCode } from '@/constants/ratingRubric';
 import { useThemeColors } from '@/hooks/useTheme';
 import { cn } from '@/utils/cn';
+import { noZoomInputStyle } from '@/utils/platform';
 import { formatStars, tierDefinition } from '@/utils/rating';
 import {
   activeFilterCount,
@@ -99,6 +100,7 @@ function ScoreBound({ label, value, onChange }: { label: string; value: number |
     <View className="flex-row items-center gap-1">
       <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted">{label}</Text>
       <TextInput
+          style={noZoomInputStyle}
         value={text}
         onChangeText={commit}
         keyboardType="number-pad"
@@ -303,6 +305,7 @@ export function RatingsSpreadsheet({ rows, canSortFilter, ownerName }: RatingsSp
         <View className="gap-2">
           <View className="flex-row flex-wrap items-center gap-2">
             <TextInput
+          style={noZoomInputStyle}
               value={filters.text}
               onChangeText={(text) => setFilters((f) => ({ ...f, text }))}
               placeholder="Search title, developer, genre…"

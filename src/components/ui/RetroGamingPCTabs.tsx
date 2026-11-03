@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { cn } from '@/utils/cn';
 
@@ -42,7 +42,7 @@ function TabButton<K extends string>({
       onHoverOut={() => setHovered(false)}
       className={cn(
         // Identical border widths in both states: only colors change, so no layout shift.
-        '-mb-px items-center border border-b px-3 py-1',
+        '-mb-px min-h-[32px] items-center justify-center border border-b px-3 py-1',
         fill && 'flex-1',
         active
           ? 'border-retrogamingpc-highlight border-b-retrogamingpc-card bg-retrogamingpc-card'
@@ -65,17 +65,22 @@ function TabButton<K extends string>({
 
 /** Segmented sub-tab bar with classic folder-tab styling (e.g. Search: Games / Studios / Users). */
 export function RetroGamingPCTabs<K extends string>({ items, value, onChange, fill = false, className }: RetroGamingPCTabsProps<K>) {
+  const tabs = items.map((item) => (
+    <TabButton key={item.key} item={item} active={item.key === value} fill={fill} onPress={() => onChange(item.key)} />
+  ));
+  if (fill) {
+    return (
+      <View role="tablist" className={cn('flex-row gap-0.5 border-b border-b-retrogamingpc-accent', className)}>
+        {tabs}
+      </View>
+    );
+  }
+  // Natural-width tabs (e.g. Search's four) scroll sideways when a phone is too narrow for them.
   return (
-    <View role="tablist" className={cn('flex-row gap-0.5 border-b border-b-retrogamingpc-accent', className)}>
-      {items.map((item) => (
-        <TabButton
-          key={item.key}
-          item={item}
-          active={item.key === value}
-          fill={fill}
-          onPress={() => onChange(item.key)}
-        />
-      ))}
+    <View role="tablist" className={cn('border-b border-b-retrogamingpc-accent', className)}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-0.5" keyboardShouldPersistTaps="handled">
+        {tabs}
+      </ScrollView>
     </View>
   );
 }

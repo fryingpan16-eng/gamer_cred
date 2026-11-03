@@ -1,6 +1,9 @@
 import { Pressable, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ACTION_COLORS } from '@/constants/actionColors';
+import { retroGamingPCLayout } from '@/constants/theme';
+import { useIsDesktop } from '@/hooks/useIsDesktop';
 import { useToastStore, type ToastTone } from '@/hooks/useToastStore';
 
 /** Same fixed tones as RetroGamingPCAlert: error red, info blue, success green. */
@@ -14,10 +17,14 @@ const TONES: Record<ToastTone, { color: string; glyph: string }> = {
 export function RetroGamingPCToastHost() {
   const toasts = useToastStore((s) => s.toasts);
   const dismiss = useToastStore((s) => s.dismiss);
+  const insets = useSafeAreaInsets();
+  const isDesktop = useIsDesktop();
   if (toasts.length === 0) return null;
+  // Phones: just above the bottom tab bar and the home indicator. Desktop: near the bottom edge.
+  const bottom = isDesktop ? 24 : retroGamingPCLayout.bottomBarHeight + insets.bottom + 8;
 
   return (
-    <View pointerEvents="box-none" className="absolute inset-x-0 bottom-20 items-center gap-1 px-4 md:bottom-6">
+    <View pointerEvents="box-none" className="absolute inset-x-0 items-center gap-1 px-4" style={{ bottom }}>
       {toasts.map((t) => (
         <Pressable
           key={t.id}

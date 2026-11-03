@@ -8,6 +8,7 @@ import { NOT_GOOD, NUMERIC_MAX, NUMERIC_MIN, RATING_SCALE_LABELS, type RatingSca
 import { usePrimaryRatingScale } from '@/hooks/useAuth';
 import { useThemeColors } from '@/hooks/useTheme';
 import { cn } from '@/utils/cn';
+import { noZoomInputStyle } from '@/utils/platform';
 import {
   nextRatingForTap,
   parseNumericField,
@@ -196,7 +197,7 @@ function NumericField({
         placeholderTextColor={themeColors.textMuted}
         accessibilityLabel={`${label}, ${NUMERIC_MIN} to ${NUMERIC_MAX}`}
         accessibilityHint="Type a score and press Enter"
-        style={{ height: height - 8 }}
+        style={{ ...noZoomInputStyle, height: height - 8 }}
         className="w-14 border border-b-retrogamingpc-bevel-light border-l-retrogamingpc-bevel-dark border-r-retrogamingpc-bevel-light border-t-retrogamingpc-bevel-dark bg-retrogamingpc-dark text-center font-mono text-retrogamingpc-lg font-bold text-retrogamingpc-text-bright outline-none"
       />
       {stepButton(1)}

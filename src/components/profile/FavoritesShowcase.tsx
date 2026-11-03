@@ -33,9 +33,9 @@ function TinyButton({
       accessibilityRole="button"
       accessibilityLabel={a11y}
       disabled={disabled}
-      hitSlop={4}
+      hitSlop={{ top: 6, bottom: 6 }}
       onPress={onPress}
-      className={cn('retrogamingpc-bevel h-5 flex-1 items-center justify-center bg-retrogamingpc-button', disabled && 'opacity-30')}
+      className={cn('retrogamingpc-bevel h-8 flex-1 items-center justify-center bg-retrogamingpc-button', disabled && 'opacity-30')}
     >
       <Text className={cn('text-retrogamingpc-xs font-bold', !tone && 'text-retrogamingpc-text-bright')} style={tone ? { color: tone } : undefined}>
         {label}
