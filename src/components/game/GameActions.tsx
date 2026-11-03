@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
-import { SteamAlert, SteamBadge, SteamButton, SteamModal, SteamPanel, SteamSpinner } from '@/components/ui';
+import { RetroGamingPCAlert, RetroGamingPCBadge, RetroGamingPCButton, RetroGamingPCModal, RetroGamingPCPanel, RetroGamingPCSpinner } from '@/components/ui';
 import { useGameLookup } from '@/hooks/useGames';
 import { useNowPlaying, useUpdateNowPlayingSlot } from '@/hooks/useNowPlaying';
 import { useMyReviewForGame } from '@/hooks/useReviews';
@@ -41,11 +41,11 @@ function SlotChooserModal({ visible, game, onClose, onAssigned }: SlotChooserPro
   };
 
   return (
-    <SteamModal visible={visible} title={`Assign “${game.name}”`} onClose={onClose} footer={<SteamButton label="Cancel" onPress={onClose} />}>
+    <RetroGamingPCModal visible={visible} title={`Assign “${game.name}”`} onClose={onClose} footer={<RetroGamingPCButton label="Cancel" onPress={onClose} />}>
       <View className="gap-2">
-        {assign.isError ? <SteamAlert message={assign.error.message} /> : null}
+        {assign.isError ? <RetroGamingPCAlert message={assign.error.message} /> : null}
         {nowPlaying.isPending ? (
-          <SteamSpinner label="Loading your slots…" />
+          <RetroGamingPCSpinner label="Loading your slots…" />
         ) : (
           NOW_PLAYING_SLOTS.map((slot) => {
             const row = rows.find((r) => r.slot_index === slot);
@@ -60,21 +60,21 @@ function SlotChooserModal({ visible, game, onClose, onAssigned }: SlotChooserPro
                 onPress={() => choose(slot)}
                 className={cn(
                   'flex-row items-center gap-2 border p-2',
-                  isArmed ? 'border-steam-error bg-steam-dark' : 'border-steam-accent bg-steam-card',
+                  isArmed ? 'border-retrogamingpc-error bg-retrogamingpc-dark' : 'border-retrogamingpc-accent bg-retrogamingpc-card',
                 )}
               >
-                <Text className="w-14 font-mono text-steam-xs text-steam-text-muted">SLOT {slot}</Text>
-                <Text className="flex-1 text-steam-sm text-steam-text-bright" numberOfLines={1}>
+                <Text className="w-14 font-mono text-retrogamingpc-xs text-retrogamingpc-text-muted">SLOT {slot}</Text>
+                <Text className="flex-1 text-retrogamingpc-sm text-retrogamingpc-text-bright" numberOfLines={1}>
                   {isArmed ? `Tap again to replace “${current}”` : (current ?? 'Empty')}
                 </Text>
-                {assign.isPending && assign.variables?.slot === slot ? <SteamSpinner /> : null}
-                {!current ? <SteamBadge label="Free" variant="nowPlaying" /> : null}
+                {assign.isPending && assign.variables?.slot === slot ? <RetroGamingPCSpinner /> : null}
+                {!current ? <RetroGamingPCBadge label="Free" variant="nowPlaying" /> : null}
               </Pressable>
             );
           })
         )}
       </View>
-    </SteamModal>
+    </RetroGamingPCModal>
   );
 }
 
@@ -100,19 +100,19 @@ export function GameActions({ game }: { game: IgdbGameResult }) {
   };
 
   return (
-    <SteamPanel title="Your Library">
+    <RetroGamingPCPanel title="Your Library">
       <View className="gap-2">
-        {assignedTo ? <SteamAlert tone="info" message={`Added to Now Playing slot ${assignedTo}.`} /> : null}
+        {assignedTo ? <RetroGamingPCAlert tone="info" message={`Added to Now Playing slot ${assignedTo}.`} /> : null}
         <View className="flex-row flex-wrap gap-1">
-          {inSlot ? <SteamBadge label={`Now Playing · Slot ${inSlot.slot_index}`} variant="nowPlaying" /> : null}
-          {review ? <SteamBadge label={review.status === 'published' ? 'Reviewed' : 'Draft saved'} variant={review.status === 'published' ? 'published' : 'draft'} /> : null}
+          {inSlot ? <RetroGamingPCBadge label={`Now Playing · Slot ${inSlot.slot_index}`} variant="nowPlaying" /> : null}
+          {review ? <RetroGamingPCBadge label={review.status === 'published' ? 'Reviewed' : 'Draft saved'} variant={review.status === 'published' ? 'published' : 'draft'} /> : null}
         </View>
         {inSlot ? (
-          <SteamButton label="Open in Review Studio" onPress={() => router.push('/post')} />
+          <RetroGamingPCButton label="Open in Review Studio" onPress={() => router.push('/post')} />
         ) : (
-          <SteamButton label="Assign to Now Playing Slot" variant="primary" onPress={() => setChoosing(true)} />
+          <RetroGamingPCButton label="Assign to Now Playing Slot" variant="primary" onPress={() => setChoosing(true)} />
         )}
-        <SteamButton
+        <RetroGamingPCButton
           label={review ? (review.status === 'published' ? 'Edit Review' : 'Resume Draft') : 'Write Review'}
           variant={inSlot ? 'primary' : 'default'}
           loading={myReview.isPending}
@@ -128,6 +128,6 @@ export function GameActions({ game }: { game: IgdbGameResult }) {
           setAssignedTo(slot);
         }}
       />
-    </SteamPanel>
+    </RetroGamingPCPanel>
   );
 }

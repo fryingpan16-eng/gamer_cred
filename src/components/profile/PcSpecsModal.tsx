@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { View } from 'react-native';
 
-import { SteamAlert, SteamButton, SteamInput, SteamModal } from '@/components/ui';
+import { RetroGamingPCAlert, RetroGamingPCButton, RetroGamingPCInput, RetroGamingPCModal } from '@/components/ui';
 import { EMPTY_PC_SPECS, PC_SPEC_FIELDS, pcSpecsSchema, type PcSpecKey, type PcSpecs } from '@/utils/profileSchemas';
 
 type PcSpecsModalProps = {
@@ -16,9 +16,9 @@ type PcSpecsModalProps = {
 
 export function PcSpecsModal({ visible, platformName, onClose, saving, ...formProps }: PcSpecsModalProps) {
   return (
-    <SteamModal visible={visible} title={`System Specs — ${platformName}`} onClose={onClose} dismissOnBackdrop={!saving}>
+    <RetroGamingPCModal visible={visible} title={`System Specs — ${platformName}`} onClose={onClose} dismissOnBackdrop={!saving}>
       {visible ? <PcSpecsForm {...formProps} saving={saving} onClose={onClose} /> : null}
-    </SteamModal>
+    </RetroGamingPCModal>
   );
 }
 
@@ -42,9 +42,9 @@ function PcSpecsForm({ initial, saving, error, onClose, onSave }: Omit<PcSpecsMo
 
   return (
     <View className="gap-2">
-      {error ? <SteamAlert message={error} /> : null}
+      {error ? <RetroGamingPCAlert message={error} /> : null}
       {PC_SPEC_FIELDS.map((field) => (
-        <SteamInput
+        <RetroGamingPCInput
           key={field.key}
           label={field.label}
           value={specs[field.key]}
@@ -56,9 +56,9 @@ function PcSpecsForm({ initial, saving, error, onClose, onSave }: Omit<PcSpecsMo
           onChangeText={(v) => setSpecs((s) => ({ ...s, [field.key]: v }))}
         />
       ))}
-      <View className="flex-row justify-end gap-2 border-t border-t-steam-accent pt-2">
-        <SteamButton label="Cancel" onPress={onClose} disabled={saving} />
-        <SteamButton label="Save Specs" variant="primary" loading={saving} onPress={submit} />
+      <View className="flex-row justify-end gap-2 border-t border-t-retrogamingpc-accent pt-2">
+        <RetroGamingPCButton label="Cancel" onPress={onClose} disabled={saving} />
+        <RetroGamingPCButton label="Save Specs" variant="primary" loading={saving} onPress={submit} />
       </View>
     </View>
   );

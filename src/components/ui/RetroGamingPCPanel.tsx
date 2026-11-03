@@ -3,7 +3,7 @@ import { Text, View } from 'react-native';
 
 import { cn } from '@/utils/cn';
 
-export type SteamPanelProps = {
+export type RetroGamingPCPanelProps = {
   title?: string;
   /** Optional element rendered at the right of the header strip. */
   headerRight?: ReactNode;
@@ -11,13 +11,13 @@ export type SteamPanelProps = {
   className?: string;
 };
 
-/** Beveled 2004-Steam content panel with optional header strip. */
-export function SteamPanel({ title, headerRight, children, className }: SteamPanelProps) {
+/** Beveled RetroGamingPC content panel with optional header strip. */
+export function RetroGamingPCPanel({ title, headerRight, children, className }: RetroGamingPCPanelProps) {
   return (
-    <View className={cn('steam-bevel bg-steam-card', className)}>
+    <View className={cn('retrogamingpc-bevel bg-retrogamingpc-card', className)}>
       {title ? (
-        <View className="steam-panel-header flex-row items-center justify-between">
-          <Text className="steam-heading" numberOfLines={1}>
+        <View className="retrogamingpc-panel-header flex-row items-center justify-between">
+          <Text className="retrogamingpc-heading" numberOfLines={1}>
             {title}
           </Text>
           {headerRight}

@@ -3,25 +3,26 @@ import '../global.css';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { SplashScreen, Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
+import { useEffect, type ReactNode } from 'react';
+import { View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
-import { steamStackHeader } from '@/components/navigation/steamStackHeader';
-import { SteamBootScreen } from '@/components/SteamBootScreen';
-import { SteamErrorBoundary } from '@/components/SteamErrorBoundary';
-import { SteamWindowFrame } from '@/components/SteamWindowFrame';
-import { steamColors } from '@/constants/theme';
+import { retroGamingPCStackHeader } from '@/components/navigation/retroGamingPCStackHeader';
+import { RetroGamingPCBootScreen } from '@/components/RetroGamingPCBootScreen';
+import { RetroGamingPCErrorBoundary } from '@/components/RetroGamingPCErrorBoundary';
+import { RetroGamingPCWindowFrame } from '@/components/RetroGamingPCWindowFrame';
 import { useAuthStore } from '@/hooks/useAuth';
 import { queryClient } from '@/services/queryClient';
+import { useThemeColors, useThemeStore, useThemeVars } from '@/hooks/useTheme';
 
 // Global error boundary. Expo Router has no `+error.tsx` file convention (it
 // rejects route files starting with '+'), so the boundary is exported here.
-export { SteamErrorBoundary as ErrorBoundary } from '@/components/SteamErrorBoundary';
+export { RetroGamingPCErrorBoundary as ErrorBoundary } from '@/components/RetroGamingPCErrorBoundary';
 
 export const unstable_settings = {
   anchor: '(tabs)',
   // Screen-level boundary keeps the tab bar/sidebar mounted when a screen throws.
-  screenErrorBoundary: SteamErrorBoundary,
+  screenErrorBoundary: RetroGamingPCErrorBoundary,
 };
 
 // Keep the native splash up until the stored session has been restored.
@@ -33,15 +34,37 @@ export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
       <SafeAreaProvider>
-        <SafeAreaView className="flex-1 bg-steam-dark" edges={['top', 'left', 'right']}>
-          <StatusBar style="light" />
-          <SteamWindowFrame>
-            <RootNavigator />
-          </SteamWindowFrame>
-        </SafeAreaView>
+        <ThemeRoot>
+          <SafeAreaView className="flex-1 bg-retrogamingpc-dark" edges={['top', 'left', 'right']}>
+            <StatusBar style="light" />
+            <RetroGamingPCWindowFrame>
+              <RootNavigator />
+            </RetroGamingPCWindowFrame>
+          </SafeAreaView>
+        </ThemeRoot>
       </SafeAreaProvider>
     </QueryClientProvider>
   );
+}
+
+/**
+ * Applies the active colour theme (CSS variables) to the whole tree.
+ * Source of truth: the signed-in profile's `ui_theme`; before sign-in or while
+ * the profile loads, the device-cached choice is used so screens don't flash olive.
+ */
+function ThemeRoot({ children }: { children: ReactNode }) {
+  const themeVars = useThemeVars();
+  const profileTheme = useAuthStore((s) => s.profile?.ui_theme);
+
+  useEffect(() => {
+    void useThemeStore.getState().hydrate(() => useAuthStore.getState().profile?.ui_theme === undefined);
+  }, []);
+
+  useEffect(() => {
+    if (profileTheme) useThemeStore.getState().setTheme(profileTheme);
+  }, [profileTheme]);
+
+  return <View style={[{ flex: 1 }, themeVars]}>{children}</View>;
 }
 
 /**
@@ -52,23 +75,24 @@ export default function RootLayout() {
  * transient "signed out" state (which would bounce deep links to /login).
  */
 function RootNavigator() {
+  const themeColors = useThemeColors();
   const status = useAuthStore((s) => s.status);
 
   useEffect(() => {
     if (status !== 'loading') SplashScreen.hide();
   }, [status]);
 
-  if (status === 'loading') return <SteamBootScreen />;
+  if (status === 'loading') return <RetroGamingPCBootScreen />;
 
   const isSignedIn = status === 'signedIn';
 
   return (
     <Stack
       screenOptions={{
-        header: steamStackHeader,
+        header: retroGamingPCStackHeader,
         // iOS 26 defaults Stack headers to transparent (Liquid Glass); keep ours opaque.
         headerTransparent: false,
-        contentStyle: { backgroundColor: steamColors.dark },
+        contentStyle: { backgroundColor: themeColors.dark },
       }}
     >
       <Stack.Protected guard={isSignedIn} redirectTo="/login">
@@ -76,6 +100,7 @@ function RootNavigator() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="game/[id]" options={{ title: 'Game' }} />
         <Stack.Screen name="user/[id]" options={{ title: 'Player' }} />
+        <Stack.Screen name="settings" options={{ title: 'Settings' }} />
       </Stack.Protected>
 
       <Stack.Protected guard={!isSignedIn} redirectTo="/">

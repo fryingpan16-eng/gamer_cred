@@ -2,10 +2,10 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router/js-tabs';
 import type { ComponentProps } from 'react';
 
-import { SteamHeaderBar } from '@/components/navigation/SteamHeaderBar';
-import { SteamTabBar } from '@/components/navigation/SteamTabBar';
-import { steamColors } from '@/constants/theme';
+import { RetroGamingPCHeaderBar } from '@/components/navigation/RetroGamingPCHeaderBar';
+import { RetroGamingPCTabBar } from '@/components/navigation/RetroGamingPCTabBar';
 import { useIsDesktop } from '@/hooks/useIsDesktop';
+import { useThemeColors } from '@/hooks/useTheme';
 
 type IconName = ComponentProps<typeof MaterialCommunityIcons>['name'];
 
@@ -22,15 +22,16 @@ const TABS: readonly { name: 'index' | 'search' | 'post' | 'profile'; title: str
  * changes), so crossing the breakpoint never remounts screens or loses state.
  */
 export default function TabsLayout() {
+  const themeColors = useThemeColors();
   const isDesktop = useIsDesktop();
 
   return (
     <Tabs
-      tabBar={(props) => <SteamTabBar {...props} variant={isDesktop ? 'sidebar' : 'bottom'} />}
+      tabBar={(props) => <RetroGamingPCTabBar {...props} variant={isDesktop ? 'sidebar' : 'bottom'} />}
       screenOptions={{
         tabBarPosition: isDesktop ? 'left' : 'bottom',
-        header: ({ options, route }) => <SteamHeaderBar title={options.title ?? route.name} />,
-        sceneStyle: { backgroundColor: steamColors.dark },
+        header: ({ options, route }) => <RetroGamingPCHeaderBar title={options.title ?? route.name} />,
+        sceneStyle: { backgroundColor: themeColors.dark },
         animation: 'none',
       }}
     >
@@ -43,7 +44,7 @@ export default function TabsLayout() {
             tabBarIcon: ({ color, size }) => (
               <MaterialCommunityIcons
                 name={tab.icon}
-                color={typeof color === 'string' ? color : steamColors.textMuted}
+                color={typeof color === 'string' ? color : themeColors.textMuted}
                 size={size}
               />
             ),

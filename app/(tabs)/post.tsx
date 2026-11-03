@@ -33,7 +33,7 @@ export default function PostScreen() {
   return (
     <ScrollView
       ref={scrollRef}
-      className="flex-1 bg-steam-dark"
+      className="flex-1 bg-retrogamingpc-dark"
       contentContainerClassName="gap-3 p-3"
       keyboardShouldPersistTaps="handled"
     >

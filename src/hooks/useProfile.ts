@@ -14,8 +14,11 @@ import {
   setMainPlatform,
   swapFavoriteRanks,
   updatePcSpecs,
+  updatePlatformDevices,
+  updateNowPlayingVisibility,
   updatePrimaryRatingScale,
   updateProfile,
+  updateUiTheme,
 } from '@/services/profile';
 import {
   removeFriendship,
@@ -24,11 +27,14 @@ import {
   type FriendRelation,
 } from '@/services/users';
 import type { FavoriteRank, Profile, UserFavorite, UserPlatform } from '@/types/database.types';
+import type { NowPlayingVisibility } from '@/constants/privacy';
 import type { RatingScale } from '@/constants/ratingRubric';
+import type { ThemeName } from '@/constants/themes';
 import type { ProfileSettingsValues } from '@/utils/profileSchemas';
 import { queryKeys } from '@/utils/queryKeys';
 
 import { useAuthStore } from './useAuth';
+import { useThemeStore } from './useTheme';
 
 export function useViewerId(): string | null {
   return useAuthStore((s) => s.user?.id ?? null);
@@ -113,6 +119,60 @@ export function useUpdatePrimaryRatingScale() {
   });
 }
 
+/**
+ * Switch colour theme: applies instantly on this device, then saves to the
+ * profile so other devices pick it up. Rolls back if the save fails.
+ */
+export function useUpdateUiTheme() {
+  const queryClient = useQueryClient();
+  const viewerId = useViewerId();
+  return useMutation({
+    mutationFn: (theme: ThemeName) => {
+      if (!viewerId) throw new Error('You must be signed in.');
+      return updateUiTheme(viewerId, theme);
+    },
+    onMutate: (theme) => {
+      const previous = { theme: useThemeStore.getState().theme, profile: useAuthStore.getState().profile };
+      useThemeStore.getState().setTheme(theme);
+      if (previous.profile) useAuthStore.setState({ profile: { ...previous.profile, ui_theme: theme } });
+      return previous;
+    },
+    onError: (_e, _theme, ctx) => {
+      if (!ctx) return;
+      useThemeStore.getState().setTheme(ctx.theme);
+      if (ctx.profile) useAuthStore.setState({ profile: ctx.profile });
+    },
+    onSuccess: (profile) => {
+      useAuthStore.setState({ profile });
+      queryClient.setQueryData(queryKeys.profiles.detail(profile.id), profile);
+    },
+  });
+}
+
+/** Change who can see your Now Playing — optimistic on the auth snapshot. */
+export function useUpdateNowPlayingVisibility() {
+  const queryClient = useQueryClient();
+  const viewerId = useViewerId();
+  return useMutation({
+    mutationFn: (visibility: NowPlayingVisibility) => {
+      if (!viewerId) throw new Error('You must be signed in.');
+      return updateNowPlayingVisibility(viewerId, visibility);
+    },
+    onMutate: (visibility) => {
+      const previous = useAuthStore.getState().profile;
+      if (previous) useAuthStore.setState({ profile: { ...previous, now_playing_visibility: visibility } });
+      return { previous };
+    },
+    onError: (_e, _v, ctx) => {
+      if (ctx?.previous) useAuthStore.setState({ profile: ctx.previous });
+    },
+    onSuccess: (profile) => {
+      useAuthStore.setState({ profile });
+      queryClient.setQueryData(queryKeys.profiles.detail(profile.id), profile);
+    },
+  });
+}
+
 // -----------------------------------------------------------------------------
 // Top 4 favorites
 // -----------------------------------------------------------------------------
@@ -180,20 +240,23 @@ export type PlatformAction =
   | { action: 'add'; platformId: number }
   | { action: 'remove'; platformId: number }
   | { action: 'setMain'; platformId: number | null }
-  | { action: 'specs'; platformId: number; pcSpecs: string | null };
+  | { action: 'specs'; platformId: number; pcSpecs: string | null }
+  | { action: 'devices'; platformId: number; devices: string[] };
 
 function applyPlatformAction(rows: UserPlatform[] = [], vars: PlatformAction, userId: string): UserPlatform[] {
   switch (vars.action) {
     case 'add':
       return rows.some((r) => r.platform_id === vars.platformId)
         ? rows
-        : [...rows, { user_id: userId, platform_id: vars.platformId, is_main: false, pc_specs: null }];
+        : [...rows, { user_id: userId, platform_id: vars.platformId, is_main: false, pc_specs: null, devices: [] }];
     case 'remove':
       return rows.filter((r) => r.platform_id !== vars.platformId);
     case 'setMain':
       return rows.map((r) => ({ ...r, is_main: r.platform_id === vars.platformId }));
     case 'specs':
       return rows.map((r) => (r.platform_id === vars.platformId ? { ...r, pc_specs: vars.pcSpecs } : r));
+    case 'devices':
+      return rows.map((r) => (r.platform_id === vars.platformId ? { ...r, devices: vars.devices } : r));
   }
 }
 
@@ -213,6 +276,8 @@ export function usePlatformMutation() {
           return setMainPlatform(vars.platformId);
         case 'specs':
           return updatePcSpecs(viewerId, vars.platformId, vars.pcSpecs);
+        case 'devices':
+          return updatePlatformDevices(viewerId, vars.platformId, vars.devices);
       }
     },
     ...optimistic<UserPlatform[], PlatformAction>(

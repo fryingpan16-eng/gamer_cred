@@ -4,13 +4,14 @@ import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
 
 import { GoogleSignInButton } from '@/components/GoogleSignInButton';
-import { SteamAlert, SteamButton, SteamInput, SteamPanel } from '@/components/ui';
-import { steamColors } from '@/constants/theme';
+import { RetroGamingPCAlert, RetroGamingPCButton, RetroGamingPCInput, RetroGamingPCPanel } from '@/components/ui';
 import { useAuthAction } from '@/hooks/useAuthAction';
 import { signInWithEmail, signInWithGoogle } from '@/services/auth';
 import { loginSchema, validate, type FieldErrors, type LoginInput } from '@/utils/authSchemas';
+import { useThemeColors } from '@/hooks/useTheme';
 
 export default function LoginScreen() {
+  const themeColors = useThemeColors();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fieldErrors, setFieldErrors] = useState<FieldErrors<LoginInput>>({});
@@ -35,13 +36,13 @@ export default function LoginScreen() {
   return (
     <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView
-        className="flex-1 bg-steam-dark"
+        className="flex-1 bg-retrogamingpc-dark"
         contentContainerClassName="flex-grow items-center justify-center p-4"
         keyboardShouldPersistTaps="handled"
       >
-        <SteamPanel title="Sign in to GAMER_CRED" className="w-full max-w-[360px]">
+        <RetroGamingPCPanel title="Sign in to GAMER_CRED" className="w-full max-w-[360px]">
           <View className="gap-3">
-            {formError ? <SteamAlert message={formError} /> : null}
+            {formError ? <RetroGamingPCAlert message={formError} /> : null}
 
             <GoogleSignInButton
               loading={google.pending}
@@ -53,12 +54,12 @@ export default function LoginScreen() {
             />
 
             <View className="flex-row items-center gap-2">
-              <View className="steam-divider flex-1" />
-              <Text className="steam-label">or use email</Text>
-              <View className="steam-divider flex-1" />
+              <View className="retrogamingpc-divider flex-1" />
+              <Text className="retrogamingpc-label">or use email</Text>
+              <View className="retrogamingpc-divider flex-1" />
             </View>
 
-            <SteamInput
+            <RetroGamingPCInput
               label="Email"
               value={email}
               onChangeText={setEmail}
@@ -69,9 +70,9 @@ export default function LoginScreen() {
               keyboardType="email-address"
               textContentType="emailAddress"
               returnKeyType="next"
-              icon={<Feather name="mail" size={12} color={steamColors.textMuted} />}
+              icon={<Feather name="mail" size={12} color={themeColors.textMuted} />}
             />
-            <SteamInput
+            <RetroGamingPCInput
               label="Password"
               value={password}
               onChangeText={setPassword}
@@ -82,14 +83,14 @@ export default function LoginScreen() {
               textContentType="password"
               returnKeyType="go"
               onSubmitEditing={submit}
-              icon={<Feather name="lock" size={12} color={steamColors.textMuted} />}
+              icon={<Feather name="lock" size={12} color={themeColors.textMuted} />}
             />
 
             <View className="flex-row items-center justify-between pt-1">
-              <Link href="/register" className="text-steam-sm text-steam-highlight underline">
+              <Link href="/register" className="text-retrogamingpc-sm text-retrogamingpc-highlight underline">
                 Create account
               </Link>
-              <SteamButton
+              <RetroGamingPCButton
                 label={emailLogin.pending ? 'Signing in…' : 'Login'}
                 variant="primary"
                 loading={emailLogin.pending}
@@ -98,7 +99,7 @@ export default function LoginScreen() {
               />
             </View>
           </View>
-        </SteamPanel>
+        </RetroGamingPCPanel>
       </ScrollView>
     </KeyboardAvoidingView>
   );

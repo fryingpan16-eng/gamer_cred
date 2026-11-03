@@ -4,13 +4,13 @@ import { useState } from 'react';
 import { FlatList, Pressable, Text, View } from 'react-native';
 
 import { Thumbnail } from '@/components/search/Thumbnail';
-import { SteamAlert, SteamBadge, SteamButton, SteamInput, SteamModal, SteamSpinner } from '@/components/ui';
-import { steamColors } from '@/constants/theme';
+import { RetroGamingPCAlert, RetroGamingPCBadge, RetroGamingPCButton, RetroGamingPCInput, RetroGamingPCModal, RetroGamingPCSpinner } from '@/components/ui';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { primeGameCache } from '@/hooks/useGames';
 import { useGameSearch } from '@/hooks/useSearch';
 import { IGDB_SEARCH_LIMITS, igdbImageUrl, normalizeSearchQuery, type IgdbGameResult } from '@/types/igdb';
 import { cn } from '@/utils/cn';
+import { useThemeColors } from '@/hooks/useTheme';
 
 type GamePickerModalProps = {
   visible: boolean;
@@ -28,16 +28,16 @@ type GamePickerModalProps = {
 /** Search-and-pick dialog used for Now Playing slots and quick reviews. */
 export function GamePickerModal({ visible, title, onClose, ...bodyProps }: GamePickerModalProps) {
   return (
-    <SteamModal
+    <RetroGamingPCModal
       visible={visible}
       title={title}
       onClose={onClose}
       className="max-w-[520px]"
-      footer={<SteamButton label="Cancel" onPress={onClose} />}
+      footer={<RetroGamingPCButton label="Cancel" onPress={onClose} />}
     >
       {/* Mounted only while open, so every opening starts with an empty search box. */}
       {visible ? <PickerBody {...bodyProps} /> : null}
-    </SteamModal>
+    </RetroGamingPCModal>
   );
 }
 
@@ -47,6 +47,7 @@ function PickerBody({
   annotations,
   currentGameId,
 }: Pick<GamePickerModalProps, 'onPick' | 'unavailable' | 'annotations' | 'currentGameId'>) {
+  const themeColors = useThemeColors();
   const queryClient = useQueryClient();
   const [term, setTerm] = useState('');
   const debounced = useDebouncedValue(term, 350);
@@ -60,7 +61,7 @@ function PickerBody({
 
   return (
     <View className="gap-2">
-      <SteamInput
+      <RetroGamingPCInput
         value={term}
         onChangeText={setTerm}
         placeholder="Search games by title…"
@@ -69,24 +70,24 @@ function PickerBody({
         autoCorrect={false}
         returnKeyType="search"
         accessibilityLabel="Search games"
-        icon={<Feather name="search" size={12} color={steamColors.textMuted} />}
-        trailing={search.isFetching ? <SteamSpinner /> : null}
+        icon={<Feather name="search" size={12} color={themeColors.textMuted} />}
+        trailing={search.isFetching ? <RetroGamingPCSpinner /> : null}
       />
 
       <View className="h-[320px]">
         {!active ? (
-          <Text className="py-6 text-center text-steam-sm text-steam-text-muted">
+          <Text className="py-6 text-center text-retrogamingpc-sm text-retrogamingpc-text-muted">
             Type at least {IGDB_SEARCH_LIMITS.minQueryLength} characters to search IGDB.
           </Text>
         ) : search.isError && !search.data ? (
           <View className="gap-2 pt-2">
-            <SteamAlert message={search.error.message} />
+            <RetroGamingPCAlert message={search.error.message} />
             <View className="flex-row justify-end">
-              <SteamButton label="Retry" onPress={() => void search.refetch()} />
+              <RetroGamingPCButton label="Retry" onPress={() => void search.refetch()} />
             </View>
           </View>
         ) : !search.data ? (
-          <SteamSpinner label="Searching IGDB…" className="justify-center py-6" />
+          <RetroGamingPCSpinner label="Searching IGDB…" className="justify-center py-6" />
         ) : (
           <FlatList
             data={search.data.results}
@@ -95,7 +96,7 @@ function PickerBody({
             className={search.isPlaceholderData ? 'opacity-60' : undefined}
             contentContainerClassName="gap-1"
             ListEmptyComponent={
-              <Text className="py-6 text-center text-steam-sm text-steam-text-muted">No games match “{debounced}”.</Text>
+              <Text className="py-6 text-center text-retrogamingpc-sm text-retrogamingpc-text-muted">No games match “{debounced}”.</Text>
             }
             renderItem={({ item }) => {
               const blockedReason = unavailable?.get(item.id);
@@ -109,7 +110,7 @@ function PickerBody({
                   disabled={Boolean(blockedReason)}
                   onPress={() => pick(item)}
                   className={cn(
-                    'flex-row items-center gap-2 border border-steam-accent bg-steam-card p-1.5',
+                    'flex-row items-center gap-2 border border-retrogamingpc-accent bg-retrogamingpc-card p-1.5',
                     blockedReason && 'opacity-50',
                   )}
                 >
@@ -122,16 +123,16 @@ function PickerBody({
                         accessibilityLabel={`${item.name} cover`}
                       />
                       <View className={cn('flex-1 gap-0.5', pressed && 'opacity-70')}>
-                        <Text className="text-steam-base font-bold text-steam-text-bright" numberOfLines={1}>
+                        <Text className="text-retrogamingpc-base font-bold text-retrogamingpc-text-bright" numberOfLines={1}>
                           {item.name}
                         </Text>
-                        <Text className="text-steam-xs text-steam-text-muted" numberOfLines={1}>
+                        <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted" numberOfLines={1}>
                           {[item.releaseYear, item.platforms.slice(0, 3).join(' / ')].filter(Boolean).join(' · ')}
                         </Text>
                         <View className="flex-row gap-1">
-                          {isCurrent ? <SteamBadge label="Current" variant="nowPlaying" /> : null}
-                          {blockedReason ? <SteamBadge label={blockedReason} variant="draft" /> : null}
-                          {note && !isCurrent ? <SteamBadge label={note} /> : null}
+                          {isCurrent ? <RetroGamingPCBadge label="Current" variant="nowPlaying" /> : null}
+                          {blockedReason ? <RetroGamingPCBadge label={blockedReason} variant="draft" /> : null}
+                          {note && !isCurrent ? <RetroGamingPCBadge label={note} /> : null}
                         </View>
                       </View>
                     </>

@@ -1,7 +1,7 @@
 import { Image, Text, View } from 'react-native';
 
 import { CoverTile } from '@/components/profile/CoverTile';
-import { SteamBadge } from '@/components/ui';
+import { RetroGamingPCBadge } from '@/components/ui';
 import type { GameReviewStats } from '@/services/games';
 import { igdbImageUrl, type IgdbGameDetail } from '@/types/igdb';
 
@@ -21,7 +21,7 @@ export function GameHero({ game, stats }: GameHeroProps) {
   const community = stats && stats.count > 0 && stats.average !== null ? Math.round(stats.average) : null;
 
   return (
-    <View className="steam-window overflow-hidden">
+    <View className="retrogamingpc-window overflow-hidden">
       {backdrop ? (
         <Image
           source={{ uri: igdbImageUrl(backdrop, 'screenshot_med') }}
@@ -36,33 +36,33 @@ export function GameHero({ game, stats }: GameHeroProps) {
           <CoverTile game={game} gameId={game.id} />
         </View>
         <View className="flex-1 gap-1.5">
-          <Text role="heading" className="text-steam-xl font-bold text-steam-text-bright md:text-[24px] md:leading-[28px]">
+          <Text role="heading" className="text-retrogamingpc-xl font-bold text-retrogamingpc-text-bright md:text-[24px] md:leading-[28px]">
             {game.name}
           </Text>
           {game.developers.length > 0 ? (
-            <Text className="text-steam-sm text-steam-text">
-              <Text className="text-steam-text-muted">Developer: </Text>
+            <Text className="text-retrogamingpc-sm text-retrogamingpc-text">
+              <Text className="text-retrogamingpc-text-muted">Developer: </Text>
               {game.developers.join(', ')}
             </Text>
           ) : null}
           {game.publishers.length > 0 ? (
-            <Text className="text-steam-sm text-steam-text">
-              <Text className="text-steam-text-muted">Publisher: </Text>
+            <Text className="text-retrogamingpc-sm text-retrogamingpc-text">
+              <Text className="text-retrogamingpc-text-muted">Publisher: </Text>
               {game.publishers.join(', ')}
             </Text>
           ) : null}
           {release ? (
-            <Text className="text-steam-sm text-steam-text">
-              <Text className="text-steam-text-muted">Release: </Text>
+            <Text className="text-retrogamingpc-sm text-retrogamingpc-text">
+              <Text className="text-retrogamingpc-text-muted">Release: </Text>
               {release}
             </Text>
           ) : null}
           <View className="flex-row flex-wrap gap-1 pt-1">
             {game.genres.slice(0, 4).map((g) => (
-              <SteamBadge key={g} label={g} variant="published" />
+              <RetroGamingPCBadge key={g} label={g} variant="published" />
             ))}
             {game.platforms.slice(0, 6).map((p) => (
-              <SteamBadge key={p} label={p} />
+              <RetroGamingPCBadge key={p} label={p} />
             ))}
           </View>
           <View className="flex-row flex-wrap gap-3 pt-2">

@@ -1,8 +1,8 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
-import { steamColors } from '@/constants/theme';
 
-import { SteamButton } from './ui/SteamButton';
+import { RetroGamingPCButton } from './ui/RetroGamingPCButton';
+import { useThemeColors } from '@/hooks/useTheme';
 
 type GoogleSignInButtonProps = {
   label?: string;
@@ -12,14 +12,15 @@ type GoogleSignInButtonProps = {
 };
 
 export function GoogleSignInButton({ label = 'Sign in with Google', loading, disabled, onPress }: GoogleSignInButtonProps) {
+  const themeColors = useThemeColors();
   return (
-    <SteamButton
+    <RetroGamingPCButton
       label={loading ? 'Waiting for Google…' : label}
       loading={loading}
       disabled={disabled}
       onPress={onPress}
       className="py-2"
-      icon={<MaterialCommunityIcons name="google" size={14} color={steamColors.textBright} />}
+      icon={<MaterialCommunityIcons name="google" size={14} color={themeColors.textBright} />}
       accessibilityLabel={label}
     />
   );

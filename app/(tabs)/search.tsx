@@ -8,15 +8,15 @@ import { RawgAttribution } from '@/components/search/RawgAttribution';
 import { GameResultCard } from '@/components/search/GameResultCard';
 import { SearchResultList } from '@/components/search/SearchResultList';
 import { UserResultCard } from '@/components/search/UserResultCard';
-import { SteamAlert, SteamInput, SteamTabs, type SteamTabItem } from '@/components/ui';
-import { steamColors } from '@/constants/theme';
+import { RetroGamingPCAlert, RetroGamingPCInput, RetroGamingPCTabs, type RetroGamingPCTabItem } from '@/components/ui';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useCompanySearch, useCreatorSearch, useFriendAction, useGameSearch, useUserSearch } from '@/hooks/useSearch';
 import { USER_SEARCH_MIN_LENGTH } from '@/services/users';
 import { IGDB_SEARCH_LIMITS, normalizeSearchQuery } from '@/types/igdb';
 import type { SearchEntity } from '@/utils/queryKeys';
+import { useThemeColors } from '@/hooks/useTheme';
 
-const ENTITY_TABS: readonly SteamTabItem<SearchEntity>[] = [
+const ENTITY_TABS: readonly RetroGamingPCTabItem<SearchEntity>[] = [
   { key: 'games', label: 'Games' },
   { key: 'companies', label: 'Studios & Directors' },
   { key: 'users', label: 'Users' },
@@ -25,7 +25,7 @@ const ENTITY_TABS: readonly SteamTabItem<SearchEntity>[] = [
 /** Sub-modes of the "Studios & Directors" tab: IGDB companies vs RAWG people. */
 type IndustryMode = 'studios' | 'people';
 
-const INDUSTRY_TABS: readonly SteamTabItem<IndustryMode>[] = [
+const INDUSTRY_TABS: readonly RetroGamingPCTabItem<IndustryMode>[] = [
   { key: 'studios', label: 'Studios' },
   { key: 'people', label: 'Directors & People' },
 ];
@@ -118,7 +118,7 @@ function UserResults({ term, typing }: ResultsProps) {
     <View className="flex-1">
       {friendAction.isError ? (
         <View className="px-3 pt-3">
-          <SteamAlert message={friendAction.error.message} />
+          <RetroGamingPCAlert message={friendAction.error.message} />
         </View>
       ) : null}
       <SearchResultList
@@ -149,6 +149,7 @@ function UserResults({ term, typing }: ResultsProps) {
 }
 
 export default function SearchScreen() {
+  const themeColors = useThemeColors();
   const [entity, setEntity] = useState<SearchEntity>('games');
   const [industryMode, setIndustryMode] = useState<IndustryMode>('studios');
   const [term, setTerm] = useState('');
@@ -161,10 +162,10 @@ export default function SearchScreen() {
   }, []);
 
   return (
-    <View className="flex-1 bg-steam-dark">
-      <View className="gap-2 border-b border-b-steam-accent px-3 pt-3 pb-2">
-        <SteamTabs items={ENTITY_TABS} value={entity} onChange={setEntity} />
-        <SteamInput
+    <View className="flex-1 bg-retrogamingpc-dark">
+      <View className="gap-2 border-b border-b-retrogamingpc-accent px-3 pt-3 pb-2">
+        <RetroGamingPCTabs items={ENTITY_TABS} value={entity} onChange={setEntity} />
+        <RetroGamingPCInput
           value={term}
           onChangeText={setTerm}
           placeholder={entity === 'companies' && industryMode === 'people' ? PEOPLE_PLACEHOLDER : PLACEHOLDERS[entity]}
@@ -173,17 +174,17 @@ export default function SearchScreen() {
           returnKeyType="search"
           maxLength={IGDB_SEARCH_LIMITS.maxQueryLength}
           accessibilityLabel={`Search ${ENTITY_TABS.find((t) => t.key === entity)?.label ?? entity}`}
-          icon={<Feather name="search" size={12} color={steamColors.textMuted} />}
+          icon={<Feather name="search" size={12} color={themeColors.textMuted} />}
           trailing={
             term.length > 0 ? (
               <Pressable accessibilityRole="button" accessibilityLabel="Clear search" hitSlop={8} onPress={() => setTerm('')}>
-                <Feather name="x" size={12} color={steamColors.textMuted} />
+                <Feather name="x" size={12} color={themeColors.textMuted} />
               </Pressable>
             ) : null
           }
         />
         {entity === 'companies' ? (
-          <SteamTabs items={INDUSTRY_TABS} value={industryMode} onChange={setIndustryMode} fill />
+          <RetroGamingPCTabs items={INDUSTRY_TABS} value={industryMode} onChange={setIndustryMode} fill />
         ) : null}
       </View>
 

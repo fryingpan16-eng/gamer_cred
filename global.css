@@ -3,64 +3,64 @@
 @tailwind utilities;
 
 /*
- * 2004 Steam client chrome.
+ * RetroGamingPC client chrome (early-2000s desktop look).
  * Bevels: light edge on top/left, dark inset shadow on bottom/right.
  * Sunken variants invert the edges (input fields, pressed buttons).
  */
 @layer components {
-  .steam-bevel {
-    @apply border border-t-steam-bevel-light border-l-steam-bevel-light border-b-steam-bevel-dark border-r-steam-bevel-dark;
+  .retrogamingpc-bevel {
+    @apply border border-t-retrogamingpc-bevel-light border-l-retrogamingpc-bevel-light border-b-retrogamingpc-bevel-dark border-r-retrogamingpc-bevel-dark;
   }
 
-  .steam-bevel-inset {
-    @apply border border-t-steam-bevel-dark border-l-steam-bevel-dark border-b-steam-bevel-light border-r-steam-bevel-light;
+  .retrogamingpc-bevel-inset {
+    @apply border border-t-retrogamingpc-bevel-dark border-l-retrogamingpc-bevel-dark border-b-retrogamingpc-bevel-light border-r-retrogamingpc-bevel-light;
   }
 
-  .steam-window {
-    @apply steam-bevel bg-steam-dark;
+  .retrogamingpc-window {
+    @apply retrogamingpc-bevel bg-retrogamingpc-dark;
   }
 
-  .steam-titlebar {
-    @apply flex-row items-center justify-between bg-steam-panel border-b border-b-steam-bevel-dark px-2 py-1;
+  .retrogamingpc-titlebar {
+    @apply flex-row items-center justify-between bg-retrogamingpc-panel border-b border-b-retrogamingpc-bevel-dark px-2 py-1;
   }
 
-  .steam-panel {
-    @apply steam-bevel bg-steam-card p-3;
+  .retrogamingpc-panel {
+    @apply retrogamingpc-bevel bg-retrogamingpc-card p-3;
   }
 
-  .steam-panel-header {
-    @apply bg-steam-panel border-b border-b-steam-accent px-2 py-1;
+  .retrogamingpc-panel-header {
+    @apply bg-retrogamingpc-panel border-b border-b-retrogamingpc-accent px-2 py-1;
   }
 
-  .steam-button {
-    @apply steam-bevel bg-steam-button px-3 py-1 items-center justify-center;
+  .retrogamingpc-button {
+    @apply retrogamingpc-bevel bg-retrogamingpc-button px-3 py-1 items-center justify-center;
   }
 
-  .steam-button-pressed {
-    @apply steam-bevel-inset bg-steam-dark px-3 py-1 items-center justify-center;
+  .retrogamingpc-button-pressed {
+    @apply retrogamingpc-bevel-inset bg-retrogamingpc-dark px-3 py-1 items-center justify-center;
   }
 
-  .steam-input {
-    @apply steam-bevel-inset bg-steam-dark px-2 py-1 text-steam-text text-steam-base;
+  .retrogamingpc-input {
+    @apply retrogamingpc-bevel-inset bg-retrogamingpc-dark px-2 py-1 text-retrogamingpc-text text-retrogamingpc-base;
   }
 
-  .steam-tab {
-    @apply bg-steam-button border border-steam-accent border-b-0 px-3 py-1;
+  .retrogamingpc-tab {
+    @apply bg-retrogamingpc-button border border-retrogamingpc-accent border-b-0 px-3 py-1;
   }
 
-  .steam-tab-active {
-    @apply bg-steam-card border border-steam-highlight border-b-0 px-3 py-1;
+  .retrogamingpc-tab-active {
+    @apply bg-retrogamingpc-card border border-retrogamingpc-highlight border-b-0 px-3 py-1;
   }
 
-  .steam-divider {
-    @apply h-px bg-steam-accent;
+  .retrogamingpc-divider {
+    @apply h-px bg-retrogamingpc-accent;
   }
 
-  .steam-heading {
-    @apply text-steam-text-bright text-steam-lg font-bold;
+  .retrogamingpc-heading {
+    @apply text-retrogamingpc-text-bright text-retrogamingpc-lg font-bold;
   }
 
-  .steam-label {
-    @apply text-steam-text-muted text-steam-xs uppercase tracking-wider;
+  .retrogamingpc-label {
+    @apply text-retrogamingpc-text-muted text-retrogamingpc-xs uppercase tracking-wider;
   }
 }

@@ -27,6 +27,10 @@ export type Database = {
           avatar_url: string | null;
           /** Scale the user enters ratings in (migration 000007). */
           primary_rating_scale: Database['public']['Enums']['rating_scale'];
+          /** RetroGamingPC colour palette (migration 000009). */
+          ui_theme: Database['public']['Enums']['ui_theme'];
+          /** Who can see this player's Now Playing (RLS, migration 000010). */
+          now_playing_visibility: Database['public']['Enums']['now_playing_visibility'];
           updated_at: Timestamp;
         };
         Insert: {
@@ -34,6 +38,8 @@ export type Database = {
           username: string;
           avatar_url?: string | null;
           primary_rating_scale?: Database['public']['Enums']['rating_scale'];
+          ui_theme?: Database['public']['Enums']['ui_theme'];
+          now_playing_visibility?: Database['public']['Enums']['now_playing_visibility'];
           updated_at?: Timestamp;
         };
         Update: {
@@ -41,6 +47,8 @@ export type Database = {
           username?: string;
           avatar_url?: string | null;
           primary_rating_scale?: Database['public']['Enums']['rating_scale'];
+          ui_theme?: Database['public']['Enums']['ui_theme'];
+          now_playing_visibility?: Database['public']['Enums']['now_playing_visibility'];
           updated_at?: Timestamp;
         };
         Relationships: [];
@@ -224,18 +232,22 @@ export type Database = {
           platform_id: number;
           is_main: boolean;
           pc_specs: string | null;
+          /** Specific hardware owned for this entry, e.g. ["Steam Deck OLED"] (migration 000008). */
+          devices: string[];
         };
         Insert: {
           user_id: string;
           platform_id: number;
           is_main?: boolean;
           pc_specs?: string | null;
+          devices?: string[];
         };
         Update: {
           user_id?: string;
           platform_id?: number;
           is_main?: boolean;
           pc_specs?: string | null;
+          devices?: string[];
         };
         Relationships: [
           {
@@ -310,6 +322,8 @@ export type Database = {
       friendship_status: 'pending' | 'accepted' | 'rejected';
       review_status: 'draft' | 'published';
       rating_scale: 'numeric' | 'tier' | 'stars' | 'rounded';
+      ui_theme: 'olive' | 'blue' | 'red' | 'yellow' | 'pink';
+      now_playing_visibility: 'public' | 'friends' | 'private';
     };
     CompositeTypes: { [_ in never]: never };
   };

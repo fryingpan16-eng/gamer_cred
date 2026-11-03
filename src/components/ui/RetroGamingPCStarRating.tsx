@@ -2,10 +2,10 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Pressable, Text, View } from 'react-native';
 
 import { STARS_MAX, STARS_STEP } from '@/constants/ratingRubric';
-import { steamColors } from '@/constants/theme';
 import { cn } from '@/utils/cn';
+import { useThemeColors } from '@/hooks/useTheme';
 
-export type SteamStarRatingProps = {
+export type RetroGamingPCStarRatingProps = {
   /** Stars value 0.5–5 in half steps; null renders empty stars. */
   stars: number | null;
   size?: number;
@@ -19,7 +19,8 @@ export type SteamStarRatingProps = {
 const STAR_COUNT = STARS_MAX;
 
 /** Five-star glyph row with half-star precision; doubles as the Stars-scale input. */
-export function SteamStarRating({ stars, size = 12, showValue = true, onChange, className }: SteamStarRatingProps) {
+export function RetroGamingPCStarRating({ stars, size = 12, showValue = true, onChange, className }: RetroGamingPCStarRatingProps) {
+  const themeColors = useThemeColors();
   const value = stars ?? 0;
 
   return (
@@ -39,7 +40,7 @@ export function SteamStarRating({ stars, size = 12, showValue = true, onChange, 
           const fill = value - i; // ≥1 full, 0.5 half, ≤0 empty
           const icon = fill >= 1 ? 'star' : fill >= 0.5 ? 'star-half-full' : 'star-outline';
           const glyph = (
-            <MaterialCommunityIcons name={icon} size={size} color={fill > 0 ? steamColors.highlight : steamColors.accent} />
+            <MaterialCommunityIcons name={icon} size={size} color={fill > 0 ? themeColors.highlight : themeColors.accent} />
           );
           if (!onChange) return <View key={i}>{glyph}</View>;
           return (
@@ -55,7 +56,7 @@ export function SteamStarRating({ stars, size = 12, showValue = true, onChange, 
         })}
       </View>
       {showValue ? (
-        <Text className="font-mono text-steam-xs font-bold text-steam-text-bright">{stars === null ? '--' : `${stars}★`}</Text>
+        <Text className="font-mono text-retrogamingpc-xs font-bold text-retrogamingpc-text-bright">{stars === null ? '--' : `${stars}★`}</Text>
       ) : null}
     </View>
   );

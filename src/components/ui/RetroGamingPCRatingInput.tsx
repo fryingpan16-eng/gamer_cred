@@ -9,8 +9,8 @@ import {
   TIER_CODES,
   type RatingScale,
 } from '@/constants/ratingRubric';
-import { steamColors } from '@/constants/theme';
 import { cn } from '@/utils/cn';
+import { useThemeColors } from '@/hooks/useTheme';
 import {
   formatRounded,
   isValidNumeric,
@@ -21,10 +21,10 @@ import {
   type StoredRating,
 } from '@/utils/rating';
 
-import { SteamRating } from './SteamRating';
-import { SteamStarRating } from './SteamStarRating';
+import { RetroGamingPCRating } from './RetroGamingPCRating';
+import { RetroGamingPCStarRating } from './RetroGamingPCStarRating';
 
-export type SteamRatingInputProps = {
+export type RetroGamingPCRatingInputProps = {
   label?: string;
   /** Current stored rating (may have been entered in a different scale). */
   value: StoredRating | null;
@@ -42,7 +42,7 @@ function Chip({ selected, onPress, label, children }: { selected: boolean; onPre
       accessibilityState={{ selected }}
       accessibilityLabel={label}
       onPress={onPress}
-      className={cn('min-w-[36px] items-center justify-center border px-2 py-1', selected ? 'border-steam-text-bright' : 'border-steam-accent')}
+      className={cn('min-w-[36px] items-center justify-center border px-2 py-1', selected ? 'border-retrogamingpc-text-bright' : 'border-retrogamingpc-accent')}
     >
       {children}
     </Pressable>
@@ -50,6 +50,7 @@ function Chip({ selected, onPress, label, children }: { selected: boolean; onPre
 }
 
 function NumericControl({ current, onInput }: { current: number | null; onInput: (input: RatingInput | null, error?: string) => void }) {
+  const themeColors = useThemeColors();
   const [text, setText] = useState(current === null ? '' : String(current));
   const [localError, setLocalError] = useState<string | null>(null);
 
@@ -77,8 +78,8 @@ function NumericControl({ current, onInput }: { current: number | null; onInput:
   return (
     <View className="gap-1">
       <View className="flex-row items-center gap-1">
-        <Pressable accessibilityRole="button" accessibilityLabel="Decrease by 1" onPress={() => step(-1)} className="steam-bevel h-7 w-7 items-center justify-center bg-steam-button">
-          <Text className="font-bold text-steam-text-bright">−</Text>
+        <Pressable accessibilityRole="button" accessibilityLabel="Decrease by 1" onPress={() => step(-1)} className="retrogamingpc-bevel h-7 w-7 items-center justify-center bg-retrogamingpc-button">
+          <Text className="font-bold text-retrogamingpc-text-bright">−</Text>
         </Pressable>
         <TextInput
           value={text}
@@ -87,19 +88,19 @@ function NumericControl({ current, onInput }: { current: number | null; onInput:
           inputMode="numeric"
           maxLength={3}
           placeholder="1–100"
-          placeholderTextColor={steamColors.textMuted}
+          placeholderTextColor={themeColors.textMuted}
           accessibilityLabel="Numeric score, 1 to 100"
           className={cn(
-            'h-7 w-16 border bg-steam-dark text-center font-mono text-steam-lg font-bold text-steam-text-bright outline-none',
-            localError ? 'border-steam-error' : 'border-t-steam-bevel-dark border-l-steam-bevel-dark border-b-steam-bevel-light border-r-steam-bevel-light',
+            'h-7 w-16 border bg-retrogamingpc-dark text-center font-mono text-retrogamingpc-lg font-bold text-retrogamingpc-text-bright outline-none',
+            localError ? 'border-retrogamingpc-error' : 'border-t-retrogamingpc-bevel-dark border-l-retrogamingpc-bevel-dark border-b-retrogamingpc-bevel-light border-r-retrogamingpc-bevel-light',
           )}
         />
-        <Pressable accessibilityRole="button" accessibilityLabel="Increase by 1" onPress={() => step(1)} className="steam-bevel h-7 w-7 items-center justify-center bg-steam-button">
-          <Text className="font-bold text-steam-text-bright">+</Text>
+        <Pressable accessibilityRole="button" accessibilityLabel="Increase by 1" onPress={() => step(1)} className="retrogamingpc-bevel h-7 w-7 items-center justify-center bg-retrogamingpc-button">
+          <Text className="font-bold text-retrogamingpc-text-bright">+</Text>
         </Pressable>
-        <Text className="font-mono text-steam-xs text-steam-text-muted">/ {NUMERIC_MAX}</Text>
+        <Text className="font-mono text-retrogamingpc-xs text-retrogamingpc-text-muted">/ {NUMERIC_MAX}</Text>
       </View>
-      {localError ? <Text className="text-steam-xs text-steam-error">▲ {localError}</Text> : null}
+      {localError ? <Text className="text-retrogamingpc-xs text-retrogamingpc-error">▲ {localError}</Text> : null}
     </View>
   );
 }
@@ -109,7 +110,7 @@ function NumericControl({ current, onInput }: { current: number | null; onInput:
  * half-star selector, or rounded picker. Emits a StoredRating (canonical
  * numeric + exact input); other scales are shown as a live derived preview.
  */
-export function SteamRatingInput({ label, value, onChange, scale, error, className }: SteamRatingInputProps) {
+export function RetroGamingPCRatingInput({ label, value, onChange, scale, error, className }: RetroGamingPCRatingInputProps) {
   const shown = value ? storedRatingInScale(value, scale) : null;
   const emit = (input: RatingInput | null) => onChange(input ? toStoredRating(input) : null);
   // Bumped on Clear so the numeric text box resets; never on keystrokes (that would drop focus).
@@ -122,12 +123,12 @@ export function SteamRatingInput({ label, value, onChange, scale, error, classNa
   return (
     <View className={cn('gap-1.5', className)}>
       <View className="flex-row items-center justify-between">
-        {label ? <Text className={cn('steam-label', error && 'text-steam-error')}>{label}</Text> : <View />}
+        {label ? <Text className={cn('retrogamingpc-label', error && 'text-retrogamingpc-error')}>{label}</Text> : <View />}
         <View className="flex-row items-center gap-2">
-          <Text className="text-steam-xs text-steam-text-muted">{RATING_SCALE_LABELS[scale]}</Text>
+          <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted">{RATING_SCALE_LABELS[scale]}</Text>
           {value ? (
             <Pressable accessibilityRole="button" accessibilityLabel="Clear rating" hitSlop={6} onPress={clear}>
-              <Text className="text-steam-xs text-steam-text-muted underline">CLR</Text>
+              <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted underline">CLR</Text>
             </Pressable>
           ) : null}
         </View>
@@ -148,7 +149,7 @@ export function SteamRatingInput({ label, value, onChange, scale, error, classNa
             return (
               <Chip key={tier} label={`Tier ${tier}, ${def.descriptor}`} selected={shown?.value === tier} onPress={() => emit({ scale: 'tier', value: tier })}>
                 <View className="absolute inset-0" style={{ backgroundColor: def.color, opacity: shown?.value === tier ? 1 : 0.55 }} />
-                <Text className="font-mono text-steam-sm font-bold" style={{ color: def.textColor }}>
+                <Text className="font-mono text-retrogamingpc-sm font-bold" style={{ color: def.textColor }}>
                   {tier}
                 </Text>
               </Chip>
@@ -158,7 +159,7 @@ export function SteamRatingInput({ label, value, onChange, scale, error, classNa
       ) : null}
 
       {scale === 'stars' ? (
-        <SteamStarRating
+        <RetroGamingPCStarRating
           stars={(shown?.value as number | undefined) ?? null}
           size={26}
           onChange={(stars) => emit({ scale: 'stars', value: stars })}
@@ -169,7 +170,7 @@ export function SteamRatingInput({ label, value, onChange, scale, error, classNa
         <View className="flex-row flex-wrap gap-1" accessibilityRole="radiogroup">
           {ROUNDED_VALUES.map((r) => (
             <Chip key={String(r)} label={formatRounded(r)} selected={shown?.value === r} onPress={() => emit({ scale: 'rounded', value: r })}>
-              <Text className={cn('font-mono text-steam-sm font-bold', shown?.value === r ? 'text-steam-text-bright' : 'text-steam-text-muted')}>
+              <Text className={cn('font-mono text-retrogamingpc-sm font-bold', shown?.value === r ? 'text-retrogamingpc-text-bright' : 'text-retrogamingpc-text-muted')}>
                 {r}
               </Text>
             </Chip>
@@ -178,8 +179,8 @@ export function SteamRatingInput({ label, value, onChange, scale, error, classNa
       ) : null}
 
       {/* Live preview: tier badge + every derived scale. */}
-      {value ? <SteamRating rating={value} scale={scale} expanded /> : null}
-      {error ? <Text className="text-steam-xs text-steam-error">▲ {error}</Text> : null}
+      {value ? <RetroGamingPCRating rating={value} scale={scale} expanded /> : null}
+      {error ? <Text className="text-retrogamingpc-xs text-retrogamingpc-error">▲ {error}</Text> : null}
     </View>
   );
 }

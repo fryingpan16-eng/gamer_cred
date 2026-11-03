@@ -22,7 +22,7 @@ export const registerSchema = z.object({
 export type LoginInput = z.infer<typeof loginSchema>;
 export type RegisterInput = z.infer<typeof registerSchema>;
 
-/** Field → first error message, for wiring into SteamInput `error` props. */
+/** Field → first error message, for wiring into RetroGamingPCInput `error` props. */
 export type FieldErrors<T> = Partial<Record<keyof T, string>>;
 
 export function validate<S extends z.ZodType<Record<string, unknown>>>(

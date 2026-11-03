@@ -1,18 +1,19 @@
 import { useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { Thumbnail } from '@/components/search/Thumbnail';
 import {
-  SteamAlert,
-  SteamBadge,
-  SteamButton,
-  SteamConfirmModal,
-  SteamInput,
-  SteamPanel,
-  SteamRatingInput,
-  SteamSpinner,
-  SteamTabs,
-  type SteamTabItem,
+  RetroGamingPCAlert,
+  RetroGamingPCBadge,
+  RetroGamingPCButton,
+  RetroGamingPCCheckbox,
+  RetroGamingPCConfirmModal,
+  RetroGamingPCInput,
+  RetroGamingPCPanel,
+  RetroGamingPCRatingInput,
+  RetroGamingPCSpinner,
+  RetroGamingPCTabs,
+  type RetroGamingPCTabItem,
 } from '@/components/ui';
 import { useGameLookup } from '@/hooks/useGames';
 import { usePrimaryRatingScale } from '@/hooks/useAuth';
@@ -27,28 +28,12 @@ import { REVIEW_MAX_LENGTH, reviewFormSchema, type ReviewFormValues } from '@/ut
 
 import { GamePickerModal } from './GamePickerModal';
 
-const STATUS_TABS: readonly SteamTabItem<ReviewStatus>[] = [
+const STATUS_TABS: readonly RetroGamingPCTabItem<ReviewStatus>[] = [
   { key: 'draft', label: 'Save as Draft' },
   { key: 'published', label: 'Publish' },
 ];
 
 type FieldErrors = Partial<Record<keyof ReviewFormValues, string>>;
-
-function Checkbox({ checked, label, onToggle }: { checked: boolean; label: string; onToggle: () => void }) {
-  return (
-    <Pressable
-      accessibilityRole="checkbox"
-      accessibilityState={{ checked }}
-      onPress={onToggle}
-      className="flex-row items-center gap-2"
-    >
-      <View className="steam-bevel-inset h-4 w-4 items-center justify-center bg-steam-dark">
-        {checked ? <Text className="text-steam-xs font-bold text-steam-highlight">✓</Text> : null}
-      </View>
-      <Text className="text-steam-sm text-steam-text">{label}</Text>
-    </Pressable>
-  );
-}
 
 type EditorProps = { target: StudioTarget; existing: Review | null };
 
@@ -98,16 +83,16 @@ function ReviewEditor({ target, existing }: EditorProps) {
 
   return (
     <View className="gap-3">
-      {save.isError ? <SteamAlert message={save.error.message} /> : null}
-      {remove.isError ? <SteamAlert message={remove.error.message} /> : null}
+      {save.isError ? <RetroGamingPCAlert message={save.error.message} /> : null}
+      {remove.isError ? <RetroGamingPCAlert message={remove.error.message} /> : null}
       {savedAs ? (
-        <SteamAlert
+        <RetroGamingPCAlert
           tone="info"
           message={savedAs === 'published' ? 'Review published to the community feed.' : 'Draft saved to your backlog notes.'}
         />
       ) : null}
 
-      <SteamRatingInput
+      <RetroGamingPCRatingInput
         label={status === 'published' ? 'Rating (required to publish)' : 'Rating'}
         scale={primaryScale}
         value={rating}
@@ -118,7 +103,7 @@ function ReviewEditor({ target, existing }: EditorProps) {
         error={fieldErrors.rating}
       />
 
-      <SteamInput
+      <RetroGamingPCInput
         label={status === 'published' ? 'Review' : 'Backlog notes'}
         value={content}
         onChangeText={(v) => {
@@ -133,13 +118,13 @@ function ReviewEditor({ target, existing }: EditorProps) {
         editable={!save.isPending}
       />
 
-      <SteamTabs items={STATUS_TABS} value={status} onChange={setStatus} fill />
+      <RetroGamingPCTabs items={STATUS_TABS} value={status} onChange={setStatus} fill />
 
       {unpublishing ? (
-        <SteamAlert tone="info" message="Saving as a draft removes this review from the community feed." />
+        <RetroGamingPCAlert tone="info" message="Saving as a draft removes this review from the community feed." />
       ) : null}
       {status === 'published' && target.fromSlot ? (
-        <Checkbox
+        <RetroGamingPCCheckbox
           checked={freeSlot}
           onToggle={() => setFreeSlot((v) => !v)}
           label={`Free up Now Playing slot ${target.fromSlot} after publishing`}
@@ -148,15 +133,15 @@ function ReviewEditor({ target, existing }: EditorProps) {
 
       <View className="flex-row flex-wrap items-center justify-between gap-2">
         <View className="flex-row gap-2">
-          <SteamButton label="Close" onPress={clearTarget} disabled={save.isPending} />
+          <RetroGamingPCButton label="Close" onPress={clearTarget} disabled={save.isPending} />
           {existing ? (
-            <SteamButton label="Delete" variant="danger" onPress={() => setConfirmDelete(true)} disabled={save.isPending} />
+            <RetroGamingPCButton label="Delete" variant="danger" onPress={() => setConfirmDelete(true)} disabled={save.isPending} />
           ) : null}
         </View>
-        <SteamButton label={submitLabel} variant="primary" loading={save.isPending} onPress={submit} />
+        <RetroGamingPCButton label={submitLabel} variant="primary" loading={save.isPending} onPress={submit} />
       </View>
 
-      <SteamConfirmModal
+      <RetroGamingPCConfirmModal
         visible={confirmDelete}
         title={isPublished ? 'Delete review' : 'Discard draft'}
         message={isPublished ? 'Delete this published review? This cannot be undone.' : 'Discard this draft and its notes?'}
@@ -188,22 +173,22 @@ export function ReviewStudio() {
   const game = gameId ? games.data?.get(gameId) : undefined;
 
   return (
-    <SteamPanel
+    <RetroGamingPCPanel
       title="Review Studio"
       headerRight={
         existing.data ? (
-          <SteamBadge label={existing.data.status === 'published' ? 'Published' : 'Draft'} variant={existing.data.status === 'published' ? 'published' : 'draft'} />
+          <RetroGamingPCBadge label={existing.data.status === 'published' ? 'Published' : 'Draft'} variant={existing.data.status === 'published' ? 'published' : 'draft'} />
         ) : undefined
       }
     >
       {!target ? (
         <View className="gap-3">
-          <Text className="text-steam-sm text-steam-text">
-            Hit <Text className="font-bold text-steam-text-bright">Review</Text> on a Now Playing slot to turn your notes
+          <Text className="text-retrogamingpc-sm text-retrogamingpc-text">
+            Hit <Text className="font-bold text-retrogamingpc-text-bright">Review</Text> on a Now Playing slot to turn your notes
             into a review, or rate any game directly with a quick review.
           </Text>
           <View className="flex-row justify-end">
-            <SteamButton label="Quick Review a Game…" variant="primary" onPress={() => openModal({ kind: 'pickReviewGame' })} />
+            <RetroGamingPCButton label="Quick Review a Game…" variant="primary" onPress={() => openModal({ kind: 'pickReviewGame' })} />
           </View>
         </View>
       ) : (
@@ -216,21 +201,21 @@ export function ReviewStudio() {
               accessibilityLabel={`${game?.name ?? 'Game'} cover`}
             />
             <View className="flex-1 gap-0.5">
-              <Text className="text-steam-lg font-bold text-steam-text-bright" numberOfLines={2}>
+              <Text className="text-retrogamingpc-lg font-bold text-retrogamingpc-text-bright" numberOfLines={2}>
                 {game?.name ?? (games.isFetching ? 'Loading…' : `Game #${target.gameId}`)}
               </Text>
-              <Text className={cn('text-steam-xs text-steam-text-muted')}>
+              <Text className={cn('text-retrogamingpc-xs text-retrogamingpc-text-muted')}>
                 {target.fromSlot ? `From Now Playing slot ${target.fromSlot}` : 'Quick review'}
                 {game?.releaseYear ? ` · ${game.releaseYear}` : ''}
               </Text>
             </View>
-            <SteamButton label="Change" onPress={() => openModal({ kind: 'pickReviewGame' })} />
+            <RetroGamingPCButton label="Change" onPress={() => openModal({ kind: 'pickReviewGame' })} />
           </View>
 
           {existing.isPending ? (
-            <SteamSpinner label="Checking for an existing review…" />
+            <RetroGamingPCSpinner label="Checking for an existing review…" />
           ) : existing.isError ? (
-            <SteamAlert message={existing.error.message} />
+            <RetroGamingPCAlert message={existing.error.message} />
           ) : (
             <ReviewEditor
               // Remount only when the subject changes — not after a save, so success feedback survives.
@@ -249,6 +234,6 @@ export function ReviewStudio() {
         onClose={closeModal}
         onPick={startQuickReview}
       />
-    </SteamPanel>
+    </RetroGamingPCPanel>
   );
 }

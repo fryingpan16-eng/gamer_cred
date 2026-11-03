@@ -3,14 +3,14 @@ import { useMemo, useState } from 'react';
 import { FlatList, RefreshControl, Text, View } from 'react-native';
 
 import { FeedItemCard } from '@/components/feed/FeedItemCard';
-import { SteamAlert, SteamButton, SteamCard, SteamSpinner, SteamTabs, type SteamTabItem } from '@/components/ui';
-import { steamColors } from '@/constants/theme';
+import { RetroGamingPCAlert, RetroGamingPCButton, RetroGamingPCCard, RetroGamingPCSpinner, RetroGamingPCTabs, type RetroGamingPCTabItem } from '@/components/ui';
 import { useAuth } from '@/hooks/useAuth';
 import { useActivityFeed } from '@/hooks/useFeed';
 import { useGameLookup } from '@/hooks/useGames';
 import type { FeedScope } from '@/services/feed';
+import { useThemeColors } from '@/hooks/useTheme';
 
-const SCOPE_TABS: readonly SteamTabItem<FeedScope>[] = [
+const SCOPE_TABS: readonly RetroGamingPCTabItem<FeedScope>[] = [
   { key: 'friends', label: 'Friends' },
   { key: 'community', label: 'Community' },
 ];
@@ -18,16 +18,16 @@ const SCOPE_TABS: readonly SteamTabItem<FeedScope>[] = [
 function FeedSkeleton() {
   return (
     <View className="gap-2">
-      <SteamSpinner label="Loading activity…" />
+      <RetroGamingPCSpinner label="Loading activity…" />
       {[0, 1, 2].map((i) => (
-        <SteamCard key={i} className="flex-row gap-3 opacity-60">
-          <View className="steam-bevel-inset h-12 w-12 bg-steam-dark" />
+        <RetroGamingPCCard key={i} className="flex-row gap-3 opacity-60">
+          <View className="retrogamingpc-bevel-inset h-12 w-12 bg-retrogamingpc-dark" />
           <View className="flex-1 gap-2 py-1">
-            <View className="h-3 w-3/4 bg-steam-panel" />
-            <View className="h-2 w-1/3 bg-steam-panel" />
+            <View className="h-3 w-3/4 bg-retrogamingpc-panel" />
+            <View className="h-2 w-1/3 bg-retrogamingpc-panel" />
           </View>
-          <View className="steam-bevel-inset h-16 w-12 bg-steam-dark" />
-        </SteamCard>
+          <View className="retrogamingpc-bevel-inset h-16 w-12 bg-retrogamingpc-dark" />
+        </RetroGamingPCCard>
       ))}
     </View>
   );
@@ -35,6 +35,7 @@ function FeedSkeleton() {
 
 /** Home: retro activity stream — what friends are playing and reviewing, or the whole community. */
 export default function HomeScreen() {
+  const themeColors = useThemeColors();
   const { user, profile } = useAuth();
   const [scope, setScope] = useState<FeedScope>('friends');
   const feed = useActivityFeed(scope);
@@ -44,26 +45,26 @@ export default function HomeScreen() {
 
   const empty =
     scope === 'friends' ? (
-      <View className="steam-bevel-inset items-center gap-2 bg-steam-dark px-4 py-6">
-        <Text className="text-steam-base font-bold text-steam-text">No friend activity yet</Text>
-        <Text className="text-center text-steam-sm text-steam-text-muted">
+      <View className="retrogamingpc-bevel-inset items-center gap-2 bg-retrogamingpc-dark px-4 py-6">
+        <Text className="text-retrogamingpc-base font-bold text-retrogamingpc-text">No friend activity yet</Text>
+        <Text className="text-center text-retrogamingpc-sm text-retrogamingpc-text-muted">
           Add friends to see what they&apos;re playing and reviewing — or browse the community feed.
         </Text>
         <View className="flex-row gap-2">
-          <SteamButton label="Find Friends" variant="primary" onPress={() => router.push('/search')} />
-          <SteamButton label="Community Feed" onPress={() => setScope('community')} />
+          <RetroGamingPCButton label="Find Friends" variant="primary" onPress={() => router.push('/search')} />
+          <RetroGamingPCButton label="Community Feed" onPress={() => setScope('community')} />
         </View>
       </View>
     ) : (
-      <View className="steam-bevel-inset items-center gap-2 bg-steam-dark px-4 py-6">
-        <Text className="text-steam-base font-bold text-steam-text">Nothing published yet</Text>
-        <SteamButton label="Write the first review" variant="primary" onPress={() => router.push('/post')} />
+      <View className="retrogamingpc-bevel-inset items-center gap-2 bg-retrogamingpc-dark px-4 py-6">
+        <Text className="text-retrogamingpc-base font-bold text-retrogamingpc-text">Nothing published yet</Text>
+        <RetroGamingPCButton label="Write the first review" variant="primary" onPress={() => router.push('/post')} />
       </View>
     );
 
   return (
     <FlatList
-      className="flex-1 bg-steam-dark"
+      className="flex-1 bg-retrogamingpc-dark"
       contentContainerClassName="w-full gap-2 self-center p-3 md:max-w-[860px]"
       data={feed.isPending || feed.isError ? [] : items}
       keyExtractor={(item) => item.item_key}
@@ -76,17 +77,17 @@ export default function HomeScreen() {
         <RefreshControl
           refreshing={feed.isRefetching && !feed.isFetchingNextPage}
           onRefresh={() => void feed.refetch()}
-          tintColor={steamColors.highlight}
-          colors={[steamColors.highlight]}
+          tintColor={themeColors.highlight}
+          colors={[themeColors.highlight]}
         />
       }
       ListHeaderComponent={
         <View className="gap-2 pb-1">
-          <Text className="text-steam-sm text-steam-text-muted">
-            Welcome back, <Text className="font-bold text-steam-text-bright">{profile?.username ?? 'player'}</Text>.
+          <Text className="text-retrogamingpc-sm text-retrogamingpc-text-muted">
+            Welcome back, <Text className="font-bold text-retrogamingpc-text-bright">{profile?.username ?? 'player'}</Text>.
           </Text>
-          <SteamTabs items={SCOPE_TABS} value={scope} onChange={setScope} />
-          {feed.isError && items.length > 0 ? <SteamAlert message={`Couldn't refresh — ${feed.error.message}`} /> : null}
+          <RetroGamingPCTabs items={SCOPE_TABS} value={scope} onChange={setScope} />
+          {feed.isError && items.length > 0 ? <RetroGamingPCAlert message={`Couldn't refresh — ${feed.error.message}`} /> : null}
         </View>
       }
       ListEmptyComponent={
@@ -94,9 +95,9 @@ export default function HomeScreen() {
           <FeedSkeleton />
         ) : feed.isError ? (
           <View className="gap-2">
-            <SteamAlert message={feed.error.message} />
+            <RetroGamingPCAlert message={feed.error.message} />
             <View className="flex-row justify-end">
-              <SteamButton label="Retry" onPress={() => void feed.refetch()} />
+              <RetroGamingPCButton label="Retry" onPress={() => void feed.refetch()} />
             </View>
           </View>
         ) : (
@@ -105,9 +106,9 @@ export default function HomeScreen() {
       }
       ListFooterComponent={
         feed.isFetchingNextPage ? (
-          <SteamSpinner label="Loading older activity…" className="justify-center py-2" />
+          <RetroGamingPCSpinner label="Loading older activity…" className="justify-center py-2" />
         ) : items.length > 0 && !feed.hasNextPage ? (
-          <Text className="py-2 text-center text-steam-xs text-steam-text-muted">— End of activity —</Text>
+          <Text className="py-2 text-center text-retrogamingpc-xs text-retrogamingpc-text-muted">— End of activity —</Text>
         ) : undefined
       }
     />

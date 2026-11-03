@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import { GamePickerModal } from '@/components/studio/GamePickerModal';
-import { SteamAlert, SteamPanel, SteamSpinner } from '@/components/ui';
+import { RetroGamingPCAlert, RetroGamingPCPanel, RetroGamingPCSpinner } from '@/components/ui';
 import { useGameLookup } from '@/hooks/useGames';
 import { useFavoriteMutation, useFavorites } from '@/hooks/useProfile';
 import type { FavoriteRank } from '@/types/database.types';
@@ -20,9 +20,9 @@ function TinyButton({ label, a11y, onPress, disabled }: { label: string; a11y: s
       disabled={disabled}
       hitSlop={4}
       onPress={onPress}
-      className={cn('steam-bevel h-5 flex-1 items-center justify-center bg-steam-button', disabled && 'opacity-30')}
+      className={cn('retrogamingpc-bevel h-5 flex-1 items-center justify-center bg-retrogamingpc-button', disabled && 'opacity-30')}
     >
-      <Text className="text-steam-xs font-bold text-steam-text-bright">{label}</Text>
+      <Text className="text-retrogamingpc-xs font-bold text-retrogamingpc-text-bright">{label}</Text>
     </Pressable>
   );
 }
@@ -41,16 +41,16 @@ export function FavoritesShowcase({ userId, editable }: FavoritesShowcaseProps) 
   const annotations = new Map(rows.map((r) => [r.game_id, `Rank ${r.rank} — moves here`] as const));
 
   return (
-    <SteamPanel title="Top 4 Favorites">
+    <RetroGamingPCPanel title="Top 4 Favorites">
       {favorites.isPending ? (
-        <SteamSpinner label="Loading favorites…" />
+        <RetroGamingPCSpinner label="Loading favorites…" />
       ) : favorites.isError ? (
-        <SteamAlert message={favorites.error.message} />
+        <RetroGamingPCAlert message={favorites.error.message} />
       ) : !editable && rows.length === 0 ? (
-        <Text className="text-steam-sm text-steam-text-muted">No favorites picked yet.</Text>
+        <Text className="text-retrogamingpc-sm text-retrogamingpc-text-muted">No favorites picked yet.</Text>
       ) : (
         <View className="gap-2">
-          {mutation.isError ? <SteamAlert message={mutation.error.message} /> : null}
+          {mutation.isError ? <RetroGamingPCAlert message={mutation.error.message} /> : null}
           <View className="flex-row gap-2">
             {RANKS.map((rank) => {
               const row = rows.find((r) => r.rank === rank);
@@ -65,7 +65,7 @@ export function FavoritesShowcase({ userId, editable }: FavoritesShowcaseProps) 
               );
               return (
                 <View key={rank} className="flex-1 gap-1">
-                  <Text className="font-mono text-steam-xs font-bold text-steam-highlight">#{rank}</Text>
+                  <Text className="font-mono text-retrogamingpc-xs font-bold text-retrogamingpc-highlight">#{rank}</Text>
                   {editable ? (
                     <Pressable
                       accessibilityRole="button"
@@ -77,7 +77,7 @@ export function FavoritesShowcase({ userId, editable }: FavoritesShowcaseProps) 
                   ) : (
                     tile
                   )}
-                  <Text className="min-h-[14px] text-steam-xs text-steam-text-bright" numberOfLines={1}>
+                  <Text className="min-h-[14px] text-retrogamingpc-xs text-retrogamingpc-text-bright" numberOfLines={1}>
                     {row ? (game?.name ?? '…') : ''}
                   </Text>
                   {editable && row ? (
@@ -117,6 +117,6 @@ export function FavoritesShowcase({ userId, editable }: FavoritesShowcaseProps) 
           }}
         />
       ) : null}
-    </SteamPanel>
+    </RetroGamingPCPanel>
   );
 }

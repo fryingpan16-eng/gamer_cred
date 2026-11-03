@@ -9,7 +9,7 @@ import { GameFacts } from '@/components/game/GameFacts';
 import { GameHero } from '@/components/game/GameHero';
 import { ScreenshotStrip } from '@/components/game/ScreenshotStrip';
 import { SystemRequirementsPanel } from '@/components/game/SystemRequirementsPanel';
-import { SteamAlert, SteamButton, SteamPanel, SteamSpinner } from '@/components/ui';
+import { RetroGamingPCAlert, RetroGamingPCButton, RetroGamingPCPanel, RetroGamingPCSpinner } from '@/components/ui';
 import { useGameDetail, useGameReviewStats } from '@/hooks/useGameDetail';
 import { useIsDesktop } from '@/hooks/useIsDesktop';
 import { SearchServiceError } from '@/services/igdb';
@@ -22,28 +22,28 @@ function About({ summary, storyline }: { summary: string | null; storyline: stri
   const [showStory, setShowStory] = useState(false);
   if (!summary && !storyline) return null;
   return (
-    <SteamPanel title="About This Game">
+    <RetroGamingPCPanel title="About This Game">
       <View className="gap-2">
-        {summary ? <Text className="text-steam-sm leading-[18px] text-steam-text">{summary}</Text> : null}
+        {summary ? <Text className="text-retrogamingpc-sm leading-[18px] text-retrogamingpc-text">{summary}</Text> : null}
         {storyline ? (
           showStory ? (
             <>
-              <Text className="steam-label">Storyline</Text>
-              <Text className="text-steam-sm leading-[18px] text-steam-text">{storyline}</Text>
+              <Text className="retrogamingpc-label">Storyline</Text>
+              <Text className="text-retrogamingpc-sm leading-[18px] text-retrogamingpc-text">{storyline}</Text>
             </>
           ) : (
-            <Text onPress={() => setShowStory(true)} className="text-steam-xs text-steam-highlight underline">
+            <Text onPress={() => setShowStory(true)} className="text-retrogamingpc-xs text-retrogamingpc-highlight underline">
               Read the storyline
             </Text>
           )
         ) : null}
       </View>
-    </SteamPanel>
+    </RetroGamingPCPanel>
   );
 }
 
 /**
- * 2004 Steam store-style game page.
+ * Retro store-style game page (RetroGamingPC theme).
  * Desktop: main column (hero, about, media, reviews) + sidebar (actions, facts, requirements).
  */
 export default function GameDetailScreen() {
@@ -62,30 +62,30 @@ export default function GameDetailScreen() {
 
   if (!valid || (detail.isError && detail.error instanceof SearchServiceError && detail.error.status === 404)) {
     return (
-      <View className="flex-1 bg-steam-dark p-3">
+      <View className="flex-1 bg-retrogamingpc-dark p-3">
         <Stack.Screen options={{ title: 'Game not found' }} />
-        <SteamPanel title="Game not found">
-          <SteamAlert message="This game isn't in the IGDB catalogue (it may have been merged or removed)." />
-        </SteamPanel>
+        <RetroGamingPCPanel title="Game not found">
+          <RetroGamingPCAlert message="This game isn't in the IGDB catalogue (it may have been merged or removed)." />
+        </RetroGamingPCPanel>
       </View>
     );
   }
 
   if (!game) {
     return (
-      <View className="flex-1 items-center justify-center gap-3 bg-steam-dark p-4">
+      <View className="flex-1 items-center justify-center gap-3 bg-retrogamingpc-dark p-4">
         <Stack.Screen options={{ title }} />
         {detail.isError ? (
-          <SteamPanel title="Couldn't load this game" className="w-full max-w-[420px]">
+          <RetroGamingPCPanel title="Couldn't load this game" className="w-full max-w-[420px]">
             <View className="gap-2">
-              <SteamAlert message={detail.error.message} />
+              <RetroGamingPCAlert message={detail.error.message} />
               <View className="flex-row justify-end">
-                <SteamButton label="Retry" onPress={() => void detail.refetch()} />
+                <RetroGamingPCButton label="Retry" onPress={() => void detail.refetch()} />
               </View>
             </View>
-          </SteamPanel>
+          </RetroGamingPCPanel>
         ) : (
-          <SteamSpinner size="large" label={`Loading ${light?.name ?? 'game'}…`} />
+          <RetroGamingPCSpinner size="large" label={`Loading ${light?.name ?? 'game'}…`} />
         )}
       </View>
     );
@@ -94,7 +94,7 @@ export default function GameDetailScreen() {
   const hasPc = game.platforms.some((p) => PC_PLATFORMS.has(p));
 
   return (
-    <ScrollView className="flex-1 bg-steam-dark" contentContainerClassName="gap-3 p-3">
+    <ScrollView className="flex-1 bg-retrogamingpc-dark" contentContainerClassName="gap-3 p-3">
       <Stack.Screen options={{ title }} />
       <GameHero game={game} stats={stats.data} />
       <View className="gap-3 md:flex-row md:items-start">

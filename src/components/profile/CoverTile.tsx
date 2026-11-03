@@ -1,6 +1,6 @@
 import { Image, Text, View } from 'react-native';
 
-import { SteamSpinner } from '@/components/ui';
+import { RetroGamingPCSpinner } from '@/components/ui';
 import { igdbImageUrl, type IgdbGameResult } from '@/types/igdb';
 import { cn } from '@/utils/cn';
 
@@ -16,9 +16,9 @@ type CoverTileProps = {
 /** Sunken 3:4 cover frame with title fallback — shared by favorites and Now Playing views. */
 export function CoverTile({ game, gameId, loading = false, emptyLabel = 'Empty', className }: CoverTileProps) {
   return (
-    <View className={cn('steam-bevel-inset aspect-[3/4] items-center justify-center overflow-hidden bg-steam-dark', className)}>
+    <View className={cn('retrogamingpc-bevel-inset aspect-[3/4] items-center justify-center overflow-hidden bg-retrogamingpc-dark', className)}>
       {gameId === null ? (
-        <Text className="text-steam-xs text-steam-text-muted">{emptyLabel}</Text>
+        <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted">{emptyLabel}</Text>
       ) : game?.coverImageId ? (
         <Image
           source={{ uri: igdbImageUrl(game.coverImageId, 'cover_big') }}
@@ -27,9 +27,9 @@ export function CoverTile({ game, gameId, loading = false, emptyLabel = 'Empty',
           accessibilityLabel={`${game.name} cover art`}
         />
       ) : loading ? (
-        <SteamSpinner />
+        <RetroGamingPCSpinner />
       ) : (
-        <Text className="px-1 text-center text-steam-xs font-bold text-steam-text">{game?.name ?? `Game #${gameId}`}</Text>
+        <Text className="px-1 text-center text-retrogamingpc-xs font-bold text-retrogamingpc-text">{game?.name ?? `Game #${gameId}`}</Text>
       )}
     </View>
   );

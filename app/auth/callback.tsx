@@ -2,8 +2,8 @@ import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 
-import { SteamBootScreen } from '@/components/SteamBootScreen';
-import { SteamAlert, SteamButton, SteamPanel } from '@/components/ui';
+import { RetroGamingPCBootScreen } from '@/components/RetroGamingPCBootScreen';
+import { RetroGamingPCAlert, RetroGamingPCButton, RetroGamingPCPanel } from '@/components/ui';
 import { completeOAuthSignIn, type OAuthCallbackParams } from '@/services/auth';
 
 /**
@@ -33,18 +33,18 @@ export default function AuthCallbackScreen() {
   }, [code, sb_flow_id, error, error_code, error_description]);
 
   if (state.phase === 'done') return <Redirect href="/" />;
-  if (state.phase === 'working') return <SteamBootScreen label="Completing sign-in…" />;
+  if (state.phase === 'working') return <RetroGamingPCBootScreen label="Completing sign-in…" />;
 
   return (
-    <View className="flex-1 items-center justify-center bg-steam-dark p-4">
-      <SteamPanel title="Sign-in failed" className="w-full max-w-[360px]">
+    <View className="flex-1 items-center justify-center bg-retrogamingpc-dark p-4">
+      <RetroGamingPCPanel title="Sign-in failed" className="w-full max-w-[360px]">
         <View className="gap-3">
-          <SteamAlert message={state.message} />
+          <RetroGamingPCAlert message={state.message} />
           <View className="flex-row justify-end">
-            <SteamButton label="Back to login" variant="primary" onPress={() => router.replace('/login')} />
+            <RetroGamingPCButton label="Back to login" variant="primary" onPress={() => router.replace('/login')} />
           </View>
         </View>
-      </SteamPanel>
+      </RetroGamingPCPanel>
     </View>
   );
 }

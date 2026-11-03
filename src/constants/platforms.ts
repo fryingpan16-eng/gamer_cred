@@ -2,11 +2,13 @@
  * Curated platform catalog for the hardware roster.
  *
  * `id` is the IGDB platform id stored in user_platforms.platform_id, so roster
- * entries line up with IGDB game data. The list is static on purpose: no API
+ * entries line up with IGDB game data. GamerCred-only entries that have no IGDB
+ * platform (e.g. "PC Handheld") use reserved NEGATIVE ids, which can never
+ * collide with IGDB's positive ids. The list is static on purpose: no API
  * call is needed to render a roster. Verify/extend ids against IGDB /platforms
  * (`fields id,name,abbreviation; where id = (...);`) when adding hardware.
  */
-export type PlatformFamily = 'pc' | 'playstation' | 'xbox' | 'nintendo' | 'sega' | 'mobile';
+export type PlatformFamily = 'pc' | 'handheld' | 'playstation' | 'xbox' | 'nintendo' | 'sega' | 'mobile';
 
 export type PlatformInfo = {
   id: number;
@@ -15,10 +17,30 @@ export type PlatformInfo = {
   family: PlatformFamily;
   /** Computers accept a PC specs sheet. */
   hasSpecs?: true;
+  /** The owner lists the specific devices they have (e.g. "Steam Deck OLED"). */
+  hasDevices?: true;
 };
+
+/** Reserved GamerCred-only platform ids (negative = not an IGDB platform). */
+export const PC_HANDHELD_PLATFORM_ID = -1;
+
+/** Quick-pick suggestions for the PC Handheld device list; users can type any name. */
+export const PC_HANDHELD_SUGGESTIONS: readonly string[] = [
+  'Steam Deck',
+  'Steam Deck OLED',
+  'ROG Ally',
+  'ROG Ally X',
+  'Legion Go',
+  'Legion Go S',
+  'MSI Claw',
+  'AYANEO',
+  'OneXPlayer',
+  'GPD Win',
+];
 
 export const PLATFORM_FAMILIES: readonly { key: PlatformFamily; label: string }[] = [
   { key: 'pc', label: 'Computers' },
+  { key: 'handheld', label: 'PC Handhelds' },
   { key: 'playstation', label: 'PlayStation' },
   { key: 'xbox', label: 'Xbox' },
   { key: 'nintendo', label: 'Nintendo' },
@@ -30,6 +52,8 @@ export const PLATFORMS: readonly PlatformInfo[] = [
   { id: 6, name: 'PC (Windows)', short: 'PC', family: 'pc', hasSpecs: true },
   { id: 14, name: 'Mac', short: 'Mac', family: 'pc', hasSpecs: true },
   { id: 3, name: 'Linux', short: 'Linux', family: 'pc', hasSpecs: true },
+
+  { id: PC_HANDHELD_PLATFORM_ID, name: 'PC Handheld', short: 'PC Handheld', family: 'handheld', hasDevices: true },
 
   { id: 167, name: 'PlayStation 5', short: 'PS5', family: 'playstation' },
   { id: 48, name: 'PlayStation 4', short: 'PS4', family: 'playstation' },
@@ -44,6 +68,9 @@ export const PLATFORMS: readonly PlatformInfo[] = [
   { id: 12, name: 'Xbox 360', short: 'X360', family: 'xbox' },
   { id: 11, name: 'Xbox', short: 'Xbox', family: 'xbox' },
 
+  // UNVERIFIED IGDB id: confirm with `fields id,name; where name ~ *"Switch 2"*;` on /platforms
+  // before real users pick it (stored ids would need a data fix if this is wrong).
+  { id: 508, name: 'Nintendo Switch 2', short: 'Switch 2', family: 'nintendo' },
   { id: 130, name: 'Nintendo Switch', short: 'Switch', family: 'nintendo' },
   { id: 41, name: 'Wii U', short: 'Wii U', family: 'nintendo' },
   { id: 5, name: 'Wii', short: 'Wii', family: 'nintendo' },

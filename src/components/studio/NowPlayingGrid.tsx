@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { View } from 'react-native';
 
-import { SteamAlert, SteamBadge, SteamButton, SteamConfirmModal, SteamPanel, SteamSpinner } from '@/components/ui';
+import { RetroGamingPCAlert, RetroGamingPCBadge, RetroGamingPCButton, RetroGamingPCConfirmModal, RetroGamingPCPanel, RetroGamingPCSpinner } from '@/components/ui';
 import { useGameLookup } from '@/hooks/useGames';
 import { useNowPlaying, useRemoveNowPlayingSlot, useUpdateNowPlayingSlot } from '@/hooks/useNowPlaying';
 import { useStudioStore } from '@/hooks/useStudioStore';
@@ -43,23 +43,23 @@ export function NowPlayingGrid() {
   const mutationError = updateSlot.error?.message ?? removeSlot.error?.message ?? null;
 
   return (
-    <SteamPanel
+    <RetroGamingPCPanel
       title="Now Playing"
-      headerRight={<SteamBadge label={`${filledCount}/4 active`} variant={filledCount > 0 ? 'nowPlaying' : 'draft'} />}
+      headerRight={<RetroGamingPCBadge label={`${filledCount}/4 active`} variant={filledCount > 0 ? 'nowPlaying' : 'draft'} />}
     >
       {nowPlaying.isPending ? (
-        <SteamSpinner label="Loading your slots…" />
+        <RetroGamingPCSpinner label="Loading your slots…" />
       ) : nowPlaying.isError ? (
         <View className="gap-2">
-          <SteamAlert message={nowPlaying.error.message} />
+          <RetroGamingPCAlert message={nowPlaying.error.message} />
           <View className="flex-row justify-end">
-            <SteamButton label="Retry" onPress={() => void nowPlaying.refetch()} />
+            <RetroGamingPCButton label="Retry" onPress={() => void nowPlaying.refetch()} />
           </View>
         </View>
       ) : (
         <View className="gap-2">
-          {mutationError ? <SteamAlert message={mutationError} /> : null}
-          {games.isError ? <SteamAlert tone="info" message="Couldn't load some game details. Titles will appear when the game database is reachable." /> : null}
+          {mutationError ? <RetroGamingPCAlert message={mutationError} /> : null}
+          {games.isError ? <RetroGamingPCAlert tone="info" message="Couldn't load some game details. Titles will appear when the game database is reachable." /> : null}
           {/* 2×2 on phones, 4 across on desktop. Fixed widths keep the grid stable while data loads. */}
           <View className="flex-row flex-wrap gap-2">
             {NOW_PLAYING_SLOTS.map((slot) => {
@@ -118,7 +118,7 @@ export function NowPlayingGrid() {
         }}
       />
 
-      <SteamConfirmModal
+      <RetroGamingPCConfirmModal
         visible={modal.kind === 'remove'}
         title="Remove from Now Playing"
         message={`Remove ${modalSlot ? titleFor(modalSlot) : 'this game'} from slot ${modalSlot ?? ''}? Its running notes and preliminary rating will be discarded. Write a review first if you want to keep them.`}
@@ -130,6 +130,6 @@ export function NowPlayingGrid() {
           if (modalSlot !== null) removeSlot.mutate(modalSlot, { onSettled: closeModal });
         }}
       />
-    </SteamPanel>
+    </RetroGamingPCPanel>
   );
 }

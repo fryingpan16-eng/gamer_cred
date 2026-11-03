@@ -1,15 +1,15 @@
 import { useState, type ReactNode } from 'react';
 import { ActivityIndicator, Pressable, Text, View, type PressableProps } from 'react-native';
 
-import { steamColors } from '@/constants/theme';
 
 import { cn } from '@/utils/cn';
+import { useThemeColors } from '@/hooks/useTheme';
 
-export type SteamButtonVariant = 'default' | 'primary' | 'danger';
+export type RetroGamingPCButtonVariant = 'default' | 'primary' | 'danger';
 
-export type SteamButtonProps = Omit<PressableProps, 'children' | 'style'> & {
+export type RetroGamingPCButtonProps = Omit<PressableProps, 'children' | 'style'> & {
   label: string;
-  variant?: SteamButtonVariant;
+  variant?: RetroGamingPCButtonVariant;
   /** Leading icon element. */
   icon?: ReactNode;
   /** Shows a spinner in place of the icon and blocks presses. */
@@ -17,17 +17,17 @@ export type SteamButtonProps = Omit<PressableProps, 'children' | 'style'> & {
   className?: string;
 };
 
-const SURFACE: Record<SteamButtonVariant, string> = {
-  default: 'bg-steam-button',
-  primary: 'bg-steam-active',
-  danger: 'bg-steam-button',
+const SURFACE: Record<RetroGamingPCButtonVariant, string> = {
+  default: 'bg-retrogamingpc-button',
+  primary: 'bg-retrogamingpc-active',
+  danger: 'bg-retrogamingpc-button',
 };
 
 /**
  * Raised bevel button. While pressed the bevel inverts (sunken). Border widths
  * never change between states, only colors, so pressing never shifts layout.
  */
-export function SteamButton({
+export function RetroGamingPCButton({
   label,
   variant = 'default',
   icon,
@@ -35,7 +35,8 @@ export function SteamButton({
   disabled: disabledProp,
   className,
   ...rest
-}: SteamButtonProps) {
+}: RetroGamingPCButtonProps) {
+  const themeColors = useThemeColors();
   const disabled = !!disabledProp || loading;
   const [pressed, setPressed] = useState(false);
   const [hovered, setHovered] = useState(false);
@@ -64,19 +65,19 @@ export function SteamButton({
       }}
       className={cn(
         'min-h-[26px] items-center justify-center px-3 py-1',
-        pressed ? 'steam-bevel-inset bg-steam-dark' : 'steam-bevel',
+        pressed ? 'retrogamingpc-bevel-inset bg-retrogamingpc-dark' : 'retrogamingpc-bevel',
         !pressed && SURFACE[variant],
-        hovered && !pressed && !disabled && 'bg-steam-panel',
+        hovered && !pressed && !disabled && 'bg-retrogamingpc-panel',
         disabled && 'opacity-50',
         className,
       )}
     >
       <View className={cn('flex-row items-center gap-2', pressed && 'translate-x-px translate-y-px')}>
-        {loading ? <ActivityIndicator size="small" color={steamColors.textBright} /> : icon}
+        {loading ? <ActivityIndicator size="small" color={themeColors.textBright} /> : icon}
         <Text
           className={cn(
-            'text-steam-base font-bold',
-            variant === 'danger' ? 'text-steam-error' : 'text-steam-text-bright',
+            'text-retrogamingpc-base font-bold',
+            variant === 'danger' ? 'text-retrogamingpc-error' : 'text-retrogamingpc-text-bright',
           )}
         >
           {label}

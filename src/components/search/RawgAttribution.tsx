@@ -5,9 +5,9 @@ import { Text, View } from 'react-native';
 export function RawgAttribution() {
   return (
     <View className="flex-row justify-center py-2">
-      <Text className="text-steam-xs text-steam-text-muted">
+      <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted">
         People data provided by{' '}
-        <Link href="https://rawg.io" target="_blank" className="text-steam-xs text-steam-highlight underline">
+        <Link href="https://rawg.io" target="_blank" className="text-retrogamingpc-xs text-retrogamingpc-highlight underline">
           RAWG
         </Link>
       </Text>

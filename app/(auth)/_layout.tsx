@@ -1,15 +1,16 @@
 import { Stack } from 'expo-router';
 
-import { steamStackHeader } from '@/components/navigation/steamStackHeader';
-import { steamColors } from '@/constants/theme';
+import { retroGamingPCStackHeader } from '@/components/navigation/retroGamingPCStackHeader';
+import { useThemeColors } from '@/hooks/useTheme';
 
 export default function AuthLayout() {
+  const themeColors = useThemeColors();
   return (
     <Stack
       screenOptions={{
-        header: steamStackHeader,
+        header: retroGamingPCStackHeader,
         headerTransparent: false,
-        contentStyle: { backgroundColor: steamColors.dark },
+        contentStyle: { backgroundColor: themeColors.dark },
       }}
     >
       <Stack.Screen name="login" options={{ title: 'Sign In' }} />

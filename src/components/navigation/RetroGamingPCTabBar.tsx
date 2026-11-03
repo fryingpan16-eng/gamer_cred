@@ -2,10 +2,11 @@ import type { BottomTabBarProps } from 'expo-router/js-tabs';
 import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
-import { steamColors, steamLayout } from '@/constants/theme';
+import { retroGamingPCLayout } from '@/constants/theme';
 import { cn } from '@/utils/cn';
+import { useThemeColors } from '@/hooks/useTheme';
 
-type SteamTabBarProps = BottomTabBarProps & { variant: 'bottom' | 'sidebar' };
+type RetroGamingPCTabBarProps = BottomTabBarProps & { variant: 'bottom' | 'sidebar' };
 
 function TabItem({
   label,
@@ -24,9 +25,10 @@ function TabItem({
   onLongPress: () => void;
   accessibilityLabel?: string;
 }) {
+  const themeColors = useThemeColors();
   const [hovered, setHovered] = useState(false);
   const [pressed, setPressed] = useState(false);
-  const color = focused ? steamColors.textBright : steamColors.textMuted;
+  const color = focused ? themeColors.textBright : themeColors.textMuted;
 
   return (
     <Pressable
@@ -46,21 +48,21 @@ function TabItem({
         'border',
         sidebar ? 'h-9 flex-row items-center gap-2 px-2' : 'flex-1 items-center justify-center gap-0.5',
         focused
-          ? 'border-t-steam-highlight border-l-steam-highlight border-b-steam-bevel-dark border-r-steam-bevel-dark bg-steam-card'
+          ? 'border-t-retrogamingpc-highlight border-l-retrogamingpc-highlight border-b-retrogamingpc-bevel-dark border-r-retrogamingpc-bevel-dark bg-retrogamingpc-card'
           : pressed
-            ? 'steam-bevel-inset bg-steam-dark'
-            : cn('border-steam-accent', hovered ? 'bg-steam-button' : 'bg-steam-panel'),
+            ? 'retrogamingpc-bevel-inset bg-retrogamingpc-dark'
+            : cn('border-retrogamingpc-accent', hovered ? 'bg-retrogamingpc-button' : 'bg-retrogamingpc-panel'),
       )}
     >
       {/* Active indicator stripe: always rendered (transparent when inactive) to keep geometry fixed. */}
       <View
         className={cn('absolute', sidebar ? 'bottom-0 left-0 top-0 w-[3px]' : 'left-0 right-0 top-0 h-[2px]')}
-        style={{ backgroundColor: focused ? steamColors.highlight : 'transparent' }}
+        style={{ backgroundColor: focused ? themeColors.highlight : 'transparent' }}
       />
       {renderIcon(color)}
       <Text
         numberOfLines={1}
-        className={cn(sidebar ? 'text-steam-base' : 'text-steam-xs', focused ? 'font-bold' : 'font-normal')}
+        className={cn(sidebar ? 'text-retrogamingpc-base' : 'text-retrogamingpc-xs', focused ? 'font-bold' : 'font-normal')}
         style={{ color }}
       >
         {label}
@@ -70,26 +72,26 @@ function TabItem({
 }
 
 /**
- * Custom 2004-Steam tab bar. One component renders as either the mobile
+ * Custom RetroGamingPC tab bar. One component renders as either the mobile
  * bottom bar or the desktop sidebar; both have fixed dimensions.
  */
-export function SteamTabBar({ state, descriptors, emitter, navigateToTab, insets, variant }: SteamTabBarProps) {
+export function RetroGamingPCTabBar({ state, descriptors, emitter, navigateToTab, insets, variant }: RetroGamingPCTabBarProps) {
   const sidebar = variant === 'sidebar';
 
   return (
     <View
       role="tablist"
       className={cn(
-        'bg-steam-panel',
-        sidebar ? 'gap-1 border-r border-r-steam-bevel-dark p-2' : 'flex-row gap-px border-t border-t-steam-bevel-light p-px',
+        'bg-retrogamingpc-panel',
+        sidebar ? 'gap-1 border-r border-r-retrogamingpc-bevel-dark p-2' : 'flex-row gap-px border-t border-t-retrogamingpc-bevel-light p-px',
       )}
       style={
         sidebar
-          ? { width: steamLayout.sidebarWidth }
-          : { height: steamLayout.bottomBarHeight + insets.bottom, paddingBottom: insets.bottom }
+          ? { width: retroGamingPCLayout.sidebarWidth }
+          : { height: retroGamingPCLayout.bottomBarHeight + insets.bottom, paddingBottom: insets.bottom }
       }
     >
-      {sidebar ? <Text className="steam-label px-1 pb-1">Navigation</Text> : null}
+      {sidebar ? <Text className="retrogamingpc-label px-1 pb-1">Navigation</Text> : null}
       {state.routes.map((route, index) => {
         const descriptor = descriptors[route.key];
         if (!descriptor) return null;

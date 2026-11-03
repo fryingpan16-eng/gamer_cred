@@ -1,14 +1,14 @@
 import { Text, View } from 'react-native';
 
-import { SteamPanel } from '@/components/ui';
+import { RetroGamingPCPanel } from '@/components/ui';
 import type { IgdbGameDetail } from '@/types/igdb';
 
 function FactRow({ label, values }: { label: string; values: string[] }) {
   if (values.length === 0) return null;
   return (
-    <View className="flex-row gap-2 border-b border-b-steam-accent py-1">
-      <Text className="w-[92px] text-steam-xs text-steam-text-muted">{label}</Text>
-      <Text className="flex-1 text-steam-xs text-steam-text">{values.join(', ')}</Text>
+    <View className="flex-row gap-2 border-b border-b-retrogamingpc-accent py-1">
+      <Text className="w-[92px] text-retrogamingpc-xs text-retrogamingpc-text-muted">{label}</Text>
+      <Text className="flex-1 text-retrogamingpc-xs text-retrogamingpc-text">{values.join(', ')}</Text>
     </View>
   );
 }
@@ -19,7 +19,7 @@ export function GameFacts({ game }: { game: IgdbGameDetail }) {
   const releases = [...new Map(game.releaseDates.map((r) => [r.platform, r])).values()];
 
   return (
-    <SteamPanel title="Game Details">
+    <RetroGamingPCPanel title="Game Details">
       <View>
         <FactRow label="Genre" values={game.genres} />
         <FactRow label="Themes" values={game.themes} />
@@ -33,15 +33,15 @@ export function GameFacts({ game }: { game: IgdbGameDetail }) {
       </View>
       {releases.length > 0 ? (
         <View className="gap-0.5 pt-2">
-          <Text className="steam-label pb-1">Release dates</Text>
+          <Text className="retrogamingpc-label pb-1">Release dates</Text>
           {releases.map((r) => (
             <View key={r.platform} className="flex-row justify-between">
-              <Text className="text-steam-xs text-steam-text">{r.platform}</Text>
-              <Text className="font-mono text-steam-xs text-steam-text-muted">{r.human}</Text>
+              <Text className="text-retrogamingpc-xs text-retrogamingpc-text">{r.platform}</Text>
+              <Text className="font-mono text-retrogamingpc-xs text-retrogamingpc-text-muted">{r.human}</Text>
             </View>
           ))}
         </View>
       ) : null}
-    </SteamPanel>
+    </RetroGamingPCPanel>
   );
 }

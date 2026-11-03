@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import { Text, View } from 'react-native';
 
 import { Thumbnail } from '@/components/search/Thumbnail';
-import { SteamAlert, SteamCard, SteamPanel, SteamRating, SteamSpinner } from '@/components/ui';
+import { RetroGamingPCAlert, RetroGamingPCCard, RetroGamingPCPanel, RetroGamingPCRating, RetroGamingPCSpinner } from '@/components/ui';
 import { useGameLookup } from '@/hooks/useGames';
 import { usePublishedReviews } from '@/hooks/useProfile';
 import { igdbImageUrl } from '@/types/igdb';
@@ -18,13 +18,13 @@ export function PublishedReviews({ userId, isOwner }: { userId: string; isOwner:
   const games = useGameLookup((reviews.data ?? []).map((r) => r.game_id));
 
   return (
-    <SteamPanel title={`Reviews${reviews.data ? ` (${reviews.data.length})` : ''}`}>
+    <RetroGamingPCPanel title={`Reviews${reviews.data ? ` (${reviews.data.length})` : ''}`}>
       {reviews.isPending ? (
-        <SteamSpinner label="Loading reviews…" />
+        <RetroGamingPCSpinner label="Loading reviews…" />
       ) : reviews.isError ? (
-        <SteamAlert message={reviews.error.message} />
+        <RetroGamingPCAlert message={reviews.error.message} />
       ) : reviews.data.length === 0 ? (
-        <Text className="text-steam-sm text-steam-text-muted">
+        <Text className="text-retrogamingpc-sm text-retrogamingpc-text-muted">
           {isOwner ? 'You haven’t published a review yet. Head to the Review Studio.' : 'No published reviews yet.'}
         </Text>
       ) : (
@@ -32,7 +32,7 @@ export function PublishedReviews({ userId, isOwner }: { userId: string; isOwner:
           {reviews.data.map((review) => {
             const game = games.data?.get(review.game_id);
             return (
-              <SteamCard
+              <RetroGamingPCCard
                 key={review.id}
                 className="flex-row gap-3"
                 accessibilityLabel={`Review of ${game?.name ?? 'game'}`}
@@ -45,22 +45,22 @@ export function PublishedReviews({ userId, isOwner }: { userId: string; isOwner:
                   accessibilityLabel={`${game?.name ?? 'Game'} cover`}
                 />
                 <View className="flex-1 gap-1">
-                  <Text className="text-steam-base font-bold text-steam-text-bright" numberOfLines={1}>
+                  <Text className="text-retrogamingpc-base font-bold text-retrogamingpc-text-bright" numberOfLines={1}>
                     {game?.name ?? `Game #${review.game_id}`}
                   </Text>
-                  <SteamRating rating={reviewRating(review)} size="compact" />
+                  <RetroGamingPCRating rating={reviewRating(review)} size="compact" />
                   {review.content ? (
-                    <Text className="text-steam-xs text-steam-text" numberOfLines={3}>
+                    <Text className="text-retrogamingpc-xs text-retrogamingpc-text" numberOfLines={3}>
                       {review.content}
                     </Text>
                   ) : null}
-                  <Text className="text-steam-xs text-steam-text-muted">{formatDate(review.published_at)}</Text>
+                  <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted">{formatDate(review.published_at)}</Text>
                 </View>
-              </SteamCard>
+              </RetroGamingPCCard>
             );
           })}
         </View>
       )}
-    </SteamPanel>
+    </RetroGamingPCPanel>
   );
 }

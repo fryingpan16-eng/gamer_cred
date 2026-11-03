@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
 
 import { Thumbnail } from '@/components/search/Thumbnail';
-import { SteamBadge, SteamCard, SteamRating } from '@/components/ui';
+import { RetroGamingPCBadge, RetroGamingPCCard, RetroGamingPCRating } from '@/components/ui';
 import type { ActivityFeedRow } from '@/types/database.types';
 import { igdbImageUrl, type IgdbGameResult } from '@/types/igdb';
 import { reviewRating, slotRating } from '@/utils/ratingColumns';
@@ -25,37 +25,37 @@ export function FeedItemCard({ item, game, viewerId }: FeedItemCardProps) {
   const openGame = () => router.push({ pathname: '/game/[id]', params: { id: String(item.game_id) } });
 
   return (
-    <SteamCard className="flex-row gap-3">
+    <RetroGamingPCCard className="flex-row gap-3">
       <Pressable accessibilityRole="link" accessibilityLabel={`Open ${item.actor_username}'s profile`} onPress={openActor}>
         <Thumbnail uri={item.actor_avatar_url} fallback={item.actor_username} shape="square" accessibilityLabel="" />
       </Pressable>
 
       <View className="flex-1 gap-1">
-        <Text className="text-steam-sm text-steam-text">
-          <Text onPress={openActor} className="font-bold text-steam-highlight">
+        <Text className="text-retrogamingpc-sm text-retrogamingpc-text">
+          <Text onPress={openActor} className="font-bold text-retrogamingpc-highlight">
             {isMe ? 'You' : item.actor_username}
           </Text>
           {item.kind === 'review' ? ' reviewed ' : ' is playing '}
-          <Text onPress={openGame} className="font-bold text-steam-text-bright">
+          <Text onPress={openGame} className="font-bold text-retrogamingpc-text-bright">
             {gameName}
           </Text>
         </Text>
 
         {item.kind === 'review' ? (
-          <SteamRating rating={reviewRating(item)} size="compact" />
+          <RetroGamingPCRating rating={reviewRating(item)} size="compact" />
         ) : (
           <View className="flex-row flex-wrap gap-1">
-            <SteamBadge label={`Now Playing · Slot ${item.slot_index ?? '?'}`} variant="nowPlaying" />
-            {item.preliminary_score !== null ? <SteamRating rating={slotRating(item)} size="compact" suffix="so far" /> : null}
+            <RetroGamingPCBadge label={`Now Playing · Slot ${item.slot_index ?? '?'}`} variant="nowPlaying" />
+            {item.preliminary_score !== null ? <RetroGamingPCRating rating={slotRating(item)} size="compact" suffix="so far" /> : null}
           </View>
         )}
 
         {item.excerpt ? (
-          <Text className="text-steam-xs text-steam-text" numberOfLines={3}>
+          <Text className="text-retrogamingpc-xs text-retrogamingpc-text" numberOfLines={3}>
             {item.kind === 'now_playing' ? `Notes: ${item.excerpt}` : item.excerpt}
           </Text>
         ) : null}
-        <Text className="text-steam-xs text-steam-text-muted">{timeAgo(item.occurred_at)}</Text>
+        <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted">{timeAgo(item.occurred_at)}</Text>
       </View>
 
       <Pressable accessibilityRole="link" accessibilityLabel={`Open ${gameName}`} onPress={openGame}>
@@ -66,6 +66,6 @@ export function FeedItemCard({ item, game, viewerId }: FeedItemCardProps) {
           accessibilityLabel=""
         />
       </Pressable>
-    </SteamCard>
+    </RetroGamingPCCard>
   );
 }

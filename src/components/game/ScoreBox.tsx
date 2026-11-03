@@ -17,17 +17,17 @@ export function ScoreBox({ label, score, caption }: ScoreBoxProps) {
     <View className="min-w-[72px] items-center gap-0.5" accessibilityLabel={`${label}: ${score ?? 'no score'}`}>
       <View
         className={cn(
-          'steam-bevel-inset h-11 w-14 items-center justify-center',
-          band === 'high' && 'bg-steam-active',
-          band === 'mid' && 'bg-steam-button',
+          'retrogamingpc-bevel-inset h-11 w-14 items-center justify-center',
+          band === 'high' && 'bg-retrogamingpc-active',
+          band === 'mid' && 'bg-retrogamingpc-button',
           band === 'low' && 'bg-[#5a3a30]',
-          band === 'none' && 'bg-steam-dark',
+          band === 'none' && 'bg-retrogamingpc-dark',
         )}
       >
-        <Text className="font-mono text-steam-xl font-bold text-steam-text-bright">{score ?? '--'}</Text>
+        <Text className="font-mono text-retrogamingpc-xl font-bold text-retrogamingpc-text-bright">{score ?? '--'}</Text>
       </View>
-      <Text className="steam-label">{label}</Text>
-      {caption ? <Text className="text-steam-xs text-steam-text-muted">{caption}</Text> : null}
+      <Text className="retrogamingpc-label">{label}</Text>
+      {caption ? <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted">{caption}</Text> : null}
     </View>
   );
 }

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Image, Pressable, Text, View } from 'react-native';
 
-import { SteamBadge, SteamButton, SteamRating, SteamSpinner } from '@/components/ui';
+import { RetroGamingPCBadge, RetroGamingPCButton, RetroGamingPCRating, RetroGamingPCSpinner } from '@/components/ui';
 import type { NowPlaying, NowPlayingSlot } from '@/types/database.types';
 import { igdbImageUrl, type IgdbGameResult } from '@/types/igdb';
 import { cn } from '@/utils/cn';
@@ -39,10 +39,10 @@ export function NowPlayingSlotCard({
   const title = game?.name ?? (gameLoading ? 'Loading…' : `Game #${row?.game_id ?? ''}`);
 
   return (
-    <View className={cn('steam-bevel gap-1.5 bg-steam-card p-1.5', selected && 'border-steam-highlight')}>
+    <View className={cn('retrogamingpc-bevel gap-1.5 bg-retrogamingpc-card p-1.5', selected && 'border-retrogamingpc-highlight')}>
       <View className="flex-row items-center justify-between">
-        <Text className="font-mono text-steam-xs text-steam-text-muted">SLOT {slot}</Text>
-        {filled && row.preliminary_score === null ? <SteamBadge label="Unrated" variant="draft" /> : null}
+        <Text className="font-mono text-retrogamingpc-xs text-retrogamingpc-text-muted">SLOT {slot}</Text>
+        {filled && row.preliminary_score === null ? <RetroGamingPCBadge label="Unrated" variant="draft" /> : null}
       </View>
 
       <Pressable
@@ -52,14 +52,14 @@ export function NowPlayingSlotCard({
         onPressIn={() => setPressed(true)}
         onPressOut={() => setPressed(false)}
         className={cn(
-          'aspect-[3/4] items-center justify-center overflow-hidden bg-steam-dark',
-          pressed ? 'steam-bevel' : 'steam-bevel-inset',
+          'aspect-[3/4] items-center justify-center overflow-hidden bg-retrogamingpc-dark',
+          pressed ? 'retrogamingpc-bevel' : 'retrogamingpc-bevel-inset',
         )}
       >
         {!filled ? (
           <View className="items-center gap-1">
-            <Text className="text-[32px] leading-[34px] text-steam-highlight">+</Text>
-            <Text className="text-steam-xs text-steam-text-muted">Add game</Text>
+            <Text className="text-[32px] leading-[34px] text-retrogamingpc-highlight">+</Text>
+            <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted">Add game</Text>
           </View>
         ) : game?.coverImageId ? (
           <Image
@@ -69,26 +69,26 @@ export function NowPlayingSlotCard({
             accessibilityLabel={`${title} cover art`}
           />
         ) : gameLoading ? (
-          <SteamSpinner />
+          <RetroGamingPCSpinner />
         ) : (
-          <Text className="px-2 text-center text-steam-sm font-bold text-steam-text">{title}</Text>
+          <Text className="px-2 text-center text-retrogamingpc-sm font-bold text-retrogamingpc-text">{title}</Text>
         )}
       </Pressable>
 
       {filled ? (
         <>
-          <Text className="text-steam-sm font-bold text-steam-text-bright" numberOfLines={1}>
+          <Text className="text-retrogamingpc-sm font-bold text-retrogamingpc-text-bright" numberOfLines={1}>
             {title}
           </Text>
-          {row.preliminary_score !== null ? <SteamRating rating={slotRating(row)} size="compact" suffix="so far" /> : null}
-          <Text className="min-h-[28px] text-steam-xs text-steam-text-muted" numberOfLines={2}>
+          {row.preliminary_score !== null ? <RetroGamingPCRating rating={slotRating(row)} size="compact" suffix="so far" /> : null}
+          <Text className="min-h-[28px] text-retrogamingpc-xs text-retrogamingpc-text-muted" numberOfLines={2}>
             {row.notes?.trim() ? row.notes : 'No running notes yet.'}
           </Text>
           <View className="flex-row flex-wrap gap-1">
-            <SteamButton label="Notes" onPress={onEdit} className="flex-1 px-1" />
-            <SteamButton label="Review" variant="primary" onPress={onReview} className="flex-1 px-1" />
+            <RetroGamingPCButton label="Notes" onPress={onEdit} className="flex-1 px-1" />
+            <RetroGamingPCButton label="Review" variant="primary" onPress={onReview} className="flex-1 px-1" />
           </View>
-          <SteamButton label="Remove" variant="danger" onPress={onRemove} className="px-1" />
+          <RetroGamingPCButton label="Remove" variant="danger" onPress={onRemove} className="px-1" />
         </>
       ) : null}
     </View>

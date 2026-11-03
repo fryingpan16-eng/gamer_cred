@@ -17,7 +17,7 @@ export function Thumbnail({ uri, fallback, shape, accessibilityLabel }: Thumbnai
   const size = shape === 'cover' ? 'h-16 w-12' : 'h-12 w-12';
 
   return (
-    <View className={cn('steam-bevel-inset items-center justify-center overflow-hidden bg-steam-dark', size)}>
+    <View className={cn('retrogamingpc-bevel-inset items-center justify-center overflow-hidden bg-retrogamingpc-dark', size)}>
       {uri && !failed ? (
         <Image
           source={{ uri }}
@@ -27,7 +27,7 @@ export function Thumbnail({ uri, fallback, shape, accessibilityLabel }: Thumbnai
           onError={() => setFailed(true)}
         />
       ) : (
-        <Text className="font-mono text-steam-lg font-bold text-steam-text-muted">{fallback.slice(0, 1).toUpperCase()}</Text>
+        <Text className="font-mono text-retrogamingpc-lg font-bold text-retrogamingpc-text-muted">{fallback.slice(0, 1).toUpperCase()}</Text>
       )}
     </View>
   );

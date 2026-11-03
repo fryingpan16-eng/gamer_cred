@@ -7,7 +7,7 @@ import { NowPlayingShowcase } from '@/components/profile/NowPlayingShowcase';
 import { PlatformRoster } from '@/components/profile/PlatformRoster';
 import { ProfileHeader } from '@/components/profile/ProfileHeader';
 import { PublishedReviews } from '@/components/profile/PublishedReviews';
-import { SteamAlert, SteamButton, SteamPanel, SteamSpinner } from '@/components/ui';
+import { RetroGamingPCAlert, RetroGamingPCButton, RetroGamingPCPanel, RetroGamingPCSpinner } from '@/components/ui';
 import { useAuthStore } from '@/hooks/useAuth';
 import { useProfile } from '@/hooks/useProfile';
 
@@ -25,27 +25,27 @@ export default function UserProfileScreen() {
 
   if (validId && profile.isPending) {
     return (
-      <View className="flex-1 items-center justify-center bg-steam-dark">
+      <View className="flex-1 items-center justify-center bg-retrogamingpc-dark">
         <Stack.Screen options={{ title: 'Player Profile' }} />
-        <SteamSpinner label="Loading player…" />
+        <RetroGamingPCSpinner label="Loading player…" />
       </View>
     );
   }
 
   if (!validId || profile.isError || !profile.data) {
     return (
-      <View className="flex-1 bg-steam-dark p-3">
+      <View className="flex-1 bg-retrogamingpc-dark p-3">
         <Stack.Screen options={{ title: 'Player not found' }} />
-        <SteamPanel title="Player not found">
+        <RetroGamingPCPanel title="Player not found">
           <View className="gap-2">
-            <SteamAlert message={profile.error?.message ?? 'This player does not exist or has deleted their account.'} />
+            <RetroGamingPCAlert message={profile.error?.message ?? 'This player does not exist or has deleted their account.'} />
             {profile.isError ? (
               <View className="flex-row justify-end">
-                <SteamButton label="Retry" onPress={() => void profile.refetch()} />
+                <RetroGamingPCButton label="Retry" onPress={() => void profile.refetch()} />
               </View>
             ) : null}
           </View>
-        </SteamPanel>
+        </RetroGamingPCPanel>
       </View>
     );
   }
@@ -53,12 +53,12 @@ export default function UserProfileScreen() {
   const player = profile.data;
 
   return (
-    <ScrollView className="flex-1 bg-steam-dark" contentContainerClassName="gap-3 p-3">
+    <ScrollView className="flex-1 bg-retrogamingpc-dark" contentContainerClassName="gap-3 p-3">
       <Stack.Screen options={{ title: player.username }} />
       <ProfileHeader profile={player} actions={<FriendButton otherId={player.id} otherName={player.username} />} />
       <View className="gap-3 md:flex-row md:items-start">
         <View className="gap-3 md:flex-[3]">
-          <NowPlayingShowcase userId={player.id} isOwner={false} />
+          <NowPlayingShowcase userId={player.id} isOwner={false} visibility={player.now_playing_visibility} />
           <FavoritesShowcase userId={player.id} editable={false} />
           <PublishedReviews userId={player.id} isOwner={false} />
         </View>

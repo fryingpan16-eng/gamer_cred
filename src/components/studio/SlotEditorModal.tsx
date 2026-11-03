@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { View } from 'react-native';
 
-import { SteamAlert, SteamButton, SteamInput, SteamModal, SteamRatingInput } from '@/components/ui';
+import { RetroGamingPCAlert, RetroGamingPCButton, RetroGamingPCInput, RetroGamingPCModal, RetroGamingPCRatingInput } from '@/components/ui';
 import { usePrimaryRatingScale } from '@/hooks/useAuth';
 import type { NowPlaying } from '@/types/database.types';
 import type { StoredRating } from '@/utils/rating';
@@ -23,10 +23,10 @@ type SlotEditorModalProps = {
 /** Running notes + preliminary score for an occupied slot. */
 export function SlotEditorModal({ visible, row, gameTitle, saving, error, onClose, onSave }: SlotEditorModalProps) {
   return (
-    <SteamModal visible={visible} title={`Notes — ${gameTitle}`} onClose={onClose} dismissOnBackdrop={!saving}>
+    <RetroGamingPCModal visible={visible} title={`Notes — ${gameTitle}`} onClose={onClose} dismissOnBackdrop={!saving}>
       {/* Mounted per opening so the form always starts from the slot's saved values. */}
       {visible ? <SlotEditorForm row={row} saving={saving} error={error} onClose={onClose} onSave={onSave} /> : null}
-    </SteamModal>
+    </RetroGamingPCModal>
   );
 }
 
@@ -55,15 +55,15 @@ function SlotEditorForm({ row, saving, error, onClose, onSave }: Omit<SlotEditor
 
   return (
     <View className="gap-3">
-      {error ? <SteamAlert message={error} /> : null}
-      <SteamRatingInput
+      {error ? <RetroGamingPCAlert message={error} /> : null}
+      <RetroGamingPCRatingInput
         label="Preliminary rating"
         scale={primaryScale}
         value={score}
         onChange={setScore}
         error={fieldErrors.preliminaryScore}
       />
-      <SteamInput
+      <RetroGamingPCInput
         label="Running notes"
         value={notes}
         onChangeText={setNotes}
@@ -74,9 +74,9 @@ function SlotEditorForm({ row, saving, error, onClose, onSave }: Omit<SlotEditor
         hint={`${notes.length.toLocaleString()} / ${NOTES_MAX_LENGTH.toLocaleString()}`}
         editable={!saving}
       />
-      <View className="flex-row justify-end gap-2 border-t border-t-steam-accent pt-2">
-        <SteamButton label="Cancel" onPress={onClose} disabled={saving} />
-        <SteamButton label="Save" variant="primary" loading={saving} onPress={submit} />
+      <View className="flex-row justify-end gap-2 border-t border-t-retrogamingpc-accent pt-2">
+        <RetroGamingPCButton label="Cancel" onPress={onClose} disabled={saving} />
+        <RetroGamingPCButton label="Save" variant="primary" loading={saving} onPress={submit} />
       </View>
     </View>
   );

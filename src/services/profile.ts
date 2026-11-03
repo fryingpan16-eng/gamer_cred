@@ -2,6 +2,8 @@ import type { PostgrestError } from '@supabase/supabase-js';
 
 import type { FavoriteRank, Friendship, Profile, Review, UserFavorite, UserPlatform } from '@/types/database.types';
 import type { RatingScale } from '@/constants/ratingRubric';
+import type { NowPlayingVisibility } from '@/constants/privacy';
+import type { ThemeName } from '@/constants/themes';
 import type { ProfileSettingsValues } from '@/utils/profileSchemas';
 
 import { isUsernameAvailable } from './auth';
@@ -63,6 +65,25 @@ export async function updatePrimaryRatingScale(userId: string, scale: RatingScal
   return data;
 }
 
+/** RetroGamingPC colour palette preference (synced across devices). */
+export async function updateUiTheme(userId: string, theme: ThemeName): Promise<Profile> {
+  const { data, error } = await supabase.from('profiles').update({ ui_theme: theme }).eq('id', userId).select().single();
+  if (error) fail(error, 'Could not save your colour theme.');
+  return data;
+}
+
+/** Who can see your Now Playing: everyone, friends only, or only you (RLS, migration 000010). */
+export async function updateNowPlayingVisibility(userId: string, visibility: NowPlayingVisibility): Promise<Profile> {
+  const { data, error } = await supabase
+    .from('profiles')
+    .update({ now_playing_visibility: visibility })
+    .eq('id', userId)
+    .select()
+    .single();
+  if (error) fail(error, 'Could not save your privacy setting.');
+  return data;
+}
+
 // -----------------------------------------------------------------------------
 // Top 4 favorites (public read; owner writes via RPCs for atomic moves)
 // -----------------------------------------------------------------------------
@@ -120,6 +141,16 @@ export async function removePlatform(userId: string, platformId: number): Promis
 export async function setMainPlatform(platformId: number | null): Promise<void> {
   const { error } = await supabase.rpc('set_main_platform', { p_platform_id: platformId });
   if (error) fail(error, 'Could not set your main platform.');
+}
+
+/** Specific devices owned for a roster entry (e.g. PC Handhelds). Pass a validated list. */
+export async function updatePlatformDevices(userId: string, platformId: number, devices: string[]): Promise<void> {
+  const { error } = await supabase
+    .from('user_platforms')
+    .update({ devices })
+    .eq('user_id', userId)
+    .eq('platform_id', platformId);
+  if (error) fail(error, 'Could not save your devices.');
 }
 
 export async function updatePcSpecs(userId: string, platformId: number, pcSpecs: string | null): Promise<void> {

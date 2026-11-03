@@ -3,15 +3,15 @@ import { Pressable, Text, View } from 'react-native';
 
 import { cn } from '@/utils/cn';
 
-export type SteamTabItem<K extends string> = {
+export type RetroGamingPCTabItem<K extends string> = {
   key: K;
   label: string;
   /** Optional count shown after the label, e.g. search hits. */
   count?: number;
 };
 
-export type SteamTabsProps<K extends string> = {
-  items: readonly SteamTabItem<K>[];
+export type RetroGamingPCTabsProps<K extends string> = {
+  items: readonly RetroGamingPCTabItem<K>[];
   value: K;
   onChange: (key: K) => void;
   /** Stretch tabs to fill the row (mobile segmented look). Default false. */
@@ -25,7 +25,7 @@ function TabButton<K extends string>({
   fill,
   onPress,
 }: {
-  item: SteamTabItem<K>;
+  item: RetroGamingPCTabItem<K>;
   active: boolean;
   fill: boolean;
   onPress: () => void;
@@ -45,15 +45,15 @@ function TabButton<K extends string>({
         '-mb-px items-center border border-b px-3 py-1',
         fill && 'flex-1',
         active
-          ? 'border-steam-highlight border-b-steam-card bg-steam-card'
-          : cn('border-steam-accent border-b-steam-accent', hovered ? 'bg-steam-panel' : 'bg-steam-button'),
+          ? 'border-retrogamingpc-highlight border-b-retrogamingpc-card bg-retrogamingpc-card'
+          : cn('border-retrogamingpc-accent border-b-retrogamingpc-accent', hovered ? 'bg-retrogamingpc-panel' : 'bg-retrogamingpc-button'),
       )}
     >
       <Text
         numberOfLines={1}
         className={cn(
-          'text-steam-sm',
-          active ? 'font-bold text-steam-text-bright' : 'text-steam-text-muted',
+          'text-retrogamingpc-sm',
+          active ? 'font-bold text-retrogamingpc-text-bright' : 'text-retrogamingpc-text-muted',
         )}
       >
         {item.label}
@@ -64,9 +64,9 @@ function TabButton<K extends string>({
 }
 
 /** Segmented sub-tab bar with classic folder-tab styling (e.g. Search: Games / Studios / Users). */
-export function SteamTabs<K extends string>({ items, value, onChange, fill = false, className }: SteamTabsProps<K>) {
+export function RetroGamingPCTabs<K extends string>({ items, value, onChange, fill = false, className }: RetroGamingPCTabsProps<K>) {
   return (
-    <View role="tablist" className={cn('flex-row gap-0.5 border-b border-b-steam-accent', className)}>
+    <View role="tablist" className={cn('flex-row gap-0.5 border-b border-b-retrogamingpc-accent', className)}>
       {items.map((item) => (
         <TabButton
           key={item.key}

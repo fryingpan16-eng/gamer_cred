@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import { Thumbnail } from '@/components/search/Thumbnail';
-import { SteamAlert, SteamBadge, SteamButton, SteamCard, SteamPanel, SteamRating, SteamSpinner } from '@/components/ui';
+import { RetroGamingPCAlert, RetroGamingPCBadge, RetroGamingPCButton, RetroGamingPCCard, RetroGamingPCPanel, RetroGamingPCRating, RetroGamingPCSpinner } from '@/components/ui';
 import { useAuthStore } from '@/hooks/useAuth';
 import { useGameReviews, useGameReviewStats } from '@/hooks/useGameDetail';
 import type { GameReview, GameReviewStats } from '@/services/games';
@@ -25,7 +25,7 @@ function Distribution({ stats }: { stats: GameReviewStats }) {
     >
       {buckets.map(({ tier, count }) => (
         <View key={tier} className="flex-1 items-center justify-end">
-          <Text className="font-mono text-[8px] leading-[10px] text-steam-text-muted">{count > 0 ? count : ''}</Text>
+          <Text className="font-mono text-[8px] leading-[10px] text-retrogamingpc-text-muted">{count > 0 ? count : ''}</Text>
           <View
             className="w-full"
             style={{
@@ -34,7 +34,7 @@ function Distribution({ stats }: { stats: GameReviewStats }) {
               opacity: count === 0 ? 0.25 : 1,
             }}
           />
-          <Text className="font-mono text-[9px] leading-[11px] text-steam-text-muted">{tier}</Text>
+          <Text className="font-mono text-[9px] leading-[11px] text-retrogamingpc-text-muted">{tier}</Text>
         </View>
       ))}
     </View>
@@ -55,37 +55,37 @@ function ReviewCard({ review, isMine }: { review: GameReview; isMine: boolean })
   const long = (review.content?.length ?? 0) > 320;
 
   return (
-    <SteamCard className="gap-2">
+    <RetroGamingPCCard className="gap-2">
       <View className="flex-row items-center gap-2">
         <Pressable accessibilityRole="link" accessibilityLabel={`Open ${author?.username ?? 'player'}'s profile`} onPress={openAuthor}>
           <Thumbnail uri={author?.avatar_url ?? null} fallback={author?.username ?? '?'} shape="square" accessibilityLabel="" />
         </Pressable>
         <View className="flex-1 gap-0.5">
           <View className="flex-row items-center gap-1">
-            <Text onPress={openAuthor} className="text-steam-base font-bold text-steam-highlight" numberOfLines={1}>
+            <Text onPress={openAuthor} className="text-retrogamingpc-base font-bold text-retrogamingpc-highlight" numberOfLines={1}>
               {author?.username ?? 'Unknown player'}
             </Text>
-            {isMine ? <SteamBadge label="You" variant="nowPlaying" /> : null}
+            {isMine ? <RetroGamingPCBadge label="You" variant="nowPlaying" /> : null}
           </View>
-          <SteamRating rating={reviewRating(review)} size="compact" />
-          <Text className="text-steam-xs text-steam-text-muted">{formatDate(review.published_at)}</Text>
+          <RetroGamingPCRating rating={reviewRating(review)} size="compact" />
+          <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted">{formatDate(review.published_at)}</Text>
         </View>
       </View>
       {review.content ? (
         <>
-          <Text className="text-steam-sm text-steam-text" numberOfLines={expanded ? undefined : 6}>
+          <Text className="text-retrogamingpc-sm text-retrogamingpc-text" numberOfLines={expanded ? undefined : 6}>
             {review.content}
           </Text>
           {long ? (
-            <Text onPress={() => setExpanded((v) => !v)} className="text-steam-xs text-steam-highlight underline">
+            <Text onPress={() => setExpanded((v) => !v)} className="text-retrogamingpc-xs text-retrogamingpc-highlight underline">
               {expanded ? 'Show less' : 'Read more'}
             </Text>
           ) : null}
         </>
       ) : (
-        <Text className="text-steam-xs italic text-steam-text-muted">Rating-only quick review.</Text>
+        <Text className="text-retrogamingpc-xs italic text-retrogamingpc-text-muted">Rating-only quick review.</Text>
       )}
-    </SteamCard>
+    </RetroGamingPCCard>
   );
 }
 
@@ -97,29 +97,29 @@ export function CommunityReviews({ gameId }: { gameId: number }) {
   const all = reviews.data?.pages.flatMap((p) => p.reviews) ?? [];
 
   return (
-    <SteamPanel title={`Community Reviews${stats.data ? ` (${stats.data.count})` : ''}`}>
+    <RetroGamingPCPanel title={`Community Reviews${stats.data ? ` (${stats.data.count})` : ''}`}>
       <View className="gap-3">
         {stats.data && stats.data.count > 0 ? (
-          <View className="steam-bevel-inset flex-row items-center gap-3 bg-steam-dark p-2">
+          <View className="retrogamingpc-bevel-inset flex-row items-center gap-3 bg-retrogamingpc-dark p-2">
             <View className="max-w-[45%] gap-1">
-              <Text className="steam-label">Community average</Text>
-              <SteamRating rating={averageAsRating(stats.data)} prefix="Avg" />
+              <Text className="retrogamingpc-label">Community average</Text>
+              <RetroGamingPCRating rating={averageAsRating(stats.data)} prefix="Avg" />
             </View>
             <Distribution stats={stats.data} />
           </View>
         ) : null}
 
         {reviews.isPending ? (
-          <SteamSpinner label="Loading reviews…" />
+          <RetroGamingPCSpinner label="Loading reviews…" />
         ) : reviews.isError ? (
           <View className="gap-2">
-            <SteamAlert message={reviews.error.message} />
+            <RetroGamingPCAlert message={reviews.error.message} />
             <View className="flex-row justify-end">
-              <SteamButton label="Retry" onPress={() => void reviews.refetch()} />
+              <RetroGamingPCButton label="Retry" onPress={() => void reviews.refetch()} />
             </View>
           </View>
         ) : all.length === 0 ? (
-          <Text className="text-steam-sm text-steam-text-muted">No community reviews yet. Be the first to post one.</Text>
+          <Text className="text-retrogamingpc-sm text-retrogamingpc-text-muted">No community reviews yet. Be the first to post one.</Text>
         ) : (
           <View className="gap-2">
             {all.map((review) => (
@@ -127,7 +127,7 @@ export function CommunityReviews({ gameId }: { gameId: number }) {
             ))}
             {reviews.hasNextPage ? (
               <View className="flex-row justify-center pt-1">
-                <SteamButton
+                <RetroGamingPCButton
                   label={reviews.isFetchingNextPage ? 'Loading…' : 'Load more reviews'}
                   loading={reviews.isFetchingNextPage}
                   onPress={() => void reviews.fetchNextPage()}
@@ -137,6 +137,6 @@ export function CommunityReviews({ gameId }: { gameId: number }) {
           </View>
         )}
       </View>
-    </SteamPanel>
+    </RetroGamingPCPanel>
   );
 }

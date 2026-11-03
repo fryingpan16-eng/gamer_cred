@@ -40,6 +40,32 @@ export type PcSpecs = z.output<typeof pcSpecsSchema>;
 
 export const EMPTY_PC_SPECS: PcSpecs = { os: '', cpu: '', gpu: '', ram: '', storage: '' };
 
+export const MAX_PLATFORM_DEVICES = 8;
+export const DEVICE_NAME_MAX = 40;
+
+/**
+ * Device list for a roster entry (e.g. PC Handhelds). Names are trimmed,
+ * whitespace-collapsed and de-duplicated case-insensitively (first spelling wins).
+ * Limits mirror the DB checks in migration 000008.
+ */
+export const platformDevicesSchema = z
+  .array(
+    z
+      .string()
+      .transform((v) => v.trim().replace(/\s+/g, ' '))
+      .pipe(z.string().min(1, 'Device name can’t be empty').max(DEVICE_NAME_MAX, `Keep names under ${DEVICE_NAME_MAX} characters`)),
+  )
+  .transform((names) => {
+    const seen = new Set<string>();
+    return names.filter((n) => {
+      const key = n.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  })
+  .pipe(z.array(z.string()).max(MAX_PLATFORM_DEVICES, `List up to ${MAX_PLATFORM_DEVICES} devices`));
+
 /** Lenient read: JSON from this app, or legacy free text (kept in `os`-less "notes" form). */
 export function parsePcSpecs(raw: string | null): PcSpecs | null {
   if (!raw || raw.trim() === '') return null;

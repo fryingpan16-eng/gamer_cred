@@ -2,7 +2,7 @@ import type { UseQueryResult } from '@tanstack/react-query';
 import type { ReactElement } from 'react';
 import { FlatList, Text, View } from 'react-native';
 
-import { SteamAlert, SteamButton, SteamCard, SteamSpinner } from '@/components/ui';
+import { RetroGamingPCAlert, RetroGamingPCButton, RetroGamingPCCard, RetroGamingPCSpinner } from '@/components/ui';
 
 type SearchResultListProps<T> = {
   /** Query state (any payload shape); `items` carries the extracted rows. */
@@ -26,22 +26,22 @@ type SearchResultListProps<T> = {
 
 function SkeletonCard() {
   return (
-    <SteamCard className="flex-row gap-3 opacity-60">
-      <View className="steam-bevel-inset h-16 w-12 bg-steam-dark" />
+    <RetroGamingPCCard className="flex-row gap-3 opacity-60">
+      <View className="retrogamingpc-bevel-inset h-16 w-12 bg-retrogamingpc-dark" />
       <View className="flex-1 gap-2 py-1">
-        <View className="h-3 w-2/3 bg-steam-panel" />
-        <View className="h-2 w-1/3 bg-steam-panel" />
-        <View className="h-2 w-1/2 bg-steam-panel" />
+        <View className="h-3 w-2/3 bg-retrogamingpc-panel" />
+        <View className="h-2 w-1/3 bg-retrogamingpc-panel" />
+        <View className="h-2 w-1/2 bg-retrogamingpc-panel" />
       </View>
-    </SteamCard>
+    </RetroGamingPCCard>
   );
 }
 
 function EmptyState({ title, body }: { title: string; body?: string }) {
   return (
-    <View className="steam-bevel-inset items-center gap-1 bg-steam-dark px-4 py-6">
-      <Text className="text-steam-base font-bold text-steam-text">{title}</Text>
-      {body ? <Text className="text-center text-steam-sm text-steam-text-muted">{body}</Text> : null}
+    <View className="retrogamingpc-bevel-inset items-center gap-1 bg-retrogamingpc-dark px-4 py-6">
+      <Text className="text-retrogamingpc-base font-bold text-retrogamingpc-text">{title}</Text>
+      {body ? <Text className="text-center text-retrogamingpc-sm text-retrogamingpc-text-muted">{body}</Text> : null}
     </View>
   );
 }
@@ -77,16 +77,16 @@ export function SearchResultList<T>({
     if (isError) {
       return (
         <View className="gap-2 p-3">
-          <SteamAlert message={error?.message ?? 'Search failed.'} />
+          <RetroGamingPCAlert message={error?.message ?? 'Search failed.'} />
           <View className="flex-row justify-end">
-            <SteamButton label="Retry" onPress={() => void refetch()} />
+            <RetroGamingPCButton label="Retry" onPress={() => void refetch()} />
           </View>
         </View>
       );
     }
     return (
       <View className="gap-2 p-3">
-        <SteamSpinner label={loadingLabel} />
+        <RetroGamingPCSpinner label={loadingLabel} />
         <SkeletonCard />
         <SkeletonCard />
         <SkeletonCard />
@@ -107,12 +107,12 @@ export function SearchResultList<T>({
       keyboardDismissMode="on-drag"
       ListHeaderComponent={
         <View className="gap-2">
-          {isError ? <SteamAlert message={`Showing previous results — ${error?.message ?? 'refresh failed'}`} /> : null}
+          {isError ? <RetroGamingPCAlert message={`Showing previous results — ${error?.message ?? 'refresh failed'}`} /> : null}
           <View className="h-4 flex-row items-center justify-between">
-            <Text className="steam-label">
+            <Text className="retrogamingpc-label">
               {data.length} result{data.length === 1 ? '' : 's'} for “{term.trim()}”{statusNote ? ` · ${statusNote}` : ''}
             </Text>
-            {refreshing ? <SteamSpinner /> : null}
+            {refreshing ? <RetroGamingPCSpinner /> : null}
           </View>
         </View>
       }

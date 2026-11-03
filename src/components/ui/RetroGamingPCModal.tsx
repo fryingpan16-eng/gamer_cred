@@ -3,14 +3,14 @@ import { Modal, Pressable, Text, View } from 'react-native';
 
 import { cn } from '@/utils/cn';
 
-import { SteamButton } from './SteamButton';
+import { RetroGamingPCButton } from './RetroGamingPCButton';
 
-export type SteamModalProps = {
+export type RetroGamingPCModalProps = {
   visible: boolean;
   title: string;
   onClose: () => void;
   children: ReactNode;
-  /** Action row (usually SteamButtons), right-aligned beneath the body. */
+  /** Action row (usually RetroGamingPCButtons), right-aligned beneath the body. */
   footer?: ReactNode;
   /** Close when the dimmed backdrop is tapped. Default true. */
   dismissOnBackdrop?: boolean;
@@ -29,16 +29,16 @@ function TitlebarCloseButton({ onPress }: { onPress: () => void }) {
       onPressOut={() => setPressed(false)}
       className={cn(
         'h-[18px] w-[18px] items-center justify-center',
-        pressed ? 'steam-bevel-inset bg-steam-dark' : 'steam-bevel bg-steam-button',
+        pressed ? 'retrogamingpc-bevel-inset bg-retrogamingpc-dark' : 'retrogamingpc-bevel bg-retrogamingpc-button',
       )}
     >
-      <Text className="text-steam-xs font-bold text-steam-text-bright">✕</Text>
+      <Text className="text-retrogamingpc-xs font-bold text-retrogamingpc-text-bright">✕</Text>
     </Pressable>
   );
 }
 
-/** Classic 2004 Steam popup: title bar chrome, tactile ✕, beveled body, optional action row. */
-export function SteamModal({
+/** Classic retro popup: title bar chrome, tactile ✕, beveled body, optional action row. */
+export function RetroGamingPCModal({
   visible,
   title,
   onClose,
@@ -46,7 +46,7 @@ export function SteamModal({
   footer,
   dismissOnBackdrop = true,
   className,
-}: SteamModalProps) {
+}: RetroGamingPCModalProps) {
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
       <View className="flex-1 items-center justify-center p-4">
@@ -60,17 +60,17 @@ export function SteamModal({
           aria-modal
           aria-label={title}
           accessibilityViewIsModal
-          className={cn('steam-window w-full max-w-[440px]', className)}
+          className={cn('retrogamingpc-window w-full max-w-[440px]', className)}
         >
-          <View className="steam-titlebar">
-            <Text className="flex-1 text-steam-sm font-bold text-steam-text-bright" numberOfLines={1}>
+          <View className="retrogamingpc-titlebar">
+            <Text className="flex-1 text-retrogamingpc-sm font-bold text-retrogamingpc-text-bright" numberOfLines={1}>
               {title}
             </Text>
             <TitlebarCloseButton onPress={onClose} />
           </View>
-          <View className="bg-steam-card p-3">{children}</View>
+          <View className="bg-retrogamingpc-card p-3">{children}</View>
           {footer ? (
-            <View className="flex-row justify-end gap-2 border-t border-t-steam-accent bg-steam-card px-3 py-2">
+            <View className="flex-row justify-end gap-2 border-t border-t-retrogamingpc-accent bg-retrogamingpc-card px-3 py-2">
               {footer}
             </View>
           ) : null}
@@ -80,7 +80,7 @@ export function SteamModal({
   );
 }
 
-export type SteamConfirmModalProps = {
+export type RetroGamingPCConfirmModalProps = {
   visible: boolean;
   title: string;
   message: string;
@@ -93,8 +93,8 @@ export type SteamConfirmModalProps = {
   onCancel: () => void;
 };
 
-/** Yes/No confirmation built on SteamModal (e.g. removing a Now Playing slot). */
-export function SteamConfirmModal({
+/** Yes/No confirmation built on RetroGamingPCModal (e.g. removing a Now Playing slot). */
+export function RetroGamingPCConfirmModal({
   visible,
   title,
   message,
@@ -104,17 +104,17 @@ export function SteamConfirmModal({
   busy = false,
   onConfirm,
   onCancel,
-}: SteamConfirmModalProps) {
+}: RetroGamingPCConfirmModalProps) {
   return (
-    <SteamModal
+    <RetroGamingPCModal
       visible={visible}
       title={title}
       onClose={onCancel}
       dismissOnBackdrop={!busy}
       footer={
         <>
-          <SteamButton label={cancelLabel} onPress={onCancel} disabled={busy} />
-          <SteamButton
+          <RetroGamingPCButton label={cancelLabel} onPress={onCancel} disabled={busy} />
+          <RetroGamingPCButton
             label={confirmLabel}
             variant={destructive ? 'danger' : 'primary'}
             onPress={onConfirm}
@@ -123,7 +123,7 @@ export function SteamConfirmModal({
         </>
       }
     >
-      <Text className="text-steam-base text-steam-text">{message}</Text>
-    </SteamModal>
+      <Text className="text-retrogamingpc-base text-retrogamingpc-text">{message}</Text>
+    </RetroGamingPCModal>
   );
 }

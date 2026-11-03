@@ -15,10 +15,10 @@ import {
   type StoredRating,
 } from '@/utils/rating';
 
-import { SteamStarRating } from './SteamStarRating';
-import { SteamTierBadge } from './SteamTierBadge';
+import { RetroGamingPCStarRating } from './RetroGamingPCStarRating';
+import { RetroGamingPCTierBadge } from './RetroGamingPCTierBadge';
 
-export type SteamRatingProps = {
+export type RetroGamingPCRatingProps = {
   rating: StoredRating | null;
   /** Defaults to the viewer's primary scale. */
   scale?: RatingScale;
@@ -38,13 +38,13 @@ export type SteamRatingProps = {
  * (tap to reveal). Numeric scores derived from coarse input show as "~89";
  * S** always shows as exactly 100.
  */
-export function SteamRating({ rating, scale: scaleProp, size = 'regular', suffix, expanded: forceExpanded = false, prefix, className }: SteamRatingProps) {
+export function RetroGamingPCRating({ rating, scale: scaleProp, size = 'regular', suffix, expanded: forceExpanded = false, prefix, className }: RetroGamingPCRatingProps) {
   const primary = usePrimaryRatingScale();
   const scale = scaleProp ?? primary;
   const [open, setOpen] = useState(false);
 
   if (!rating) {
-    return <Text className={cn('font-mono text-steam-xs text-steam-text-muted', className)}>Unrated</Text>;
+    return <Text className={cn('font-mono text-retrogamingpc-xs text-retrogamingpc-text-muted', className)}>Unrated</Text>;
   }
 
   const derived = deriveAllScales(rating.numeric);
@@ -53,9 +53,9 @@ export function SteamRating({ rating, scale: scaleProp, size = 'regular', suffix
 
   const primaryValue =
     scale === 'stars' ? (
-      <SteamStarRating stars={storedRatingInScale(rating, 'stars').value as number} size={compact ? 11 : 14} showValue={!compact} />
+      <RetroGamingPCStarRating stars={storedRatingInScale(rating, 'stars').value as number} size={compact ? 11 : 14} showValue={!compact} />
     ) : scale === 'tier' ? null : (
-      <Text className={cn('font-mono font-bold text-steam-text-bright', compact ? 'text-steam-sm' : 'text-steam-lg')}>
+      <Text className={cn('font-mono font-bold text-retrogamingpc-text-bright', compact ? 'text-retrogamingpc-sm' : 'text-retrogamingpc-lg')}>
         {formatRatingInScale(rating, scale)}
       </Text>
     );
@@ -72,14 +72,14 @@ export function SteamRating({ rating, scale: scaleProp, size = 'regular', suffix
   const body = (
     <View className="gap-0.5">
       <View className="flex-row flex-wrap items-center gap-1.5">
-        {prefix ? <Text className="text-steam-xs text-steam-text-muted">{prefix}</Text> : null}
+        {prefix ? <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted">{prefix}</Text> : null}
         {primaryValue}
-        <SteamTierBadge tier={derived.tier} showDescriptor={!compact || scale === 'tier'} size={compact ? 'compact' : 'regular'} />
-        {suffix ? <Text className="text-steam-xs text-steam-text-muted">{suffix}</Text> : null}
-        {!forceExpanded ? <Text className="text-steam-xs text-steam-text-muted">{open ? '▾' : '▸'}</Text> : null}
+        <RetroGamingPCTierBadge tier={derived.tier} showDescriptor={!compact || scale === 'tier'} size={compact ? 'compact' : 'regular'} />
+        {suffix ? <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted">{suffix}</Text> : null}
+        {!forceExpanded ? <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted">{open ? '▾' : '▸'}</Text> : null}
       </View>
       {showDetail ? (
-        <Text className="font-mono text-steam-xs text-steam-text-muted">
+        <Text className="font-mono text-retrogamingpc-xs text-retrogamingpc-text-muted">
           {secondary.map((s) => s.text).join(' · ')}
           {rating.inputScale !== scale ? `  (entered as ${RATING_SCALE_LABELS[rating.inputScale].split(' ')[0]}: ${rating.input})` : ''}
         </Text>

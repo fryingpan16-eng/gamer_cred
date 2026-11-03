@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 
-import { SteamPanel } from './ui/SteamPanel';
+import { RetroGamingPCPanel } from './ui/RetroGamingPCPanel';
 
 type Section = { title: string; description: string };
 
@@ -15,15 +15,15 @@ type ScreenPlaceholderProps = {
 /** Scaffold screen body: lists the panels each route will eventually host. */
 export function ScreenPlaceholder({ subtitle, sections = [], children }: ScreenPlaceholderProps) {
   return (
-    <ScrollView className="flex-1 bg-steam-dark" contentContainerClassName="gap-3 p-3">
-      {subtitle ? <Text className="text-steam-sm text-steam-text-muted">{subtitle}</Text> : null}
+    <ScrollView className="flex-1 bg-retrogamingpc-dark" contentContainerClassName="gap-3 p-3">
+      {subtitle ? <Text className="text-retrogamingpc-sm text-retrogamingpc-text-muted">{subtitle}</Text> : null}
       {children}
       {sections.length > 0 ? (
         <View className="gap-3 md:flex-row md:flex-wrap">
           {sections.map((section) => (
-            <SteamPanel key={section.title} title={section.title} className="md:min-w-[280px] md:flex-1">
-              <Text className="text-steam-base text-steam-text">{section.description}</Text>
-            </SteamPanel>
+            <RetroGamingPCPanel key={section.title} title={section.title} className="md:min-w-[280px] md:flex-1">
+              <Text className="text-retrogamingpc-base text-retrogamingpc-text">{section.description}</Text>
+            </RetroGamingPCPanel>
           ))}
         </View>
       ) : null}

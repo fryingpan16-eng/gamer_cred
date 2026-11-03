@@ -8,7 +8,7 @@ Universal cross-platform video game social review app built with Expo Router and
 ## 🖥️ TARGET DEVICES & RESPONSIVE LAYOUT SCALING
 The app MUST target **iOS, Android, and Desktop (Web/Electron wrappers)**. 
 - **Responsive Architecture**: The UI must automatically scale and adapt layout structures based on target viewports using responsive utilities (Tailwind's \`md:\`, \`lg:\` breakpoints).
-- **Desktop/Tablet Mode**: Mimics a native 2004 Steam desktop client window (fixed-width constrained centered shells, multi-column master-detail views, and permanent sidebar navigation).
+- **Desktop/Tablet Mode**: Mimics a retro early-2000s desktop game-client window (fixed-width constrained centered shells, multi-column master-detail views, and permanent sidebar navigation).
 - **Mobile Mode**: Collapses into single-column flows with standard bottom navigation bars.
 
 ## 📱 BOTTOM NAVIGATION & CORE WORKFLOWS
@@ -27,20 +27,20 @@ The core app features a bottom navigation bar (migrating to a desktop sidebar on
    - **Top 4 Favorites**: Showcase section for top 4 favorite games of all time.
    - **Hardware & Platform Roster**: Grid of owned consoles/platforms with PC spec entry and 1 highlighted "Main" platform badge.
 
-## 🎨 VISUAL THEME & UX SPECIFICATION (2004 STEAM AESTHETIC)
-The application MUST strictly adhere to a **2004 Valve Steam UI** aesthetic.
+## 🎨 VISUAL THEME & UX SPECIFICATION (RETROGAMINGPC AESTHETIC)
+The application MUST strictly adhere to the **RetroGamingPC** aesthetic: an original early-2000s desktop game-client look (olive palette, beveled chrome, compact type). Never use third-party brand names, logos, icons, fonts or artwork in UI or code identifiers; product names may appear only when referring to that real product (e.g. a "Steam Deck" device entry).
 - **Color Palette**:
-  - \`steam-dark\`: \`#3a3d36\` (Primary dark background / window chrome)
-  - \`steam-card\`: \`#4c5046\` (Container / panel background)
-  - \`steam-panel\`: \`#595e52\` (Elevated card / header background)
-  - \`steam-accent\`: \`#6a725e\` (Borders, tabs, container dividers)
-  - \`steam-highlight\`: \`#9da789\` (Active items, selected tab state, hover effects)
-  - \`steam-text\`: \`#c4cdb4\` (Primary readable text)
-  - \`steam-text-bright\`: \`#e6ebd6\` (Headings, key metric values)
-  - \`steam-text-muted\`: \`#889177\` (Subtext, meta information)
-  - \`steam-button\`: \`#52584a\` (Interactive button surfaces)
-  - \`steam-button-border\`: \`#737b67\` (Beveled button borders)
-  - \`steam-active\`: \`#79846b\` (Primary focus / action green)
+  - \`retrogamingpc-dark\`: \`#3a3d36\` (Primary dark background / window chrome)
+  - \`retrogamingpc-card\`: \`#4c5046\` (Container / panel background)
+  - \`retrogamingpc-panel\`: \`#595e52\` (Elevated card / header background)
+  - \`retrogamingpc-accent\`: \`#6a725e\` (Borders, tabs, container dividers)
+  - \`retrogamingpc-highlight\`: \`#9da789\` (Active items, selected tab state, hover effects)
+  - \`retrogamingpc-text\`: \`#c4cdb4\` (Primary readable text)
+  - \`retrogamingpc-text-bright\`: \`#e6ebd6\` (Headings, key metric values)
+  - \`retrogamingpc-text-muted\`: \`#889177\` (Subtext, meta information)
+  - \`retrogamingpc-button\`: \`#52584a\` (Interactive button surfaces)
+  - \`retrogamingpc-button-border\`: \`#737b67\` (Beveled button borders)
+  - \`retrogamingpc-active\`: \`#79846b\` (Primary focus / action green)
 - **UI & Bevel Guidelines**:
   - **Skeuomorphic Borders**: Sharp, tactile bevel borders (\`border-t\`, \`border-l\` lighter highlights, \`border-b\`, \`border-r\` darker inset shadows).
   - **Typography**: Compact, high-density retro layout (sans-serif, tight line heights, crisp monospace numbers/ratings).
@@ -100,7 +100,7 @@ UNDER NO CIRCUMSTANCES create, modify, or output \`.js\` or \`.jsx\` source file
 - **Icons**: Use \`@expo/vector-icons\` (sharp linear sets like \`MaterialCommunityIcons\` or \`Feather\`).
 
 ## 🎨 NATIVEWIND V4 RULES
-- Require \`global.css\` at project root defining 2004 Steam colors and bevel utility classes.
+- Require \`global.css\` at project root defining the RetroGamingPC colors and bevel utility classes.
 - Require import of \`../global.css\` in \`app/_layout.tsx\`.
 - Require \`nativewind-env.d.ts\` at root with content: \`/// <reference types="nativewind/types" />\`.
 `;
