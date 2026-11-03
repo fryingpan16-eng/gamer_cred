@@ -20,15 +20,14 @@ export function AccountSettings({ profile }: { profile: Profile }) {
   const update = useUpdateProfile();
   const logout = useAuthAction(signOut);
   const [username, setUsername] = useState(profile.username);
-  const [avatarUrl, setAvatarUrl] = useState(profile.avatar_url ?? '');
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [saved, setSaved] = useState(false);
 
-  const dirty = username !== profile.username || avatarUrl !== (profile.avatar_url ?? '');
+  const dirty = username !== profile.username;
 
   const submit = () => {
     setSaved(false);
-    const parsed = profileSettingsSchema.safeParse({ username, avatarUrl });
+    const parsed = profileSettingsSchema.safeParse({ username });
     if (!parsed.success) {
       const next: FieldErrors = {};
       for (const issue of parsed.error.issues) {
@@ -64,21 +63,8 @@ export function AccountSettings({ profile }: { profile: Profile }) {
           editable={!update.isPending}
           icon={<Feather name="user" size={12} color={themeColors.textMuted} />}
         />
-        <RetroGamingPCInput
-          label="Avatar URL"
-          value={avatarUrl}
-          onChangeText={setAvatarUrl}
-          autoCapitalize="none"
-          autoCorrect={false}
-          keyboardType="url"
-          placeholder="https://…"
-          error={fieldErrors.avatarUrl}
-          hint="Leave empty to use your initial."
-          editable={!update.isPending}
-          icon={<Feather name="image" size={12} color={themeColors.textMuted} />}
-        />
         <View className="flex-row justify-end">
-          <RetroGamingPCButton label="Save Profile" variant="primary" loading={update.isPending} disabled={!dirty} onPress={submit} />
+          <RetroGamingPCButton label="Save Username" variant="primary" loading={update.isPending} disabled={!dirty} onPress={submit} />
         </View>
       </View>
     </RetroGamingPCPanel>

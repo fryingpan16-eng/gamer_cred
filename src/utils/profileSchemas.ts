@@ -2,14 +2,9 @@ import { z } from 'zod';
 
 import { usernameSchema } from './authSchemas';
 
+/** Profile pictures are uploaded from the device (src/services/avatar.ts), not typed as URLs. */
 export const profileSettingsSchema = z.object({
   username: usernameSchema,
-  avatarUrl: z
-    .string()
-    .trim()
-    .max(500, 'URL is too long')
-    .refine((v) => v === '' || /^https:\/\/\S+$/i.test(v), 'Use an https:// image URL')
-    .transform((v) => (v === '' ? null : v)),
 });
 
 export type ProfileSettingsInput = z.input<typeof profileSettingsSchema>;

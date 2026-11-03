@@ -20,6 +20,7 @@ import {
   updateProfile,
   updateUiTheme,
 } from '@/services/profile';
+import { removeAvatar, uploadAvatar, type PreparedAvatar } from '@/services/avatar';
 import {
   removeFriendship,
   respondToFriendRequest,
@@ -169,6 +170,26 @@ export function useUpdateNowPlayingVisibility() {
     onSuccess: (profile) => {
       useAuthStore.setState({ profile });
       queryClient.setQueryData(queryKeys.profiles.detail(profile.id), profile);
+    },
+  });
+}
+
+/** Upload a prepared picture, or remove it (`null`); syncs the auth snapshot and profile cache. */
+export function useAvatarMutation() {
+  const queryClient = useQueryClient();
+  const viewerId = useViewerId();
+  return useMutation({
+    mutationFn: (avatar: PreparedAvatar | null) => {
+      if (!viewerId) throw new Error('You must be signed in.');
+      return avatar ? uploadAvatar(viewerId, avatar) : removeAvatar(viewerId);
+    },
+    onSuccess: (profile) => {
+      useAuthStore.setState({ profile });
+      queryClient.setQueryData(queryKeys.profiles.detail(profile.id), profile);
+      // Avatars appear in search results, reviews and the feed.
+      void queryClient.invalidateQueries({ queryKey: queryKeys.search.entity('users') });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.games.reviewsAll() });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.feed.all() });
     },
   });
 }

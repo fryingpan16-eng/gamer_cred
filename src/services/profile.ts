@@ -42,7 +42,7 @@ export async function updateProfile(userId: string, current: Profile, values: Pr
   }
   const { data, error } = await supabase
     .from('profiles')
-    .update({ username: values.username, avatar_url: values.avatarUrl })
+    .update({ username: values.username })
     .eq('id', userId)
     .select()
     .single();

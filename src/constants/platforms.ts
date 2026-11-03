@@ -19,6 +19,24 @@ export type PlatformInfo = {
   hasSpecs?: true;
   /** The owner lists the specific devices they have (e.g. "Steam Deck OLED"). */
   hasDevices?: true;
+  /** Overrides the family icon (see platformIcon). */
+  icon?: PlatformIconName;
+};
+
+/**
+ * Generic MaterialCommunityIcons glyphs — deliberately NOT console makers'
+ * logos (those are trademarks); the chip label names the platform.
+ */
+export type PlatformIconName = 'desktop-tower-monitor' | 'laptop' | 'penguin' | 'gamepad-round' | 'gamepad-variant' | 'cellphone';
+
+const FAMILY_ICONS: Record<PlatformFamily, PlatformIconName> = {
+  pc: 'desktop-tower-monitor',
+  handheld: 'gamepad-round',
+  playstation: 'gamepad-variant',
+  xbox: 'gamepad-variant',
+  nintendo: 'gamepad-variant',
+  sega: 'gamepad-variant',
+  mobile: 'cellphone',
 };
 
 /** Reserved GamerCred-only platform ids (negative = not an IGDB platform). */
@@ -50,8 +68,8 @@ export const PLATFORM_FAMILIES: readonly { key: PlatformFamily; label: string }[
 
 export const PLATFORMS: readonly PlatformInfo[] = [
   { id: 6, name: 'PC (Windows)', short: 'PC', family: 'pc', hasSpecs: true },
-  { id: 14, name: 'Mac', short: 'Mac', family: 'pc', hasSpecs: true },
-  { id: 3, name: 'Linux', short: 'Linux', family: 'pc', hasSpecs: true },
+  { id: 14, name: 'Mac', short: 'Mac', family: 'pc', hasSpecs: true, icon: 'laptop' },
+  { id: 3, name: 'Linux', short: 'Linux', family: 'pc', hasSpecs: true, icon: 'penguin' },
 
   { id: PC_HANDHELD_PLATFORM_ID, name: 'PC Handheld', short: 'PC Handheld', family: 'handheld', hasDevices: true },
 
@@ -93,6 +111,10 @@ export const PLATFORMS: readonly PlatformInfo[] = [
 ];
 
 const BY_ID = new Map(PLATFORMS.map((p) => [p.id, p]));
+
+export function platformIcon(info: PlatformInfo): PlatformIconName {
+  return info.icon ?? FAMILY_ICONS[info.family];
+}
 
 /** Unknown ids (e.g. added directly in the DB) still render with a generic label. */
 export function platformInfo(id: number): PlatformInfo {

@@ -2,6 +2,8 @@ import { Stack } from 'expo-router';
 import { ScrollView, Text, View } from 'react-native';
 
 import { AccountSettings } from '@/components/settings/AccountSettings';
+import { AvatarSetting } from '@/components/settings/AvatarSetting';
+import { PlatformSettings } from '@/components/settings/PlatformSettings';
 import { PrivacySetting } from '@/components/settings/PrivacySetting';
 import { RatingScaleSetting } from '@/components/settings/RatingScaleSetting';
 import { ThemeSetting } from '@/components/settings/ThemeSetting';
@@ -9,7 +11,7 @@ import { RetroGamingPCAlert, RetroGamingPCButton, RetroGamingPCPanel, RetroGamin
 import { useAuthStore } from '@/hooks/useAuth';
 import { useProfile } from '@/hooks/useProfile';
 
-/** Settings (opened from the Profile tab): appearance, ratings, privacy, account. */
+/** Settings (opened from the Profile tab): profile picture, appearance, hardware & platforms, ratings, privacy, account. */
 export default function SettingsScreen() {
   const userId = useAuthStore((s) => s.user?.id ?? null);
   const profile = useProfile(userId);
@@ -22,11 +24,19 @@ export default function SettingsScreen() {
     >
       <Stack.Screen options={{ title: 'Settings' }} />
 
+      <RetroGamingPCPanel title="Profile Picture">
+        <AvatarSetting />
+      </RetroGamingPCPanel>
+
       <RetroGamingPCPanel title="Appearance">
         <View className="gap-1">
           <Text className="retrogamingpc-label">Colour theme</Text>
           <ThemeSetting />
         </View>
+      </RetroGamingPCPanel>
+
+      <RetroGamingPCPanel title="Hardware & Platforms">
+        <PlatformSettings />
       </RetroGamingPCPanel>
 
       <RetroGamingPCPanel title="Ratings">

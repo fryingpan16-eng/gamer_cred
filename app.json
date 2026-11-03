@@ -28,7 +28,15 @@
       "expo-status-bar",
       "expo-secure-store",
       "expo-font",
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "GamerCred uses your photo library so you can choose a profile picture.",
+          "cameraPermission": false,
+          "microphonePermission": false
+        }
+      ]
     ],
     "scheme": "gamercred",
     "backgroundColor": "#3a3d36",

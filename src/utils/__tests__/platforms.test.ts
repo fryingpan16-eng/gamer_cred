@@ -1,4 +1,4 @@
-import { PC_HANDHELD_PLATFORM_ID, PLATFORM_FAMILIES, PLATFORMS, platformInfo } from '@/constants/platforms';
+import { PC_HANDHELD_PLATFORM_ID, PLATFORM_FAMILIES, PLATFORMS, platformIcon, platformInfo } from '@/constants/platforms';
 import { MAX_PLATFORM_DEVICES, platformDevicesSchema } from '@/utils/profileSchemas';
 
 describe('platform catalog', () => {
@@ -17,6 +17,15 @@ describe('platform catalog', () => {
   it('includes Nintendo Switch 2 alongside the original Switch', () => {
     expect(PLATFORMS.find((p) => p.name === 'Nintendo Switch 2')).toMatchObject({ family: 'nintendo' });
     expect(platformInfo(130).name).toBe('Nintendo Switch');
+  });
+});
+
+describe('platform icons', () => {
+  it('every platform gets a generic (non-logo) icon', () => {
+    const GENERIC = new Set(['desktop-tower-monitor', 'laptop', 'penguin', 'gamepad-round', 'gamepad-variant', 'cellphone']);
+    for (const p of PLATFORMS) expect(GENERIC.has(platformIcon(p))).toBe(true);
+    expect(platformIcon(platformInfo(PC_HANDHELD_PLATFORM_ID))).toBe('gamepad-round');
+    expect(platformIcon(platformInfo(14))).toBe('laptop');
   });
 });
 

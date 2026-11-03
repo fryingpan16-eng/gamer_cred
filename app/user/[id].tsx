@@ -4,7 +4,6 @@ import { ScrollView, View } from 'react-native';
 import { FavoritesShowcase } from '@/components/profile/FavoritesShowcase';
 import { FriendButton } from '@/components/profile/FriendButton';
 import { NowPlayingShowcase } from '@/components/profile/NowPlayingShowcase';
-import { PlatformRoster } from '@/components/profile/PlatformRoster';
 import { ProfileHeader } from '@/components/profile/ProfileHeader';
 import { PublishedReviews } from '@/components/profile/PublishedReviews';
 import { RetroGamingPCAlert, RetroGamingPCButton, RetroGamingPCPanel, RetroGamingPCSpinner } from '@/components/ui';
@@ -60,10 +59,9 @@ export default function UserProfileScreen() {
         <View className="gap-3 md:flex-[3]">
           <NowPlayingShowcase userId={player.id} isOwner={false} visibility={player.now_playing_visibility} />
           <FavoritesShowcase userId={player.id} editable={false} />
-          <PublishedReviews userId={player.id} isOwner={false} />
         </View>
         <View className="gap-3 md:flex-[2]">
-          <PlatformRoster userId={player.id} editable={false} />
+          <PublishedReviews userId={player.id} isOwner={false} />
         </View>
       </View>
     </ScrollView>
