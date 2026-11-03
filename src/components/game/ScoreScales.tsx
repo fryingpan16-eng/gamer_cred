@@ -1,9 +1,23 @@
+import type { ReactNode } from 'react';
 import { Text, View } from 'react-native';
 
 import { RetroGamingPCStarRating } from '@/components/ui';
 import type { RatingScale } from '@/constants/ratingRubric';
+import { useThemeColors } from '@/hooks/useTheme';
 import { cn } from '@/utils/cn';
-import { deriveAllScales, formatNumeric, formatRounded, formatStars, tierDefinition, type StoredRating } from '@/utils/rating';
+import { mix, readableTintAlpha } from '@/utils/color';
+import {
+  deriveAllScales,
+  formatNumeric,
+  formatRounded,
+  formatStars,
+  tierDefinition,
+  tierDefinitionForNumeric,
+  type StoredRating,
+} from '@/utils/rating';
+
+/** Light hairline between the scales in a score box. */
+export const SCALE_DIVIDER = 'rgba(255,255,255,0.16)';
 
 /**
  * Which scales a game-page score box shows, in order: the viewer's default
@@ -80,6 +94,8 @@ export type ScoreScalesProps = {
   numericText?: string;
   /** Leave the primary scale out (the caller renders it, e.g. as the quick-rating control). */
   omitPrimary?: boolean;
+  /** Draw a divider above the first row too (when something sits above it, e.g. the quick-rating control). */
+  dividerBeforeFirst?: boolean;
   className?: string;
 };
 
@@ -87,20 +103,60 @@ export type ScoreScalesProps = {
  * A score in several scales at once: the default scale large, then 1–100,
  * stars and tier at a readable size. Unrated shows "--" so the box keeps its shape.
  */
-export function ScoreScales({ rating, primaryScale, numericText, omitPrimary = false, className }: ScoreScalesProps) {
+export function ScoreScales({ rating, primaryScale, numericText, omitPrimary = false, dividerBeforeFirst = false, className }: ScoreScalesProps) {
   const scales = scoreBoxScales(primaryScale);
   const shown = omitPrimary ? scales.slice(1) : scales;
   return (
-    <View className={cn('gap-1.5', className)}>
-      {shown.map((scale) => {
+    <View className={className}>
+      {shown.map((scale, i) => {
         const primary = scale === primaryScale;
+        const divided = i > 0 || dividerBeforeFirst;
         return (
-          <View key={scale} className="flex-row items-center gap-2">
+          <View
+            key={scale}
+            className={cn('flex-row items-center gap-2 py-1.5', divided && 'border-t')}
+            style={divided ? { borderTopColor: SCALE_DIVIDER } : undefined}
+          >
             {primary ? null : <Text className="w-10 text-retrogamingpc-xs text-retrogamingpc-text-muted">{LABELS[scale]}</Text>}
             <ScaleValue scale={scale} rating={rating} numericText={numericText} emphasis={primary ? 'primary' : 'secondary'} />
           </View>
         );
       })}
+    </View>
+  );
+}
+
+/** Theme surface + text colours the tint must stay readable against. */
+type TintBase = { dark: string; text: string; textMuted: string };
+
+/**
+ * Border, accent bar and background for a score box, from the tier of its
+ * score. The background is the strongest tint of the tier colour that keeps
+ * the box's text at the app's contrast minimums (≥ 7:1 body, ≥ 4.5:1 muted).
+ */
+export function tierBoxStyle(rating: StoredRating | null, base: TintBase) {
+  if (!rating) return undefined;
+  const { color } = tierDefinitionForNumeric(rating.numeric);
+  const alpha = readableTintAlpha(color, base.dark, { body: base.text, muted: base.textMuted });
+  return { borderColor: color, borderLeftColor: color, backgroundColor: mix(color, base.dark, alpha) };
+}
+
+/**
+ * A game-page score box colour-coded to the tier of its score (border, left
+ * accent bar and a strong, still-readable tint). Unrated boxes keep the plain sunken look.
+ * Text stays neutral, so it reads the same on every tier.
+ */
+export function TierScoreBox({ rating, title, children }: { rating: StoredRating | null; title: string; children: ReactNode }) {
+  const themeColors = useThemeColors();
+  const style = tierBoxStyle(rating, themeColors);
+  const tierLabel = rating ? tierDefinitionForNumeric(rating.numeric) : null;
+  return (
+    <View
+      className={cn('min-w-[200px] flex-1 bg-retrogamingpc-dark px-2 pb-1 pt-2', style ? 'border-2 border-l-[6px]' : 'retrogamingpc-bevel-inset')}
+      style={style}
+      accessibilityLabel={tierLabel ? `${title}, tier ${tierLabel.tier}` : title}
+    >
+      {children}
     </View>
   );
 }

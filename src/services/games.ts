@@ -1,6 +1,6 @@
 import type { PostgrestError } from '@supabase/supabase-js';
 
-import type { FriendReviewRow } from '@/types/database.types';
+import type { FriendRatingRow, FriendReviewRow } from '@/types/database.types';
 import type { IgdbDetailResponse } from '@/types/igdb';
 
 import { invokeProxy } from './igdb';
@@ -62,6 +62,13 @@ export async function fetchGameReviews(gameId: number, page: number): Promise<Ga
 /** Accepted friends' published reviews of a game (migration 000012 RPC). */
 export async function fetchFriendReviewsForGame(gameId: number): Promise<FriendReviewRow[]> {
   const { data, error } = await supabase.rpc('friend_reviews_for_game', { p_game_id: gameId });
+  if (error) fail(error, "Could not load your friends' ratings.");
+  return data;
+}
+
+/** Accepted friends' ratings of a game, quick or reviewed (migration 000016 RPC). */
+export async function fetchFriendRatingsForGame(gameId: number): Promise<FriendRatingRow[]> {
+  const { data, error } = await supabase.rpc('friend_ratings_for_game', { p_game_id: gameId });
   if (error) fail(error, "Could not load your friends' ratings.");
   return data;
 }

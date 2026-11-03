@@ -3,9 +3,10 @@ import { Text, View } from 'react-native';
 
 import { QuickRating } from '@/components/rating/QuickRating';
 import { RetroGamingPCBadge, RetroGamingPCButton, RetroGamingPCCard } from '@/components/ui';
-import { useRateGame } from '@/hooks/useRatings';
+import { PlayedOnControl } from '@/components/rating/PlayedOnControl';
+import { useGameRatingControl } from '@/hooks/useRatings';
+import type { GameRatingEntry } from '@/services/ratings';
 import { igdbImageUrl, type IgdbGameResult } from '@/types/igdb';
-import type { StoredRating } from '@/utils/rating';
 
 import { EntryTypeBadge } from '@/components/game/EntryTypeBadge';
 
@@ -14,12 +15,12 @@ import { Thumbnail } from './Thumbnail';
 type GameResultCardProps = {
   game: IgdbGameResult;
   /** The viewer's rating, from the list's single batched lookup (undefined while it loads). */
-  myRating: StoredRating | null | undefined;
+  myRating: GameRatingEntry | null | undefined;
 };
 
-/** A game search result: inline quick rating (no navigation, no modal) + "View Details". */
+/** A game search result: inline quick rating + "played on" (no navigation, no modal) + "View Details". */
 export function GameResultCard({ game, myRating }: GameResultCardProps) {
-  const { rate } = useRateGame();
+  const control = useGameRatingControl(game, myRating ?? null);
   const meta = [game.releaseYear, game.developers[0]].filter(Boolean).join(' · ');
 
   return (
@@ -57,13 +58,22 @@ export function GameResultCard({ game, myRating }: GameResultCardProps) {
             gameName={game.name}
             value={myRating ?? null}
             readOnly={myRating === undefined}
-            onChange={(next) => rate(game.id, next, myRating ?? null)}
+            onChange={control.setRating}
           />
-          <RetroGamingPCButton
+          <RetroGamingPCButton variant="navigate"
             label="View Details"
             onPress={() => router.push({ pathname: '/game/[id]', params: { id: String(game.id) } })}
           />
         </View>
+        <PlayedOnControl
+          compact
+          gameId={game.id}
+          platformId={control.platformId}
+          isDefault={control.isDefaultPlatform}
+          defaultPlatformId={control.defaultPlatformId}
+          disabled={myRating === undefined}
+          onChange={control.setPlatform}
+        />
       </View>
     </RetroGamingPCCard>
   );

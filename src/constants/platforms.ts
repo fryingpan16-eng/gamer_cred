@@ -120,3 +120,12 @@ export function platformIcon(info: PlatformInfo): PlatformIconName {
 export function platformInfo(id: number): PlatformInfo {
   return BY_ID.get(id) ?? { id, name: `Platform #${id}`, short: `#${id}`, family: 'pc' };
 }
+
+/**
+ * Default "played on" platform for a rating: the earliest-released platform
+ * (IGDB release order, from the search/detail proxy) that is in our catalog.
+ * Null when the game has no catalog platform (or no data yet).
+ */
+export function defaultPlayedOnPlatform(releasePlatformIds: readonly number[] | undefined): number | null {
+  return (releasePlatformIds ?? []).find((id) => BY_ID.has(id)) ?? null;
+}

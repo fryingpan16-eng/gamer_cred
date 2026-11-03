@@ -1,0 +1,7 @@
+{
+  "save":     {"fill": "#148731", "hover": "#117a2b", "pressed": "#0e6b25", "light": "#5fd17a", "dark": "#0a4a1a", "label": "#ffffff", "text": "#5fe07f"},
+  "cancel":   {"fill": "#c62828", "hover": "#b02222", "pressed": "#a31f1f", "light": "#ff8a80", "dark": "#5c0d0d", "label": "#ffffff", "text": "#ff8a7a"},
+  "danger":   {"fill": "#7a0d0d", "hover": "#8f1515", "pressed": "#5e0909", "light": "#ff5c5c", "dark": "#2e0404", "label": "#ffffff", "text": "#ff8a7a"},
+  "create":   {"fill": "#148731", "hover": "#117a2b", "pressed": "#0e6b25", "light": "#5fd17a", "dark": "#0a4a1a", "label": "#ffffff", "text": "#5fe07f"},
+  "navigate": {"fill": "#4da3ff", "hover": "#6cb4ff", "pressed": "#348ae8", "light": "#b8dbff", "dark": "#1c4a80", "label": "#0b0b0b", "text": "#7ab8ff"}
+}

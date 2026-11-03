@@ -37,7 +37,7 @@ export function CompanyResultCard({ company, onSearchGames }: CompanyResultCardP
           </Text>
         ) : null}
         <View className="flex-row justify-end pt-1">
-          <RetroGamingPCButton label="Search Games" onPress={() => onSearchGames(company.name)} />
+          <RetroGamingPCButton variant="navigate" label="Search Games" onPress={() => onSearchGames(company.name)} />
         </View>
       </View>
     </RetroGamingPCCard>

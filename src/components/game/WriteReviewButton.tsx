@@ -28,9 +28,8 @@ export function WriteReviewButton({ gameId }: { gameId: number }) {
   };
 
   return (
-    <RetroGamingPCButton
+    <RetroGamingPCButton variant="create"
       label={review ? (review.status === 'published' ? 'Edit your review' : 'Resume review draft') : 'Write a review'}
-      variant="primary"
       loading={myReview.isPending}
       onPress={open}
     />

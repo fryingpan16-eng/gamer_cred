@@ -4,6 +4,7 @@ import {
   hexToTriplet,
   NEUTRAL_TEXT_TOKENS,
   isThemeName,
+  THEME_LABELS,
   THEME_NAMES,
   THEME_TOKENS,
   themeCssVariables,
@@ -32,9 +33,10 @@ const PAIRS: [string, string][] = [
 ];
 
 describe('colour themes', () => {
-  it('offers olive (default), blue, red, yellow and pink', () => {
-    expect(THEME_NAMES).toEqual(['olive', 'blue', 'red', 'yellow', 'pink']);
-    expect(DEFAULT_THEME).toBe('olive');
+  it('offers blue (default, listed first), olive, red, yellow and pink', () => {
+    expect(THEME_NAMES).toEqual(['blue', 'olive', 'red', 'yellow', 'pink']);
+    expect(DEFAULT_THEME).toBe('blue');
+    expect(THEME_NAMES.map((n) => THEME_LABELS[n])).toEqual(['Mega', 'Chief', 'Super', 'Pika', 'Peach']);
     expect(Object.keys(palettes).sort()).toEqual([...THEME_NAMES].sort());
   });
 
@@ -92,7 +94,7 @@ describe('colour themes', () => {
     expect(isThemeName(undefined)).toBe(false);
   });
 
-  it('tailwind.config.js maps every token to a CSS variable and defaults :root to olive', () => {
+  it('tailwind.config.js maps every token to a CSS variable and defaults :root to the default theme', () => {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const config = require('../../../tailwind.config.js') as {
       theme: { extend: { colors: Record<string, string> } };

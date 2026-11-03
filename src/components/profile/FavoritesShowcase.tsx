@@ -7,13 +7,27 @@ import { RetroGamingPCAlert, RetroGamingPCPanel, RetroGamingPCSpinner } from '@/
 import { useGameLookup } from '@/hooks/useGames';
 import { useFavoriteMutation, useFavorites } from '@/hooks/useProfile';
 import type { FavoriteRank } from '@/types/database.types';
+import { ACTION_COLORS } from '@/constants/actionColors';
 import { cn } from '@/utils/cn';
 
 import { CoverTile } from './CoverTile';
 
 const RANKS: readonly FavoriteRank[] = [1, 2, 3, 4];
 
-function TinyButton({ label, a11y, onPress, disabled }: { label: string; a11y: string; onPress: () => void; disabled?: boolean }) {
+function TinyButton({
+  label,
+  a11y,
+  onPress,
+  disabled,
+  tone,
+}: {
+  label: string;
+  a11y: string;
+  onPress: () => void;
+  disabled?: boolean;
+  /** Fixed action colour for the glyph (e.g. red ✕ remove). */
+  tone?: string;
+}) {
   return (
     <Pressable
       accessibilityRole="button"
@@ -23,7 +37,9 @@ function TinyButton({ label, a11y, onPress, disabled }: { label: string; a11y: s
       onPress={onPress}
       className={cn('retrogamingpc-bevel h-5 flex-1 items-center justify-center bg-retrogamingpc-button', disabled && 'opacity-30')}
     >
-      <Text className="text-retrogamingpc-xs font-bold text-retrogamingpc-text-bright">{label}</Text>
+      <Text className={cn('text-retrogamingpc-xs font-bold', !tone && 'text-retrogamingpc-text-bright')} style={tone ? { color: tone } : undefined}>
+        {label}
+      </Text>
     </Pressable>
   );
 }
@@ -97,7 +113,7 @@ export function FavoritesShowcase({ userId, editable }: FavoritesShowcaseProps) 
                         onPress={() => mutation.mutate({ action: 'swap', a: rank, b: (rank - 1) as FavoriteRank })}
                       />
                       <TinyButton label="⇄" a11y={`Replace favorite #${rank}`} onPress={() => setPickingRank(rank)} />
-                      <TinyButton label="✕" a11y={`Remove favorite #${rank}`} onPress={() => mutation.mutate({ action: 'remove', rank })} />
+                      <TinyButton label="✕" tone={ACTION_COLORS.cancel.text} a11y={`Remove favorite #${rank}`} onPress={() => mutation.mutate({ action: 'remove', rank })} />
                       <TinyButton
                         label="▶"
                         a11y={`Move #${rank} down`}

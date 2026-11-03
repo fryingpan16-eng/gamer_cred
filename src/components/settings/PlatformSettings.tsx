@@ -5,13 +5,7 @@ import { Pressable, Text, View } from 'react-native';
 import { PcSpecsModal } from '@/components/profile/PcSpecsModal';
 import { PlatformDevicesModal } from '@/components/profile/PlatformDevicesModal';
 import { SystemSpecsPanel } from '@/components/profile/SystemSpecsPanel';
-import {
-  RetroGamingPCAlert,
-  RetroGamingPCBadge,
-  RetroGamingPCButton,
-  RetroGamingPCCard,
-  RetroGamingPCSpinner,
-} from '@/components/ui';
+import { RetroGamingPCAlert, RetroGamingPCBadge, RetroGamingPCButton, RetroGamingPCCard, RetroGamingPCSaveStatus, RetroGamingPCSpinner, saveStatusOf } from '@/components/ui';
 import {
   PC_HANDHELD_SUGGESTIONS,
   PLATFORM_FAMILIES,
@@ -120,7 +114,10 @@ export function PlatformSettings() {
       {mutation.isError && !specsError && !devicesError ? <RetroGamingPCAlert message={mutation.error.message} /> : null}
 
       <View className="gap-2">
-        <Text className="retrogamingpc-label">Owned platforms — tap to toggle</Text>
+        <View className="flex-row items-center justify-between gap-2">
+          <Text className="retrogamingpc-label">Owned platforms — tap to toggle</Text>
+          <RetroGamingPCSaveStatus {...saveStatusOf(mutation)} />
+        </View>
         {PLATFORM_FAMILIES.map((family) => (
           <View key={family.key} className="gap-1">
             <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted">{family.label}</Text>

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Image, Platform, Text, View } from 'react-native';
 
-import { RetroGamingPCAlert, RetroGamingPCButton, RetroGamingPCConfirmModal, RetroGamingPCSpinner } from '@/components/ui';
+import { RetroGamingPCAlert, RetroGamingPCButton, RetroGamingPCConfirmModal, RetroGamingPCSaveStatus, RetroGamingPCSpinner } from '@/components/ui';
 import { useAuthStore } from '@/hooks/useAuth';
 import { useAvatarMutation } from '@/hooks/useProfile';
 import { AvatarError, pickAvatarImage, type PreparedAvatar } from '@/services/avatar';
@@ -57,9 +57,8 @@ export function AvatarSetting() {
 
       <View className="min-w-[180px] flex-1 gap-2">
         <View className="flex-row flex-wrap gap-2">
-          <RetroGamingPCButton
+          <RetroGamingPCButton variant="create"
             label={Platform.OS === 'web' ? 'Choose File…' : 'Choose from Gallery'}
-            variant="primary"
             loading={busy}
             onPress={() => void choose()}
           />
@@ -70,6 +69,7 @@ export function AvatarSetting() {
         <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted">
           {mutation.isPending ? 'Uploading…' : 'JPG, PNG or WebP. Cropped to a square and resized automatically.'}
         </Text>
+        <RetroGamingPCSaveStatus pending={false} savedAt={mutation.isSuccess ? mutation.submittedAt : null} />
         {pickError ? <RetroGamingPCAlert message={pickError} /> : null}
         {mutation.isError ? <RetroGamingPCAlert message={mutation.error.message} /> : null}
       </View>

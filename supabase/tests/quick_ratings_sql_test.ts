@@ -26,7 +26,7 @@ const rate = (db: PGlite, uid: string, gameId: number, score: number, scale = 's
 const clear = (db: PGlite, uid: string, gameId: number) =>
   asUser(db, uid, 'delete from public.game_ratings where user_id = $1 and game_id = $2', [uid, gameId]);
 const myRatings = (db: PGlite, uid: string) =>
-  asUser<RatingRow>(db, uid, 'select * from public.game_ratings order by game_id');
+  asUser<RatingRow>(db, uid, 'select * from public.game_ratings where user_id = auth.uid() order by game_id');
 const reviewsOf = (db: PGlite, uid: string) =>
   asOwner<ReviewRow>(db, `select game_id, rating, rating_input, status from public.reviews where user_id = '${uid}' order by game_id`);
 
@@ -51,8 +51,8 @@ Deno.test('one quick rating per game per user (primary key), and never a review'
   assertEquals(await reviewsOf(db, ME), []);
 });
 
-Deno.test('RLS: quick ratings are private to their owner', async () => {
-  const db = await freshDb();
+Deno.test('RLS (000015): quick ratings were private to their owner', async () => {
+  const db = await freshDb({ through: 15 });
   await rate(db, ME, 10, 89);
   assertEquals(await myRatings(db, OTHER), []); // can't read mine
   // can't write a rating as me
@@ -121,8 +121,7 @@ Deno.test('Gamer Cred score counts one score per user from reviews and quick rat
   assertEquals(stats!.review_count, 2);
   assertEquals(Number(stats!.average_rating), 80);
   assertEquals(stats!.distribution[89], 1); // score 90
-  // ...but OTHER still can't read my individual rating.
-  assertEquals((await myRatings(db, OTHER)).map((r) => r.user_id), [OTHER]);
+  // (since 000016 individual ratings are public too — see quick_ratings_public_test.ts)
 });
 
 Deno.test('stats: quick-rated games count as logged (platform Unknown) and in the score stats', async () => {

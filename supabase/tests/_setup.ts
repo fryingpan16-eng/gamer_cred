@@ -9,6 +9,7 @@ import { PGlite } from '@electric-sql/pglite';
 
 export const ME = '00000000-0000-0000-0000-00000000000a';
 export const OTHER = '00000000-0000-0000-0000-00000000000b';
+export const THIRD = '00000000-0000-0000-0000-00000000000c';
 
 const BASE_SCHEMA = `
   create role authenticated; create role anon;
@@ -17,7 +18,14 @@ const BASE_SCHEMA = `
     as $$ select nullif(current_setting('test.uid', true), '')::uuid $$;
   create type public.review_status as enum ('draft', 'published');
   create type public.rating_scale as enum ('numeric', 'tier', 'stars', 'rounded');
-  create table public.profiles (id uuid primary key);
+  create table public.profiles (id uuid primary key, username text, avatar_url text);
+  create type public.friendship_status as enum ('pending', 'accepted', 'declined', 'blocked');
+  create table public.friendships (
+    id uuid primary key default gen_random_uuid(),
+    user_id uuid not null references public.profiles (id) on delete cascade,
+    friend_id uuid not null references public.profiles (id) on delete cascade,
+    status public.friendship_status not null default 'pending'
+  );
   create table public.reviews (
     id uuid primary key default gen_random_uuid(),
     user_id uuid not null references public.profiles (id) on delete cascade,
@@ -58,13 +66,16 @@ const GRANTS = `
 const migration = (name: string) => Deno.readTextFile(new URL(`../migrations/${name}`, import.meta.url));
 
 /** Fresh database. `beforeMigrations` runs between the stub schema and 000014 (e.g. cache rows for the backfill). */
-export async function freshDb(opts: { beforeMigrations?: string; through?: 14 | 15 } = {}): Promise<PGlite> {
+export async function freshDb(opts: { beforeMigrations?: string; through?: 14 | 15 | 16 | 17 } = {}): Promise<PGlite> {
   const db = new PGlite();
   await db.exec(BASE_SCHEMA);
-  await db.exec(`insert into public.profiles (id) values ('${ME}'), ('${OTHER}');`);
+  await db.exec(`insert into public.profiles (id, username) values ('${ME}', 'me'), ('${OTHER}', 'other'), ('${THIRD}', 'third');`);
   if (opts.beforeMigrations) await db.exec(opts.beforeMigrations);
   await db.exec(await migration('000014_games_and_stats.sql'));
-  if ((opts.through ?? 15) >= 15) await db.exec(await migration('000015_quick_ratings.sql'));
+  const through = opts.through ?? 17;
+  if (through >= 15) await db.exec(await migration('000015_quick_ratings.sql'));
+  if (through >= 16) await db.exec(await migration('000016_public_ratings_and_platform.sql'));
+  if (through >= 17) await db.exec(await migration('000017_user_ratings_table.sql'));
   await db.exec(GRANTS);
   return db;
 }

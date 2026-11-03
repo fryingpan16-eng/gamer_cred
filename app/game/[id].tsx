@@ -46,7 +46,7 @@ function About({ summary, storyline }: { summary: string | null; storyline: stri
 
 /**
  * Retro store-style game page (RetroGamingPC theme).
- * Desktop: main column (hero, about, media, reviews) + sidebar (actions, facts, requirements).
+ * Desktop: main column (hero, about, friends' ratings, media, reviews) + sidebar (actions, facts, requirements).
  */
 export default function GameDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -114,8 +114,8 @@ export default function GameDetailScreen() {
             </RetroGamingPCPanel>
           ) : null}
           <About summary={game.summary} storyline={game.storyline} />
-          <ScreenshotStrip imageIds={game.screenshotIds} gameName={game.name} />
           <FriendRatings gameId={game.id} />
+          <ScreenshotStrip imageIds={game.screenshotIds} gameName={game.name} />
           <CommunityReviews gameId={game.id} />
         </View>
         <View className="gap-3 md:flex-[2]">

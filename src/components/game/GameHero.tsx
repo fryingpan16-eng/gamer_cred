@@ -4,14 +4,15 @@ import { CoverTile } from '@/components/profile/CoverTile';
 import { QuickRating } from '@/components/rating/QuickRating';
 import { RetroGamingPCBadge } from '@/components/ui';
 import { usePrimaryRatingScale } from '@/hooks/useAuth';
-import { useMyGameRating, useRateGame } from '@/hooks/useRatings';
+import { PlayedOnControl } from '@/components/rating/PlayedOnControl';
+import { useGameRatingControl, useMyGameRating } from '@/hooks/useRatings';
 import { useMyReviewForGame } from '@/hooks/useReviews';
 import type { GameReviewStats } from '@/services/games';
 import { igdbImageUrl, type IgdbGameDetail } from '@/types/igdb';
 import type { StoredRating } from '@/utils/rating';
 
 import { EntryTypeBadge } from './EntryTypeBadge';
-import { ScoreScales } from './ScoreScales';
+import { SCALE_DIVIDER, ScoreScales, TierScoreBox } from './ScoreScales';
 import { WriteReviewButton } from './WriteReviewButton';
 
 type GameHeroProps = { game: IgdbGameDetail; stats: GameReviewStats | undefined };
@@ -30,7 +31,7 @@ export function GameHero({ game, stats }: GameHeroProps) {
   const release = firstRelease(game);
   const mine = useMyReviewForGame(game.id);
   const myRating = useMyGameRating(game.id);
-  const { rate } = useRateGame();
+  const control = useGameRatingControl(game, myRating.rating);
   const primaryScale = usePrimaryRatingScale();
   // Community average (canonical 1–100) shown like any rating, in the viewer's chosen scale.
   const community: StoredRating | null =
@@ -88,20 +89,20 @@ export function GameHero({ game, stats }: GameHeroProps) {
             ))}
           </View>
           <View className="flex-row flex-wrap gap-3 pt-2">
-            <View className="retrogamingpc-bevel-inset min-w-[200px] flex-1 gap-1.5 bg-retrogamingpc-dark p-2">
-              <Text className="retrogamingpc-label">Gamer Cred score · avg</Text>
+            <TierScoreBox rating={community} title="Gamer Cred score">
+              <Text className="retrogamingpc-label pb-0.5">Gamer Cred score · avg</Text>
               <ScoreScales
                 rating={community}
                 primaryScale={primaryScale}
                 // The exact average (one decimal), not the rounded score used for tier / stars.
                 numericText={community && stats?.average !== null && stats?.average !== undefined ? stats.average.toFixed(1) : undefined}
               />
-              <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted">
+              <Text className="border-t pt-1 text-retrogamingpc-xs text-retrogamingpc-text-muted" style={{ borderTopColor: SCALE_DIVIDER }}>
                 {stats ? (stats.count > 0 ? `${stats.count} rating${stats.count === 1 ? '' : 's'}` : 'No ratings yet') : '…'}
               </Text>
-            </View>
-            <View className="retrogamingpc-bevel-inset min-w-[200px] flex-1 gap-1.5 bg-retrogamingpc-dark p-2">
-              <Text className="retrogamingpc-label">Your rating</Text>
+            </TierScoreBox>
+            <TierScoreBox rating={myRating.rating} title="Your rating">
+              <Text className="retrogamingpc-label pb-1">Your rating</Text>
               {/* Your default scale, large and tappable; the other scales follow below. */}
               <QuickRating
                 gameId={game.id}
@@ -110,19 +111,27 @@ export function GameHero({ game, stats }: GameHeroProps) {
                 showTierBadge={false}
                 value={myRating.rating}
                 readOnly={myRating.isPending}
-                onChange={(next) => rate(game.id, next, myRating.rating)}
+                onChange={control.setRating}
               />
-              <ScoreScales rating={myRating.rating} primaryScale={primaryScale} omitPrimary />
-              <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted">
+              <PlayedOnControl
+                gameId={game.id}
+                platformId={control.platformId}
+                isDefault={control.isDefaultPlatform}
+                defaultPlatformId={control.defaultPlatformId}
+                disabled={myRating.isPending}
+                onChange={control.setPlatform}
+              />
+              <ScoreScales rating={myRating.rating} primaryScale={primaryScale} omitPrimary dividerBeforeFirst className="mt-1" />
+              <Text className="border-t pt-1 text-retrogamingpc-xs text-retrogamingpc-text-muted" style={{ borderTopColor: SCALE_DIVIDER }}>
                 {myRating.rating
                   ? mine.data
                     ? 'Also the score on your review.'
-                    : 'Private — counts toward your stats and the Gamer Cred score.'
+                    : 'Public on your profile — counts toward your stats and the Gamer Cred score.'
                   : primaryScale === 'numeric'
                     ? 'Type a score and press Enter, or use − / +.'
                     : 'Tap to rate. Tap it again to clear.'}
               </Text>
-            </View>
+            </TierScoreBox>
           </View>
           <View className="flex-row pt-1">
             <WriteReviewButton gameId={game.id} />

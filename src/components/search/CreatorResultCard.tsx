@@ -43,7 +43,7 @@ export function CreatorResultCard({ creator, onSearchGames }: CreatorResultCardP
         ) : null}
         {firstTitle ? (
           <View className="flex-row justify-end pt-1">
-            <RetroGamingPCButton label={`Find “${firstTitle}”`} onPress={() => onSearchGames(firstTitle)} />
+            <RetroGamingPCButton variant="navigate" label={`Find “${firstTitle}”`} onPress={() => onSearchGames(firstTitle)} />
           </View>
         ) : null}
       </View>

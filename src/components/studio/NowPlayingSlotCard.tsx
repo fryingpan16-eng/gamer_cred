@@ -86,7 +86,7 @@ export function NowPlayingSlotCard({
           </Text>
           <View className="flex-row flex-wrap gap-1">
             <RetroGamingPCButton label="Notes" onPress={onEdit} className="flex-1 px-1" />
-            <RetroGamingPCButton label="Review" variant="primary" onPress={onReview} className="flex-1 px-1" />
+            <RetroGamingPCButton variant="create" label="Review" onPress={onReview} className="flex-1 px-1" />
           </View>
           <RetroGamingPCButton label="Remove" variant="danger" onPress={onRemove} className="px-1" />
         </>

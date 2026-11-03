@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { Modal, Pressable, Text, View } from 'react-native';
 
+import { ACTION_COLORS } from '@/constants/actionColors';
 import { cn } from '@/utils/cn';
 
 import { RetroGamingPCButton } from './RetroGamingPCButton';
@@ -17,6 +18,8 @@ export type RetroGamingPCModalProps = {
   className?: string;
 };
 
+const CANCEL = ACTION_COLORS.cancel;
+
 function TitlebarCloseButton({ onPress }: { onPress: () => void }) {
   const [pressed, setPressed] = useState(false);
   return (
@@ -27,12 +30,19 @@ function TitlebarCloseButton({ onPress }: { onPress: () => void }) {
       onPress={onPress}
       onPressIn={() => setPressed(true)}
       onPressOut={() => setPressed(false)}
-      className={cn(
-        'h-[18px] w-[18px] items-center justify-center',
-        pressed ? 'retrogamingpc-bevel-inset bg-retrogamingpc-dark' : 'retrogamingpc-bevel bg-retrogamingpc-button',
-      )}
+      // Exit = the fixed "cancel" red in every theme.
+      style={{
+        backgroundColor: pressed ? CANCEL.pressed : CANCEL.fill,
+        borderTopColor: pressed ? CANCEL.dark : CANCEL.light,
+        borderLeftColor: pressed ? CANCEL.dark : CANCEL.light,
+        borderBottomColor: pressed ? CANCEL.light : CANCEL.dark,
+        borderRightColor: pressed ? CANCEL.light : CANCEL.dark,
+      }}
+      className="h-[18px] w-[18px] items-center justify-center border"
     >
-      <Text className="text-retrogamingpc-xs font-bold text-retrogamingpc-text-bright">✕</Text>
+      <Text className="text-retrogamingpc-xs font-bold" style={{ color: CANCEL.label }}>
+        ✕
+      </Text>
     </Pressable>
   );
 }
@@ -113,10 +123,10 @@ export function RetroGamingPCConfirmModal({
       dismissOnBackdrop={!busy}
       footer={
         <>
-          <RetroGamingPCButton label={cancelLabel} onPress={onCancel} disabled={busy} />
+          <RetroGamingPCButton label={cancelLabel} variant="cancel" onPress={onCancel} disabled={busy} />
           <RetroGamingPCButton
             label={confirmLabel}
-            variant={destructive ? 'danger' : 'primary'}
+            variant={destructive ? 'danger' : 'save'}
             onPress={onConfirm}
             disabled={busy}
           />

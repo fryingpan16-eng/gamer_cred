@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 
 /** App-wide transient messages (e.g. "Couldn't save your rating"). Rendered by RetroGamingPCToastHost. */
-export type ToastTone = 'error' | 'info';
+export type ToastTone = 'error' | 'info' | 'success';
 export type Toast = { id: number; message: string; tone: ToastTone };
 
 const TOAST_MS = 4500;

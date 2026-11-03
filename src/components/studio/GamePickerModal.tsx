@@ -33,7 +33,7 @@ export function GamePickerModal({ visible, title, onClose, ...bodyProps }: GameP
       title={title}
       onClose={onClose}
       className="max-w-[520px]"
-      footer={<RetroGamingPCButton label="Cancel" onPress={onClose} />}
+      footer={<RetroGamingPCButton variant="cancel" label="Cancel" onPress={onClose} />}
     >
       {/* Mounted only while open, so every opening starts with an empty search box. */}
       {visible ? <PickerBody {...bodyProps} /> : null}

@@ -90,9 +90,8 @@ export default function LoginScreen() {
               <Link href="/register" className="text-retrogamingpc-sm text-retrogamingpc-text-bright underline">
                 Create account
               </Link>
-              <RetroGamingPCButton
+              <RetroGamingPCButton variant="save"
                 label={emailLogin.pending ? 'Signing in…' : 'Login'}
-                variant="primary"
                 loading={emailLogin.pending}
                 disabled={busy}
                 onPress={submit}

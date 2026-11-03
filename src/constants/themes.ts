@@ -13,15 +13,20 @@ import palettes from './themePalettes.json';
 
 export type ThemeName = 'olive' | 'blue' | 'red' | 'yellow' | 'pink';
 
-export const THEME_NAMES: readonly ThemeName[] = ['olive', 'blue', 'red', 'yellow', 'pink'];
-export const DEFAULT_THEME: ThemeName = 'olive';
+/** Settings order; the default comes first. */
+export const THEME_NAMES: readonly ThemeName[] = ['blue', 'olive', 'red', 'yellow', 'pink'];
+export const DEFAULT_THEME: ThemeName = 'blue';
 
+/**
+ * Names shown in Settings. The ids (blue, olive, …) stay as they are: they are
+ * stored in profiles.ui_theme and used throughout the code.
+ */
 export const THEME_LABELS: Record<ThemeName, string> = {
-  olive: 'Olive',
-  blue: 'Blue',
-  red: 'Red',
-  yellow: 'Yellow',
-  pink: 'Pink',
+  blue: 'Mega',
+  olive: 'Chief',
+  red: 'Super',
+  yellow: 'Pika',
+  pink: 'Peach',
 };
 
 /** Token names as used in Tailwind classes (`bg-retrogamingpc-<token>`). */

@@ -25,7 +25,7 @@ export function FriendButton({ otherId, otherName }: FriendButtonProps) {
   let control: ReactNode;
 
   if (r.state === 'none') {
-    control = <RetroGamingPCButton label="Add Friend" variant="primary" loading={busy} onPress={() => mutation.mutate({ action: 'send' })} />;
+    control = <RetroGamingPCButton variant="create" label="Add Friend" loading={busy} onPress={() => mutation.mutate({ action: 'send' })} />;
   } else if (r.state === 'outgoing' || (r.state === 'declined' && r.direction === 'outgoing')) {
     control = (
       <RetroGamingPCButton
@@ -37,10 +37,9 @@ export function FriendButton({ otherId, otherName }: FriendButtonProps) {
   } else if (r.state === 'incoming') {
     control = (
       <>
-        <RetroGamingPCButton label="Decline" disabled={busy} onPress={() => mutation.mutate({ action: 'decline', friendshipId: r.friendshipId })} />
-        <RetroGamingPCButton
+        <RetroGamingPCButton variant="cancel" label="Decline" disabled={busy} onPress={() => mutation.mutate({ action: 'decline', friendshipId: r.friendshipId })} />
+        <RetroGamingPCButton variant="save"
           label="Accept Request"
-          variant="primary"
           loading={busy}
           onPress={() => mutation.mutate({ action: 'accept', friendshipId: r.friendshipId })}
         />
@@ -49,9 +48,8 @@ export function FriendButton({ otherId, otherName }: FriendButtonProps) {
   } else if (r.state === 'declined') {
     // I declined them earlier; adding them now accepts their original request (unique pair index).
     control = (
-      <RetroGamingPCButton
+      <RetroGamingPCButton variant="create"
         label="Add Friend"
-        variant="primary"
         loading={busy}
         onPress={() => mutation.mutate({ action: 'accept', friendshipId: r.friendshipId })}
       />

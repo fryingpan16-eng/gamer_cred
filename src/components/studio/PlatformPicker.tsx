@@ -14,11 +14,27 @@ type PlatformPickerProps = {
   onChange: (platformId: number | null) => void;
   label?: string;
   error?: string;
+  /** Offer a "Not specified" chip (reviews). Quick ratings always have a platform. Default true. */
+  allowNone?: boolean;
+  /** Platform to mark "(earliest release)" — the default when nothing is picked. */
+  defaultId?: number | null;
+  /** Smaller, label-less variant for search rows. */
+  compact?: boolean;
 };
 
-function Chip({ platform, selected, onPress }: { platform: PlatformInfo | null; selected: boolean; onPress: () => void }) {
+function Chip({
+  platform,
+  selected,
+  onPress,
+  isDefault = false,
+}: {
+  platform: PlatformInfo | null;
+  selected: boolean;
+  onPress: () => void;
+  isDefault?: boolean;
+}) {
   const themeColors = useThemeColors();
-  const name = platform ? platform.short : 'Not specified';
+  const name = platform ? `${platform.short}${isDefault ? ' (earliest)' : ''}` : 'Not specified';
   return (
     <Pressable
       accessibilityRole="radio"
@@ -44,10 +60,12 @@ function Chip({ platform, selected, onPress }: { platform: PlatformInfo | null; 
  * "Played on" picker: your own platforms first (Main first), with every other
  * catalog platform one tap away. Only catalog ids can be chosen.
  */
-export function PlatformPicker({ value, onChange, label = 'Played on', error }: PlatformPickerProps) {
+export function PlatformPicker({ value, onChange, label = 'Played on', error, allowNone = true, defaultId = null, compact = false }: PlatformPickerProps) {
   const viewerId = useAuthStore((s) => s.user?.id ?? null);
   const roster = usePlatforms(viewerId);
-  const owned = (roster.data ?? []).map((r) => platformInfo(r.platform_id));
+  const rosterPlatforms = (roster.data ?? []).map((r) => platformInfo(r.platform_id));
+  // The game's earliest platform sits with your own, so the default is one tap away.
+  const owned = defaultId !== null && !rosterPlatforms.some((p) => p.id === defaultId) ? [platformInfo(defaultId), ...rosterPlatforms] : rosterPlatforms;
   const ownedIds = new Set(owned.map((p) => p.id));
   // Show the full catalog when you own nothing, or when the current pick isn't one of yours.
   const [showAll, setShowAll] = useState(false);
@@ -55,12 +73,12 @@ export function PlatformPicker({ value, onChange, label = 'Played on', error }: 
 
   return (
     <View className="gap-1.5">
-      <Text className={cn('retrogamingpc-label', error && 'text-retrogamingpc-error')}>{label}</Text>
+      {compact ? null : <Text className={cn('retrogamingpc-label', error && 'text-retrogamingpc-error')}>{label}</Text>}
       <View className="flex-row flex-wrap gap-1" accessibilityRole="radiogroup">
         {owned.map((p) => (
-          <Chip key={p.id} platform={p} selected={value === p.id} onPress={() => onChange(p.id)} />
+          <Chip key={p.id} platform={p} selected={value === p.id} isDefault={p.id === defaultId} onPress={() => onChange(p.id)} />
         ))}
-        <Chip platform={null} selected={value === null} onPress={() => onChange(null)} />
+        {allowNone ? <Chip platform={null} selected={value === null} onPress={() => onChange(null)} /> : null}
         {owned.length > 0 ? (
           <Pressable accessibilityRole="button" onPress={() => setShowAll((v) => !v)} className="justify-center px-1">
             <Text className="text-retrogamingpc-xs text-retrogamingpc-text-bright underline">
@@ -79,7 +97,7 @@ export function PlatformPicker({ value, onChange, label = 'Played on', error }: 
                 <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted">{family.label}</Text>
                 <View className="flex-row flex-wrap gap-1">
                   {options.map((p) => (
-                    <Chip key={p.id} platform={p} selected={value === p.id} onPress={() => onChange(p.id)} />
+                    <Chip key={p.id} platform={p} selected={value === p.id} isDefault={p.id === defaultId} onPress={() => onChange(p.id)} />
                   ))}
                 </View>
               </View>

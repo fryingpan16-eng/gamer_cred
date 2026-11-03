@@ -39,7 +39,7 @@ function SlotChooserModal({ visible, game, onClose, onAssigned }: SlotChooserPro
   };
 
   return (
-    <RetroGamingPCModal visible={visible} title={`Assign “${game.name}”`} onClose={onClose} footer={<RetroGamingPCButton label="Cancel" onPress={onClose} />}>
+    <RetroGamingPCModal visible={visible} title={`Assign “${game.name}”`} onClose={onClose} footer={<RetroGamingPCButton variant="cancel" label="Cancel" onPress={onClose} />}>
       <View className="gap-2">
         {assign.isError ? <RetroGamingPCAlert message={assign.error.message} /> : null}
         {nowPlaying.isPending ? (
@@ -92,15 +92,15 @@ export function GameActions({ game }: { game: IgdbGameResult }) {
   return (
     <RetroGamingPCPanel title="Your Library">
       <View className="gap-2">
-        {assignedTo ? <RetroGamingPCAlert tone="info" message={`Added to Now Playing slot ${assignedTo}.`} /> : null}
+        {assignedTo ? <RetroGamingPCAlert tone="success" message={`Added to Now Playing slot ${assignedTo}.`} /> : null}
         <View className="flex-row flex-wrap gap-1">
           {inSlot ? <RetroGamingPCBadge label={`Now Playing · Slot ${inSlot.slot_index}`} variant="nowPlaying" /> : null}
           {review ? <RetroGamingPCBadge label={review.status === 'published' ? 'Reviewed' : 'Draft saved'} variant={review.status === 'published' ? 'published' : 'draft'} /> : null}
         </View>
         {inSlot ? (
-          <RetroGamingPCButton label="Open in Review Studio" onPress={() => router.push('/post')} />
+          <RetroGamingPCButton variant="navigate" label="Open in Review Studio" onPress={() => router.push('/post')} />
         ) : (
-          <RetroGamingPCButton label="Assign to Now Playing Slot" variant="primary" onPress={() => setChoosing(true)} />
+          <RetroGamingPCButton variant="create" label="Assign to Now Playing Slot" onPress={() => setChoosing(true)} />
         )}
       </View>
       <SlotChooserModal

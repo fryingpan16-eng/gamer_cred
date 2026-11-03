@@ -68,7 +68,7 @@ function PlatformDetailModal({ row, onClose }: { row: UserPlatform | null; onClo
       visible={row !== null}
       title={info ? info.name : ''}
       onClose={onClose}
-      footer={<RetroGamingPCButton label="Close" onPress={onClose} />}
+      footer={<RetroGamingPCButton variant="cancel" label="Close" onPress={onClose} />}
     >
       {row && info ? (
         <View className="gap-2">

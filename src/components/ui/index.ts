@@ -19,3 +19,4 @@ export { RetroGamingPCStarRating, type RetroGamingPCStarRatingProps } from './Re
 export { RetroGamingPCCheckbox, type RetroGamingPCCheckboxProps } from './RetroGamingPCCheckbox';
 export { RetroGamingPCBarChart, type RetroGamingPCBarChartProps } from './RetroGamingPCBarChart';
 export { RetroGamingPCToastHost } from './RetroGamingPCToastHost';
+export { RetroGamingPCSaveStatus, saveStatusOf, type RetroGamingPCSaveStatusProps } from './RetroGamingPCSaveStatus';

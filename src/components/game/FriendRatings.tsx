@@ -3,15 +3,17 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { Thumbnail } from '@/components/search/Thumbnail';
 import { RetroGamingPCAlert, RetroGamingPCPanel, RetroGamingPCRating, RetroGamingPCSpinner } from '@/components/ui';
-import { useFriendReviewsForGame } from '@/hooks/useGameDetail';
+import { platformInfo } from '@/constants/platforms';
+import { useFriendRatingsForGame } from '@/hooks/useGameDetail';
 import { reviewRating } from '@/utils/ratingColumns';
 
 /**
- * Your friends' ratings of this game — shown before other community reviews.
- * Each entry is the friend's picture + rating (in your scale); tap to open their review.
+ * Your friends' ratings of this game (quick ratings and reviews — one score
+ * per friend), shown before other community reviews. Tap opens their review
+ * when they wrote one, otherwise their profile.
  */
 export function FriendRatings({ gameId }: { gameId: number }) {
-  const friends = useFriendReviewsForGame(gameId);
+  const friends = useFriendRatingsForGame(gameId);
 
   return (
     <RetroGamingPCPanel title={`Friends' Ratings${friends.data?.length ? ` (${friends.data.length})` : ''}`}>
@@ -25,10 +27,14 @@ export function FriendRatings({ gameId }: { gameId: number }) {
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-3">
           {friends.data.map((f) => (
             <Pressable
-              key={f.review_id}
+              key={f.user_id}
               accessibilityRole="link"
-              accessibilityLabel={`${f.username}'s review`}
-              onPress={() => router.push({ pathname: '/review/[id]', params: { id: f.review_id } })}
+              accessibilityLabel={f.review_id ? `${f.username}'s review` : `${f.username}'s profile`}
+              onPress={() =>
+                f.review_id
+                  ? router.push({ pathname: '/review/[id]', params: { id: f.review_id } })
+                  : router.push({ pathname: '/user/[id]', params: { id: f.user_id } })
+              }
               className="w-[92px] items-center gap-1"
             >
               <Thumbnail uri={f.avatar_url} fallback={f.username} shape="square" accessibilityLabel="" />
@@ -38,6 +44,10 @@ export function FriendRatings({ gameId }: { gameId: number }) {
               <View pointerEvents="none">
                 <RetroGamingPCRating rating={reviewRating(f)} size="compact" expanded={false} />
               </View>
+              <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted" numberOfLines={1}>
+                {f.platform_id !== null ? `on ${platformInfo(f.platform_id).short}` : ''}
+                {f.review_id ? `${f.platform_id !== null ? ' · ' : ''}Review` : ''}
+              </Text>
             </Pressable>
           ))}
         </ScrollView>

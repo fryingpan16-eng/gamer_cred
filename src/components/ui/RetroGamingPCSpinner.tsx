@@ -9,7 +9,7 @@ export type RetroGamingPCSpinnerProps = {
   className?: string;
 };
 
-/** Loading indicator in RetroGamingPC olive with an optional retro status line. */
+/** Loading indicator in the theme highlight colour, with an optional retro status line. */
 export function RetroGamingPCSpinner({ label, size = 'small', className }: RetroGamingPCSpinnerProps) {
   const themeColors = useThemeColors();
   return (

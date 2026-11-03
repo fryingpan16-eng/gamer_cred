@@ -1,6 +1,6 @@
 import { Text, View } from 'react-native';
 
-import { RetroGamingPCAlert, RetroGamingPCTabs, type RetroGamingPCTabItem } from '@/components/ui';
+import { RetroGamingPCAlert, RetroGamingPCSaveStatus, type RetroGamingPCTabItem, RetroGamingPCTabs, saveStatusOf } from '@/components/ui';
 import { RATING_SCALES, type RatingScale } from '@/constants/ratingRubric';
 import { usePrimaryRatingScale } from '@/hooks/useAuth';
 import { useUpdatePrimaryRatingScale } from '@/hooks/useProfile';
@@ -24,6 +24,10 @@ export function RatingScaleSetting() {
   const update = useUpdatePrimaryRatingScale();
   return (
     <View className="gap-1.5">
+      <View className="flex-row items-center justify-between gap-2">
+        <Text className="retrogamingpc-label">Primary rating scale</Text>
+        <RetroGamingPCSaveStatus {...saveStatusOf(update)} />
+      </View>
       <RetroGamingPCTabs items={SCALE_TABS} value={value} onChange={(scale) => update.mutate(scale)} fill />
       <Text className="text-retrogamingpc-xs text-retrogamingpc-text">{SCALE_EXAMPLES[value]}</Text>
       <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted">

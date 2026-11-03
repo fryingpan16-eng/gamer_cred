@@ -102,9 +102,8 @@ export default function ReviewScreen() {
 
       {isMine ? (
         <View className="flex-row justify-end">
-          <RetroGamingPCButton
+          <RetroGamingPCButton variant="navigate"
             label="Edit in Review Studio"
-            variant="primary"
             onPress={() => {
               startReview({ gameId: data.game_id });
               router.push('/post');

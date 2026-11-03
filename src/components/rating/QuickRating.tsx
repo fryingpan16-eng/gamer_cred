@@ -3,6 +3,7 @@ import { useState, type ReactNode } from 'react';
 import { Platform, Pressable, Text, TextInput, View } from 'react-native';
 
 import { RetroGamingPCTierBadge } from '@/components/ui';
+import { ACTION_COLORS } from '@/constants/actionColors';
 import { NOT_GOOD, NUMERIC_MAX, NUMERIC_MIN, RATING_SCALE_LABELS, type RatingScale } from '@/constants/ratingRubric';
 import { usePrimaryRatingScale } from '@/hooks/useAuth';
 import { useThemeColors } from '@/hooks/useTheme';
@@ -258,7 +259,9 @@ export function QuickRating({
         style={{ width: dims.clear, height: dims.clear }}
         className="items-center justify-center"
       >
-        <Text className="font-mono text-retrogamingpc-sm font-bold text-retrogamingpc-text-muted">✕</Text>
+        <Text className="font-mono text-retrogamingpc-sm font-bold" style={{ color: ACTION_COLORS.cancel.text }}>
+          ✕
+        </Text>
       </Pressable>
     ) : null;
 

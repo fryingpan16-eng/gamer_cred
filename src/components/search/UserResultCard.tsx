@@ -31,33 +31,30 @@ export function UserResultCard({ user, pending, onSendRequest, onRespond }: User
         ) : null}
         {relation.state === 'incoming' ? <RetroGamingPCBadge label="Wants to be friends" variant="nowPlaying" /> : null}
         <View className="flex-row flex-wrap justify-end gap-2 pt-1">
-          <RetroGamingPCButton
+          <RetroGamingPCButton variant="navigate"
             label="View Profile"
             onPress={() => router.push({ pathname: '/user/[id]', params: { id: user.id } })}
           />
           {relation.state === 'none' ? (
-            <RetroGamingPCButton
+            <RetroGamingPCButton variant="create"
               label="Send Friend Request"
-              variant="primary"
               loading={pending}
               onPress={() => onSendRequest(user.id)}
             />
           ) : null}
           {relation.state === 'declined' && relation.direction === 'incoming' ? (
             // I declined them earlier: re-adding accepts their original request (unique pair index).
-            <RetroGamingPCButton
+            <RetroGamingPCButton variant="create"
               label="Add Friend"
-              variant="primary"
               loading={pending}
               onPress={() => onRespond(relation.friendshipId, true)}
             />
           ) : null}
           {relation.state === 'incoming' ? (
             <>
-              <RetroGamingPCButton label="Decline" disabled={pending} onPress={() => onRespond(relation.friendshipId, false)} />
-              <RetroGamingPCButton
+              <RetroGamingPCButton variant="cancel" label="Decline" disabled={pending} onPress={() => onRespond(relation.friendshipId, false)} />
+              <RetroGamingPCButton variant="save"
                 label="Accept"
-                variant="primary"
                 loading={pending}
                 onPress={() => onRespond(relation.friendshipId, true)}
               />

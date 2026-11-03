@@ -23,16 +23,16 @@ export default function SettingsScreen() {
       keyboardShouldPersistTaps="handled"
     >
       <Stack.Screen options={{ title: 'Settings' }} />
+      <Text className="text-retrogamingpc-sm text-retrogamingpc-text">
+        Changes save automatically, except your username, which has its own Save button.
+      </Text>
 
       <RetroGamingPCPanel title="Profile Picture">
         <AvatarSetting />
       </RetroGamingPCPanel>
 
       <RetroGamingPCPanel title="Appearance">
-        <View className="gap-1">
-          <Text className="retrogamingpc-label">Colour theme</Text>
-          <ThemeSetting />
-        </View>
+        <ThemeSetting />
       </RetroGamingPCPanel>
 
       <RetroGamingPCPanel title="Hardware & Platforms">
@@ -40,10 +40,7 @@ export default function SettingsScreen() {
       </RetroGamingPCPanel>
 
       <RetroGamingPCPanel title="Ratings">
-        <View className="gap-1">
-          <Text className="retrogamingpc-label">Primary rating scale</Text>
-          <RatingScaleSetting />
-        </View>
+        <RatingScaleSetting />
       </RetroGamingPCPanel>
 
       <RetroGamingPCPanel title="Privacy">

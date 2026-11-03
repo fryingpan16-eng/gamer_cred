@@ -57,6 +57,7 @@ import {
 import { cacheFreshness, computeRulesVersion, runInBackground, SEARCH_REFRESH_AFTER_MS } from './cache_policy.ts';
 import * as curationModule from './curation.ts';
 import { rankCompanies, rankGames } from './ranking.ts';
+import { releasePlatformOrder } from './platform_order.ts';
 import * as rankingModule from './ranking.ts';
 import { fetchRawgPcRequirements, RawgError, searchRawgCreators } from './rawg.ts';
 
@@ -294,7 +295,9 @@ type RawGame = {
   game_type?: number;
   version_parent?: number | null;
   parent_game?: { id: number; name?: string } | number | null;
-  platforms?: { abbreviation?: string; name?: string }[];
+  platforms?: { id?: number; abbreviation?: string; name?: string }[];
+  /** Only date + platform id here; the detail query adds the platform names. */
+  release_dates?: { date?: number; human?: string; platform?: { id?: number; abbreviation?: string; name?: string } }[];
   genres?: { name?: string }[];
   involved_companies?: { developer?: boolean; publisher?: boolean; company?: { id: number; name?: string } }[];
   external_games?: { external_game_source?: number }[];
@@ -322,7 +325,7 @@ function compact(values: (string | undefined)[]): string[] {
 // CURATION_FIELDS already includes total_rating_count, external games and involved companies.
 const GAME_FIELDS = [
   `fields name,slug,cover.image_id,total_rating,${CURATION_FIELDS},`,
-  'platforms.abbreviation,platforms.name,genres.name;',
+  'platforms.id,platforms.abbreviation,platforms.name,release_dates.date,release_dates.platform.id,genres.name;',
 ].join(' ');
 
 async function searchGames(query: string, limit: number): Promise<IgdbGameResult[]> {
@@ -354,7 +357,6 @@ type RawGameDetail = Omit<RawGame, 'involved_companies'> & {
   game_engines?: { name?: string }[];
   franchises?: { name?: string }[];
   involved_companies?: { developer?: boolean; publisher?: boolean; company?: { id: number; name?: string } }[];
-  release_dates?: { date?: number; human?: string; platform?: { abbreviation?: string; name?: string } }[];
   aggregated_rating?: number;
   aggregated_rating_count?: number;
   rating?: number;
@@ -453,6 +455,7 @@ function mapGames(raw: CuratedGame<RawGame>[]): IgdbGameResult[] {
       releaseYear: yearFromUnix(g.first_release_date),
       rating: typeof g.total_rating === 'number' ? Math.round(g.total_rating) : null,
       platforms: compact((g.platforms ?? []).map((p) => p.abbreviation ?? p.name)),
+      releasePlatformIds: releasePlatformOrder(g.release_dates, g.platforms),
       genres: compact((g.genres ?? []).map((x) => x.name)),
       developers: compact((g.involved_companies ?? []).filter((ic) => ic.developer).map((ic) => ic.company?.name)),
     }));

@@ -123,12 +123,12 @@ function DevicesForm({ initial, suggestions, saving, error, onClose, onSave }: O
           onSubmitEditing={() => draft.trim() && add(draft)}
           icon={<Feather name="cpu" size={12} color={themeColors.textMuted} />}
         />
-        <RetroGamingPCButton label="Add" className="mt-[18px]" disabled={full || draft.trim() === '' || saving} onPress={() => add(draft)} />
+        <RetroGamingPCButton variant="create" label="Add" className="mt-[18px]" disabled={full || draft.trim() === '' || saving} onPress={() => add(draft)} />
       </View>
 
       <View className="flex-row justify-end gap-2 border-t border-t-retrogamingpc-accent pt-2">
-        <RetroGamingPCButton label="Cancel" onPress={onClose} disabled={saving} />
-        <RetroGamingPCButton label="Save Devices" variant="primary" loading={saving} onPress={() => onSave(devices)} />
+        <RetroGamingPCButton variant="cancel" label="Cancel" onPress={onClose} disabled={saving} />
+        <RetroGamingPCButton variant="save" label="Save Devices" loading={saving} onPress={() => onSave(devices)} />
       </View>
     </View>
   );

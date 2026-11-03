@@ -46,6 +46,11 @@ export const queryKeys = {
     /** One batched lookup; ids are sorted + de-duplicated so equal sets share a cache entry. */
     mine: (userId: string, gameIds: readonly number[]) =>
       [...queryKeys.ratings.byUser(userId), [...new Set(gameIds)].sort((a, b) => a - b)] as const,
+    /** A player's public ratings list (profiles). Separate prefix from the viewer's batches. */
+    ofUserAll: () => [...queryKeys.ratings.all(), 'ofUser'] as const,
+    ofUser: (userId: string) => [...queryKeys.ratings.ofUserAll(), userId] as const,
+    /** The full spreadsheet list (same prefix, so rating changes refresh it). */
+    table: (userId: string) => [...queryKeys.ratings.ofUserAll(), userId, 'table'] as const,
   },
 
   friendships: {
@@ -84,6 +89,8 @@ export const queryKeys = {
     /** The viewer's friends' reviews of a game (per viewer: depends on their friend list). */
     friendReviewsAll: () => [...queryKeys.games.all(), 'friendReviews'] as const,
     friendReviews: (viewerId: string, gameId: number) => [...queryKeys.games.friendReviewsAll(), viewerId, gameId] as const,
+    /** Friends' ratings (quick or reviewed) — same prefix, so rating / review changes refresh both. */
+    friendRatings: (viewerId: string, gameId: number) => [...queryKeys.games.friendReviewsAll(), 'ratings', viewerId, gameId] as const,
     reviewStats: (gameId: number) => [...queryKeys.games.reviewStatsAll(), gameId] as const,
     /** Batch lookup; ids are sorted so [2,1] and [1,2] share a cache entry. */
     lookup: (gameIds: readonly number[]) =>

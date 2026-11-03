@@ -13,7 +13,7 @@ type IconName = ComponentProps<typeof MaterialCommunityIcons>['name'];
 const TABS: readonly { name: 'index' | 'search' | 'post' | 'stats' | 'profile'; title: string; icon: IconName }[] = [
   { name: 'index', title: 'Home', icon: 'home-outline' },
   { name: 'search', title: 'Search', icon: 'magnify' },
-  { name: 'post', title: 'Review Studio', icon: 'pencil-box-outline' },
+  { name: 'post', title: 'Now Playing', icon: 'gamepad-variant-outline' },
   { name: 'stats', title: 'Stats', icon: 'chart-bar' },
   { name: 'profile', title: 'Profile', icon: 'account-outline' },
 ];

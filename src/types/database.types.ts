@@ -265,9 +265,9 @@ export type Database = {
       };
 
       /**
-       * Quick ratings (migration 000015): one private overall score per (user, game),
-       * separate from reviews. RLS: owner-only. Kept equal to the score on the
-       * user's review of the same game by sync triggers.
+       * Quick ratings (migrations 000015–000016): one overall score + platform per
+       * (user, game), separate from reviews. RLS: public read, owner write. Kept
+       * equal to the score / platform on the user's review by sync triggers.
        */
       game_ratings: {
         Row: {
@@ -278,6 +278,8 @@ export type Database = {
           rating_input_scale: Database['public']['Enums']['rating_scale'];
           /** Raw input exactly as entered, e.g. "4.5". */
           rating_input: string;
+          /** Played on (catalog id = IGDB platform id; migration 000016). */
+          platform_id: number | null;
           created_at: Timestamp;
           updated_at: Timestamp;
         };
@@ -287,6 +289,7 @@ export type Database = {
           rating: number;
           rating_input_scale: Database['public']['Enums']['rating_scale'];
           rating_input: string;
+          platform_id?: number | null;
           created_at?: Timestamp;
           updated_at?: Timestamp;
         };
@@ -296,6 +299,7 @@ export type Database = {
           rating?: number;
           rating_input_scale?: Database['public']['Enums']['rating_scale'];
           rating_input?: string;
+          platform_id?: number | null;
           created_at?: Timestamp;
           updated_at?: Timestamp;
         };
@@ -425,6 +429,29 @@ export type Database = {
         Args: { p_game_id: number };
         Returns: FriendReviewRow[];
       };
+      /** A player's whole ratings list with game metadata (migration 000016). */
+      user_ratings_table: {
+        Args: { p_user_id: string };
+        Returns: {
+          game_id: number;
+          rating: number;
+          rating_input_scale: Database['public']['Enums']['rating_scale'];
+          rating_input: string;
+          platform_id: number | null;
+          rated_at: string;
+          name: string | null;
+          release_year: number | null;
+          genres: string[];
+          developers: string[];
+          community_rating: number | null;
+          review_id: string | null;
+        }[];
+      };
+      /** Friends' ratings of a game — quick or reviewed (migration 000016). */
+      friend_ratings_for_game: {
+        Args: { p_game_id: number };
+        Returns: FriendRatingRow[];
+      };
       activity_feed: {
         Args: {
           p_scope?: 'friends' | 'community';
@@ -447,6 +474,19 @@ export type Database = {
 };
 
 /** Row returned by the friend_reviews_for_game RPC (migration 000012). */
+export type FriendRatingRow = {
+  user_id: string;
+  username: string;
+  avatar_url: string | null;
+  rating: number;
+  rating_input_scale: Database['public']['Enums']['rating_scale'];
+  rating_input: string;
+  platform_id: number | null;
+  /** Set when the friend has a PUBLISHED review of this game. */
+  review_id: string | null;
+  rated_at: string;
+};
+
 export type FriendReviewRow = {
   review_id: string;
   user_id: string;

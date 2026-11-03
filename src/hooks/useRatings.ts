@@ -3,7 +3,8 @@ import { router } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { create } from 'zustand';
 
-import { clearGameRating, fetchMyRatings, rateGame, type MyRatings } from '@/services/ratings';
+import { defaultPlayedOnPlatform } from '@/constants/platforms';
+import { clearGameRating, fetchMyRatings, fetchRatingsTable, fetchUserRatings, rateGame, type GameRatingEntry, type MyRatings } from '@/services/ratings';
 import type { StoredRating } from '@/utils/rating';
 import { RatingQueue } from '@/utils/ratingQueue';
 import { queryKeys } from '@/utils/queryKeys';
@@ -12,7 +13,8 @@ import { useAuthStore } from './useAuth';
 import { showToast } from './useToastStore';
 
 /**
- * Quick ratings: a private overall score per game. These hooks never create
+ * Quick ratings: an overall score + "played on" platform per game, public on
+ * profiles and to friends. These hooks never create
  * or open a review — reviews are only started from the Review Studio or the
  * game page's "Write a review" button (see src/components/rating/README.md).
  */
@@ -46,7 +48,7 @@ export function useMyGameRating(gameId: number | null) {
 }
 
 /** Write a value into every cached batch (optimistic update / rollback). */
-function patchCachedRating(queryClient: QueryClient, userId: string, gameId: number, value: StoredRating | null) {
+function patchCachedRating(queryClient: QueryClient, userId: string, gameId: number, value: GameRatingEntry | null) {
   queryClient.setQueriesData<MyRatings>({ queryKey: queryKeys.ratings.byUser(userId) }, (old) => {
     if (!old) return old;
     const next = { ...old };
@@ -65,17 +67,25 @@ function invalidateAfterRating(queryClient: QueryClient) {
   void queryClient.invalidateQueries({ queryKey: queryKeys.games.reviewsAll() });
   void queryClient.invalidateQueries({ queryKey: queryKeys.games.friendReviewsAll() });
   void queryClient.invalidateQueries({ queryKey: queryKeys.feed.all() });
+  // Public ratings lists on profiles.
+  void queryClient.invalidateQueries({ queryKey: queryKeys.ratings.ofUserAll() });
 }
 
-const sameRating = (a: StoredRating | null, b: StoredRating | null) =>
-  a === b || (a !== null && b !== null && a.numeric === b.numeric && a.inputScale === b.inputScale && a.input === b.input);
+const sameRating = (a: GameRatingEntry | null, b: GameRatingEntry | null) =>
+  a === b ||
+  (a !== null &&
+    b !== null &&
+    a.numeric === b.numeric &&
+    a.inputScale === b.inputScale &&
+    a.input === b.input &&
+    a.platformId === b.platformId);
 
 // ---------------------------------------------------------------------------
 // Signed-out handoff: a tap without a session remembers the rating, sends the
 // user to sign in, and applies it afterwards (useApplyPendingRating).
 // ---------------------------------------------------------------------------
 
-type PendingRating = { gameId: number; value: StoredRating | null };
+type PendingRating = { gameId: number; value: GameRatingEntry | null };
 
 export const usePendingRatingStore = create<{
   pending: PendingRating | null;
@@ -113,7 +123,7 @@ export function useRateGame() {
   // One queue per mounted control; its callbacks read the current viewer from the auth store at save time.
   const [queue] = useState(
     () =>
-      new RatingQueue<StoredRating>({
+      new RatingQueue<GameRatingEntry>({
         delayMs: SAVE_DEBOUNCE_MS,
         equals: sameRating,
         save: async (gameId, value) => {
@@ -134,9 +144,9 @@ export function useRateGame() {
   // Leaving the screen mid-debounce still saves the last tap.
   useEffect(() => () => void queue.flushAll(), [queue]);
 
-  /** `current` = the rating currently shown for the game (before this change). */
+  /** `current` = the rating (+ platform) currently shown for the game, before this change. */
   const rate = useCallback(
-    (gameId: number, value: StoredRating | null, current: StoredRating | null) => {
+    (gameId: number, value: GameRatingEntry | null, current: GameRatingEntry | null) => {
       if (!viewerId) {
         usePendingRatingStore.getState().setPending({ gameId, value });
         router.push('/login');
@@ -151,4 +161,44 @@ export function useRateGame() {
   );
 
   return { rate };
+}
+
+/** A player's public ratings list, newest first (profiles). */
+export function useUserRatings(userId: string | null) {
+  return useQuery({
+    queryKey: queryKeys.ratings.ofUser(userId ?? 'none'),
+    queryFn: () => fetchUserRatings(userId!),
+    enabled: userId !== null,
+  });
+}
+
+/**
+ * Rating + "played on" for one game, as the game page and search rows use it.
+ * The platform is the saved one, else the user's pick (held until they rate),
+ * else the game's earliest catalog release platform.
+ */
+export function useGameRatingControl(game: { id: number; releasePlatformIds?: number[] }, current: GameRatingEntry | null) {
+  const { rate } = useRateGame();
+  // A platform picked before the game is rated; applied with the first rating.
+  const [pendingPlatform, setPendingPlatform] = useState<number | null | undefined>(undefined);
+  const fallback = defaultPlayedOnPlatform(game.releasePlatformIds);
+  const platformId = current ? current.platformId ?? fallback : pendingPlatform !== undefined ? pendingPlatform : fallback;
+  const isDefaultPlatform = current ? current.platformId === null || current.platformId === fallback : pendingPlatform === undefined;
+
+  const setRating = (next: StoredRating | null) => rate(game.id, next ? { ...next, platformId } : null, current);
+  const setPlatform = (next: number | null) => {
+    if (current) rate(game.id, { ...current, platformId: next }, current);
+    else setPendingPlatform(next);
+  };
+
+  return { platformId, isDefaultPlatform, defaultPlatformId: fallback, setRating, setPlatform };
+}
+
+/** A player's full ratings list for the spreadsheet view. */
+export function useRatingsTable(userId: string | null) {
+  return useQuery({
+    queryKey: queryKeys.ratings.table(userId ?? 'none'),
+    queryFn: () => fetchRatingsTable(userId!),
+    enabled: userId !== null,
+  });
 }

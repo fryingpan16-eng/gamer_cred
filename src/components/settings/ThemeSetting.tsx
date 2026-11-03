@@ -1,7 +1,7 @@
 import { Pressable, Text, View } from 'react-native';
 
-import { RetroGamingPCAlert } from '@/components/ui';
-import { THEME_LABELS, THEME_NAMES, themePalette, type ThemeName } from '@/constants/themes';
+import { RetroGamingPCAlert, RetroGamingPCSaveStatus, saveStatusOf } from '@/components/ui';
+import { DEFAULT_THEME, THEME_LABELS, THEME_NAMES, themePalette, type ThemeName } from '@/constants/themes';
 import { useUpdateUiTheme } from '@/hooks/useProfile';
 import { useThemeStore } from '@/hooks/useTheme';
 
@@ -28,7 +28,7 @@ function ThemeSwatch({ name, selected, onPress }: { name: ThemeName; selected: b
       </View>
       <Text className={selected ? 'text-retrogamingpc-xs font-bold text-retrogamingpc-text-bright' : 'text-retrogamingpc-xs text-retrogamingpc-text-muted'}>
         {THEME_LABELS[name]}
-        {name === 'olive' ? ' (default)' : ''}
+        {name === DEFAULT_THEME ? ' (default)' : ''}
       </Text>
     </Pressable>
   );
@@ -40,6 +40,10 @@ export function ThemeSetting() {
   const update = useUpdateUiTheme();
   return (
     <View className="gap-1.5">
+      <View className="flex-row items-center justify-between gap-2">
+        <Text className="retrogamingpc-label">Colour theme</Text>
+        <RetroGamingPCSaveStatus {...saveStatusOf(update)} />
+      </View>
       <View className="flex-row flex-wrap gap-3" accessibilityRole="radiogroup">
         {THEME_NAMES.map((name) => (
           <ThemeSwatch key={name} name={name} selected={theme === name} onPress={() => update.mutate(name)} />

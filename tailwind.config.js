@@ -1,6 +1,6 @@
 const palettes = require('./src/constants/themePalettes.json');
 
-const DEFAULT_THEME = 'olive';
+const DEFAULT_THEME = 'blue';
 const THEME_TOKENS = Object.keys(palettes[DEFAULT_THEME]);
 
 /** "#3a3d36" → "58 61 54" (channel triplet for rgb(var(--x) / <alpha-value>)). */
@@ -19,7 +19,7 @@ module.exports = {
     extend: {
       // Theme colours are CSS variables (rgb channel triplets) so the palette can
       // switch at runtime. Values live in src/constants/themePalettes.json (the
-      // single source); `:root` defaults to olive via the plugin below.
+      // single source); `:root` defaults to blue (DEFAULT_THEME) via the plugin below.
       colors: {
         ...Object.fromEntries(
           THEME_TOKENS.map((token) => [`retrogamingpc-${token}`, `rgb(var(--rgpc-${token}) / <alpha-value>)`]),

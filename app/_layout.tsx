@@ -52,7 +52,7 @@ export default function RootLayout() {
 /**
  * Applies the active colour theme (CSS variables) to the whole tree.
  * Source of truth: the signed-in profile's `ui_theme`; before sign-in or while
- * the profile loads, the device-cached choice is used so screens don't flash olive.
+ * the profile loads, the device-cached choice is used so screens don't flash the default theme.
  */
 function ThemeRoot({ children }: { children: ReactNode }) {
   const themeVars = useThemeVars();
@@ -104,6 +104,7 @@ function RootNavigator() {
         <Stack.Screen name="user/[id]" options={{ title: 'Player' }} />
         <Stack.Screen name="settings" options={{ title: 'Settings' }} />
         <Stack.Screen name="review/[id]" options={{ title: 'Review' }} />
+        <Stack.Screen name="ratings/[userId]" options={{ title: 'Ratings' }} />
       </Stack.Protected>
 
       <Stack.Protected guard={!isSignedIn} redirectTo="/">

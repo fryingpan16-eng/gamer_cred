@@ -6,13 +6,14 @@ GamerCred has two separate actions with separate code paths:
 |---|---|---|
 | What | One overall score per game, entered in **your chosen scale** (Settings): 1–100, Tier, Stars (½ steps) or Rounded /10 | Score + written review (draft or published), entered in the same chosen scale |
 | Where it's set | Stars on every **search result** and in the **game page** hero (`QuickRating`) | **Review Studio** only (Post tab) |
-| Visibility | Private. Never in the profile's Reviews list, the feed or friends' ratings. It does count toward the public **Gamer Cred score**, which only exposes an aggregate. | Published reviews are public, as before. Drafts are author-only. |
-| Table | `public.game_ratings` (migration 000015, owner-only RLS) | `public.reviews` |
+| Visibility | **Public** (migration 000016). Shown on the player's profile (**Ratings** panel), in **Friends' Ratings** on game pages, and in the **Gamer Cred score** average. Never in the profile's Reviews list or the activity feed: a rating is not a review. | Published reviews are public, as before. Drafts are author-only. |
+| Played on | Platform picker under the rating (game page + search rows). Defaults to the game's **earliest release platform** in the catalog. | The review form's platform picker. A new review starts on the rating's platform. |
+| Table | `public.game_ratings` (migrations 000015–000016; public read, owner-only write) | `public.reviews` |
 | Code | `services/ratings.ts` → `rateGame`, `clearGameRating`, `fetchMyRatings`; `hooks/useRatings.ts` → `useRateGame`, `useMyGameRatings` | `services/reviews.ts` → `saveReview`; `hooks/useReviews.ts` → `useSaveReview` |
 
 ## One score per game
 
-A user's quick rating and the score on their review of the same game are always the same number. Two triggers in migration 000015 keep them in sync:
+A user's quick rating and the score on their review of the same game are always the same number, and since 000016 the same "played on" platform too. Two triggers keep them in sync (a "not specified" platform on either side keeps the other's):
 - Saving a review with a score sets the quick rating.
 - Changing the stars updates the score on the review.
 - A new review starts from the quick rating.

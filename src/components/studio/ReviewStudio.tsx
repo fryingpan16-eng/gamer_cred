@@ -21,6 +21,7 @@ import { usePlatforms } from '@/hooks/useProfile';
 import { useMyGameRating } from '@/hooks/useRatings';
 import { useDeleteReview, useMyReviewForGame, useSaveReview } from '@/hooks/useReviews';
 import { useStudioStore, type StudioTarget } from '@/hooks/useStudioStore';
+import type { GameRatingEntry } from '@/services/ratings';
 import type { Review, ReviewStatus } from '@/types/database.types';
 import { igdbImageUrl } from '@/types/igdb';
 import { cn } from '@/utils/cn';
@@ -41,8 +42,8 @@ type FieldErrors = Partial<Record<keyof ReviewFormValues, string>>;
 type EditorProps = {
   target: StudioTarget;
   existing: Review | null;
-  /** The viewer's quick rating for this game — the starting score for a new review. */
-  quickRating: StoredRating | null;
+  /** The viewer's quick rating for this game — the starting score and platform for a new review. */
+  quickRating: GameRatingEntry | null;
 };
 
 /** Keyed by game + existing review version, so initial values never need effect-syncing. */
@@ -58,12 +59,13 @@ function ReviewEditor({ target, existing, quickRating }: EditorProps) {
     (existing ? reviewRating(existing) : null) ?? quickRating ?? target.seed?.rating ?? null,
   );
   const [content, setContent] = useState(existing?.content ?? target.seed?.content ?? '');
-  // undefined = untouched: an existing review keeps its platform; a new one defaults to your Main platform.
+  // undefined = untouched: an existing review keeps its platform; a new one uses your quick rating's
+  // platform, else your Main platform.
   const [platformChoice, setPlatformChoice] = useState<number | null | undefined>(existing ? existing.platform_id : undefined);
   const viewerId = useAuthStore((s) => s.user?.id ?? null);
   const roster = usePlatforms(viewerId);
   const mainPlatformId = roster.data?.find((r) => r.is_main)?.platform_id ?? null;
-  const platformId = platformChoice === undefined ? mainPlatformId : platformChoice;
+  const platformId = platformChoice === undefined ? (quickRating?.platformId ?? mainPlatformId) : platformChoice;
   const [status, setStatus] = useState<ReviewStatus>(existing?.status ?? 'draft');
   const [freeSlot, setFreeSlot] = useState(true);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
@@ -104,7 +106,7 @@ function ReviewEditor({ target, existing, quickRating }: EditorProps) {
       {remove.isError ? <RetroGamingPCAlert message={remove.error.message} /> : null}
       {savedAs ? (
         <RetroGamingPCAlert
-          tone="info"
+          tone="success"
           message={savedAs === 'published' ? 'Review published to the community feed.' : 'Draft saved to your backlog notes.'}
         />
       ) : null}
@@ -155,12 +157,12 @@ function ReviewEditor({ target, existing, quickRating }: EditorProps) {
 
       <View className="flex-row flex-wrap items-center justify-between gap-2">
         <View className="flex-row gap-2">
-          <RetroGamingPCButton label="Close" onPress={clearTarget} disabled={save.isPending} />
+          <RetroGamingPCButton variant="cancel" label="Close" onPress={clearTarget} disabled={save.isPending} />
           {existing ? (
             <RetroGamingPCButton label="Delete" variant="danger" onPress={() => setConfirmDelete(true)} disabled={save.isPending} />
           ) : null}
         </View>
-        <RetroGamingPCButton label={submitLabel} variant="primary" loading={save.isPending} onPress={submit} />
+        <RetroGamingPCButton variant="save" label={submitLabel} loading={save.isPending} onPress={submit} />
       </View>
 
       <RetroGamingPCConfirmModal
@@ -215,7 +217,7 @@ export function ReviewStudio() {
             into a review, or write a review for any game.
           </Text>
           <View className="flex-row justify-end">
-            <RetroGamingPCButton label="Review a Game…" variant="primary" onPress={() => openModal({ kind: 'pickReviewGame' })} />
+            <RetroGamingPCButton variant="create" label="Review a Game…" onPress={() => openModal({ kind: 'pickReviewGame' })} />
           </View>
         </View>
       ) : (

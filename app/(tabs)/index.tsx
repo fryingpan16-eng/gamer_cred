@@ -51,14 +51,14 @@ export default function HomeScreen() {
           Add friends to see what they&apos;re playing and reviewing — or browse the community feed.
         </Text>
         <View className="flex-row gap-2">
-          <RetroGamingPCButton label="Find Friends" variant="primary" onPress={() => router.push('/search')} />
-          <RetroGamingPCButton label="Community Feed" onPress={() => setScope('community')} />
+          <RetroGamingPCButton variant="navigate" label="Find Friends" onPress={() => router.push('/search')} />
+          <RetroGamingPCButton variant="navigate" label="Community Feed" onPress={() => setScope('community')} />
         </View>
       </View>
     ) : (
       <View className="retrogamingpc-bevel-inset items-center gap-2 bg-retrogamingpc-dark px-4 py-6">
         <Text className="text-retrogamingpc-base font-bold text-retrogamingpc-text">Nothing published yet</Text>
-        <RetroGamingPCButton label="Write the first review" variant="primary" onPress={() => router.push('/post')} />
+        <RetroGamingPCButton variant="create" label="Write the first review" onPress={() => router.push('/post')} />
       </View>
     );
 

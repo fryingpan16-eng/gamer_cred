@@ -57,8 +57,8 @@ function PcSpecsForm({ initial, saving, error, onClose, onSave }: Omit<PcSpecsMo
         />
       ))}
       <View className="flex-row justify-end gap-2 border-t border-t-retrogamingpc-accent pt-2">
-        <RetroGamingPCButton label="Cancel" onPress={onClose} disabled={saving} />
-        <RetroGamingPCButton label="Save Specs" variant="primary" loading={saving} onPress={submit} />
+        <RetroGamingPCButton variant="cancel" label="Cancel" onPress={onClose} disabled={saving} />
+        <RetroGamingPCButton variant="save" label="Save Specs" loading={saving} onPress={submit} />
       </View>
     </View>
   );

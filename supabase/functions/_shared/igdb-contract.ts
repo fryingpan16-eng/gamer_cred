@@ -158,6 +158,12 @@ export type IgdbGameResult = {
   /** 0–100 aggregate (critics + users). */
   rating: number | null;
   platforms: string[];
+  /**
+   * IGDB platform ids in release order (earliest first). The app defaults a
+   * rating's "played on" platform to the first one in its catalog. May be
+   * missing on records cached before it existed.
+   */
+  releasePlatformIds?: number[];
   genres: string[];
   developers: string[];
 };

@@ -125,9 +125,8 @@ export default function RegisterScreen() {
               <Link href="/login" className="text-retrogamingpc-sm text-retrogamingpc-text-bright underline">
                 Have an account?
               </Link>
-              <RetroGamingPCButton
+              <RetroGamingPCButton variant="save"
                 label={signUp.pending ? 'Creating…' : 'Register'}
-                variant="primary"
                 loading={signUp.pending}
                 disabled={busy}
                 onPress={() => void submit()}

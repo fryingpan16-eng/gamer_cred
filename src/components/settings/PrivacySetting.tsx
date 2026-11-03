@@ -1,6 +1,6 @@
 import { Text, View } from 'react-native';
 
-import { RetroGamingPCAlert, RetroGamingPCTabs, type RetroGamingPCTabItem } from '@/components/ui';
+import { RetroGamingPCAlert, RetroGamingPCSaveStatus, type RetroGamingPCTabItem, RetroGamingPCTabs, saveStatusOf } from '@/components/ui';
 import {
   DEFAULT_NOW_PLAYING_VISIBILITY,
   NOW_PLAYING_VISIBILITIES,
@@ -26,7 +26,10 @@ export function PrivacySetting() {
 
   return (
     <View className="gap-1.5">
-      <Text className="retrogamingpc-label">Who can see my Now Playing</Text>
+      <View className="flex-row items-center justify-between gap-2">
+        <Text className="retrogamingpc-label">Who can see my Now Playing</Text>
+        <RetroGamingPCSaveStatus {...saveStatusOf(update)} />
+      </View>
       <RetroGamingPCTabs items={TABS} value={visibility} onChange={(v) => v !== visibility && update.mutate(v)} fill />
       <Text className="text-retrogamingpc-xs text-retrogamingpc-text">{NOW_PLAYING_VISIBILITY_OPTIONS[visibility].description}</Text>
       {update.isError ? <RetroGamingPCAlert message={update.error.message} /> : null}

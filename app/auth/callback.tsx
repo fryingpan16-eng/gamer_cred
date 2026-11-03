@@ -41,7 +41,7 @@ export default function AuthCallbackScreen() {
         <View className="gap-3">
           <RetroGamingPCAlert message={state.message} />
           <View className="flex-row justify-end">
-            <RetroGamingPCButton label="Back to login" variant="primary" onPress={() => router.replace('/login')} />
+            <RetroGamingPCButton variant="navigate" label="Back to login" onPress={() => router.replace('/login')} />
           </View>
         </View>
       </RetroGamingPCPanel>
