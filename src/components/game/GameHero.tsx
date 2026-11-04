@@ -17,6 +17,7 @@ import { igdbImageUrl, type IgdbGameDetail } from '@/types/igdb';
 import type { StoredRating } from '@/utils/rating';
 
 import { EntryTypeBadge } from './EntryTypeBadge';
+import { RemasterNote } from './RemastersPanel';
 import { SCALE_DIVIDER, ScoreScales, TierScoreBox } from './ScoreScales';
 import { NowPlayingButton } from './GameActions';
 import { BacklogButton } from './BacklogButton';
@@ -161,11 +162,7 @@ export function GameHero({ game, stats }: GameHeroProps) {
             </Text>
           ) : null}
           <EntryTypeBadge game={game} />
-          {(game.remasters?.length ?? 0) > 0 ? (
-            <View className="flex-row">
-              <RetroGamingPCBadge label="Remastered" variant="main" />
-            </View>
-          ) : null}
+          <RemasterNote remasters={game.remasters ?? []} />
           {release ? (
             <Text className="text-retrogamingpc-sm text-retrogamingpc-text">
               <Text className="text-retrogamingpc-text-muted">Release: </Text>
