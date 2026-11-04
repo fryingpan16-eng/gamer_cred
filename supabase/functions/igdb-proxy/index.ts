@@ -34,6 +34,7 @@ import {
   normalizeSearchQuery,
   SEARCH_PROVIDER,
   type ApiEnvelope,
+  type CompanyRef,
   type IgdbCompanyDetail,
   type IgdbCompanyDetailResponse,
   type IgdbCompanyResult,
@@ -410,6 +411,14 @@ async function fetchGameDetail(
   const names = (list: { name?: string }[] | undefined) => compact((list ?? []).map((x) => x.name));
   const images = (list: { image_id?: string }[] | undefined) => compact((list ?? []).map((x) => x.image_id));
   const round = (n: number | undefined) => (typeof n === 'number' ? Math.round(n) : null);
+  // One entry per company id, in IGDB's credit order.
+  const companies = (role: 'developer' | 'publisher'): CompanyRef[] => [
+    ...new Map(
+      (g.involved_companies ?? [])
+        .filter((ic) => ic[role] && typeof ic.company?.id === 'number' && typeof ic.company.name === 'string')
+        .map((ic) => [ic.company!.id, { id: ic.company!.id, name: ic.company!.name! }] as const),
+    ).values(),
+  ];
 
   const releaseDates: GameReleaseDate[] = (g.release_dates ?? [])
     .filter((r) => r.human || r.date)
@@ -438,6 +447,8 @@ async function fetchGameDetail(
     userRating: round(g.rating),
     userRatingCount: g.rating_count ?? 0,
     systemRequirements: null,
+    developerCompanies: companies('developer'),
+    publisherCompanies: companies('publisher'),
     remasters: mapRemasters(g.remasters),
   };
 

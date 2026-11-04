@@ -1,6 +1,6 @@
-import { router } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
 
+import { openStudio } from '@/components/game/CompanyLinks';
 import { RetroGamingPCBadge, RetroGamingPCButton, RetroGamingPCCard } from '@/components/ui';
 import { igdbImageUrl, type IgdbCompanyResult } from '@/types/igdb';
 
@@ -9,10 +9,6 @@ import { Thumbnail } from './Thumbnail';
 type CompanyResultCardProps = {
   company: IgdbCompanyResult;
 };
-
-function openStudio(company: IgdbCompanyResult) {
-  router.push({ pathname: '/studio/[id]', params: { id: String(company.id), name: company.name } });
-}
 
 /** A studio search result: tap the card (or View Studio) to open its page with all its games. */
 export function CompanyResultCard({ company }: CompanyResultCardProps) {

@@ -71,6 +71,9 @@ export type SystemRequirements = {
   sourceUrl: string;
 };
 
+/** A company credited on a game, linkable to its studio page. */
+export type CompanyRef = { id: number; name: string };
+
 /** A remaster of a game. Not a catalogue entry: it shares its original's page, ratings and reviews. */
 export type GameRemaster = {
   id: number;
@@ -99,6 +102,9 @@ export type IgdbGameDetail = IgdbGameResult & {
   userRating: number | null;
   userRatingCount: number;
   systemRequirements: SystemRequirements | null;
+  /** Developers / publishers with ids, for links to their studio pages (same order as the name lists). */
+  developerCompanies: CompanyRef[];
+  publisherCompanies: CompanyRef[];
   /** Remasters of this game, oldest first (empty for most games). */
   remasters: GameRemaster[];
 };

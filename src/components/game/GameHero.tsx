@@ -16,6 +16,7 @@ import type { GameReviewStats } from '@/services/games';
 import { igdbImageUrl, type IgdbGameDetail } from '@/types/igdb';
 import type { StoredRating } from '@/utils/rating';
 
+import { CompanyLinks } from './CompanyLinks';
 import { EntryTypeBadge } from './EntryTypeBadge';
 import { RemasterNote } from './RemastersPanel';
 import { SCALE_DIVIDER, ScoreScales, TierScoreBox } from './ScoreScales';
@@ -152,13 +153,13 @@ export function GameHero({ game, stats }: GameHeroProps) {
           {game.developers.length > 0 ? (
             <Text className="text-retrogamingpc-sm text-retrogamingpc-text">
               <Text className="text-retrogamingpc-text-muted">Developer: </Text>
-              {game.developers.join(', ')}
+              <CompanyLinks companies={game.developerCompanies} fallback={game.developers} />
             </Text>
           ) : null}
           {game.publishers.length > 0 ? (
             <Text className="text-retrogamingpc-sm text-retrogamingpc-text">
               <Text className="text-retrogamingpc-text-muted">Publisher: </Text>
-              {game.publishers.join(', ')}
+              <CompanyLinks companies={game.publisherCompanies} fallback={game.publishers} />
             </Text>
           ) : null}
           <EntryTypeBadge game={game} />
