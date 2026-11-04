@@ -62,7 +62,7 @@ Search covers three kinds of thing:
 - All IGDB and RAWG traffic goes through a Supabase Edge Function with a PostgreSQL cache. The app never calls IGDB or RAWG directly.
 - Game results show the cover, year, platforms and studios; tap anywhere on a card to open the game page. Lists of games (search, studio pages, user lists) show no scores.
 - **Studio pages:** every game a studio developed or published, filterable by role and sortable.
-- The catalogue is curated so each game appears once. Editions, mods, fan games and unrelated bundles are filtered out. DLC, expansions, remakes and real collections are kept and labelled. Remasters share their original's page: it shows an "Also remastered" line in the top card and a Remastered Versions card listing each remaster with its year and platforms, and searching a remaster's name finds the original.
+- The catalogue is curated so each game appears once. Editions, mods, fan games and unrelated bundles are filtered out. DLC, expansions, remakes and real collections are kept and labelled. Remasters share their original's page: it shows an "Also remastered" line in the top card and a Remastered Versions card listing each remaster with its year and platforms, and searching a remaster's name finds the original. Search result cards say "↻ Also remastered · 2018".
 
 ### Now Playing (Post / Review Studio)
 - **Now Playing grid:** four slots for the games you're currently playing. Each slot holds running notes and a "so far" score.

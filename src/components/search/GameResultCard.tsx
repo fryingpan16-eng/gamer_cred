@@ -20,6 +20,15 @@ export function gameMetaLine(game: Pick<IgdbGameResult, 'releaseYear' | 'develop
   return [game.releaseYear, game.developers.join(', ')].filter(Boolean).join(' · ');
 }
 
+/** "Also remastered · 2011, 2018" for result cards, or null. Remasters share the original's page. */
+export function remasterLine(game: Pick<IgdbGameResult, 'remasterCount' | 'remasterYears'>): string | null {
+  const count = game.remasterCount ?? 0;
+  if (count === 0) return null;
+  const years = game.remasterYears ?? [];
+  const shown = years.length > 3 ? `${years.slice(0, 3).join(', ')} +${years.length - 3}` : years.join(', ');
+  return shown ? `Also remastered · ${shown}` : count > 1 ? `Also remastered (${count} versions)` : 'Also remastered';
+}
+
 /**
  * A game in a list of results (search, studio pages): cover, title, year, studios, platforms.
  * The whole card opens the game page; rating happens there, not in lists.
@@ -27,11 +36,12 @@ export function gameMetaLine(game: Pick<IgdbGameResult, 'releaseYear' | 'develop
 export function GameResultCard({ game, note }: GameResultCardProps) {
   const meta = gameMetaLine(game);
   const extraPlatforms = game.platforms.length - MAX_PLATFORMS;
+  const remastered = remasterLine(game);
 
   return (
     <Pressable
       accessibilityRole="link"
-      accessibilityLabel={`${game.name}${meta ? `, ${meta}` : ''}. Open game page`}
+      accessibilityLabel={`${game.name}${meta ? `, ${meta}` : ''}${remastered ? `. ${remastered}` : ''}. Open game page`}
       onPress={() => router.push({ pathname: '/game/[id]', params: { id: String(game.id) } })}
     >
       {({ pressed }) => (
@@ -48,6 +58,7 @@ export function GameResultCard({ game, note }: GameResultCardProps) {
             </Text>
             <EntryTypeBadge game={game} />
             {meta ? <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted">{meta}</Text> : null}
+            {remastered ? <Text className="text-retrogamingpc-xs text-retrogamingpc-text">↻ {remastered}</Text> : null}
             {game.platforms.length > 0 ? (
               <View className="flex-row flex-wrap gap-1">
                 {game.platforms.slice(0, MAX_PLATFORMS).map((p) => (

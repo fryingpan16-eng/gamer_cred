@@ -2,7 +2,7 @@ import { assertEquals } from '@std/assert';
 
 import { GAME_TYPE, searchWhereClause } from './curation.ts';
 import { rankGames } from './ranking.ts';
-import { mapRemasters, remasterOriginals } from './remasters.ts';
+import { mapRemasters, remasterOriginals, summarizeRemasters } from './remasters.ts';
 
 const unix = (year: number) => Date.UTC(year, 5, 1) / 1000;
 
@@ -53,4 +53,19 @@ Deno.test('search pre-filter: remasters are fetched only when asked', () => {
     '(version_parent = null & first_release_date != null & game_type = (0,1,2,3,4,8,9,10))',
   );
   assertEquals(searchWhereClause(new Map()).includes(',9,'), false);
+});
+
+Deno.test('summarizeRemasters: count and known years for result cards', () => {
+  assertEquals(
+    summarizeRemasters([
+      { id: 1, first_release_date: unix(2018) },
+      { id: 2, first_release_date: unix(2011) },
+      { id: 3, version_parent: 1, first_release_date: unix(2019) }, // an edition of a remaster
+      { id: 4 }, // undated
+      { id: 5, first_release_date: unix(2018) },
+      9, // unexpanded id
+    ]),
+    { remasterCount: 4, remasterYears: [2011, 2018] },
+  );
+  assertEquals(summarizeRemasters(undefined), { remasterCount: 0, remasterYears: [] });
 });

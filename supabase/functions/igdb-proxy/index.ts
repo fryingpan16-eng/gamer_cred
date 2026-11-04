@@ -69,7 +69,14 @@ import { releasePlatformOrder } from './platform_order.ts';
 import { chunk, companyGameIds, IGDB_PAGE_MAX, tagCompanyGames } from './company_games.ts';
 import * as rankingModule from './ranking.ts';
 import * as remastersModule from './remasters.ts';
-import { mapRemasters, REMASTER_DETAIL_FIELDS, remasterOriginals, type RawRemaster } from './remasters.ts';
+import {
+  mapRemasters,
+  REMASTER_DETAIL_FIELDS,
+  REMASTER_RESULT_FIELDS,
+  remasterOriginals,
+  summarizeRemasters,
+  type RawRemaster,
+} from './remasters.ts';
 import { fetchRawgPcRequirements, RawgError, searchRawgCreators } from './rawg.ts';
 
 // -----------------------------------------------------------------------------
@@ -315,6 +322,7 @@ type RawGame = {
   genres?: { name?: string }[];
   involved_companies?: { developer?: boolean; publisher?: boolean; company?: { id: number; name?: string } }[];
   external_games?: { external_game_source?: number }[];
+  remasters?: (RawRemaster | number)[];
 };
 
 type RawCompany = {
@@ -339,7 +347,7 @@ function compact(values: (string | undefined)[]): string[] {
 // CURATION_FIELDS already includes total_rating_count, external games and involved companies.
 const GAME_FIELDS = [
   `fields name,slug,cover.image_id,total_rating,${CURATION_FIELDS},`,
-  'platforms.id,platforms.abbreviation,platforms.name,release_dates.date,release_dates.platform.id,genres.name;',
+  `platforms.id,platforms.abbreviation,platforms.name,release_dates.date,release_dates.platform.id,genres.name,${REMASTER_RESULT_FIELDS};`,
 ].join(' ');
 
 async function searchGames(query: string, limit: number): Promise<IgdbGameResult[]> {
@@ -380,7 +388,6 @@ type RawGameDetail = Omit<RawGame, 'involved_companies'> & {
   game_engines?: { name?: string }[];
   franchises?: { name?: string }[];
   involved_companies?: { developer?: boolean; publisher?: boolean; company?: { id: number; name?: string } }[];
-  remasters?: (RawRemaster | number)[];
   aggregated_rating?: number;
   aggregated_rating_count?: number;
   rating?: number;
@@ -493,6 +500,7 @@ function mapGames(raw: CuratedGame<RawGame>[]): IgdbGameResult[] {
       releasePlatformIds: releasePlatformOrder(g.release_dates, g.platforms),
       genres: compact((g.genres ?? []).map((x) => x.name)),
       developers: compact((g.involved_companies ?? []).filter((ic) => ic.developer).map((ic) => ic.company?.name)),
+      ...summarizeRemasters(g.remasters),
     }));
 }
 

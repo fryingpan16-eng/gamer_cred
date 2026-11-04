@@ -212,6 +212,9 @@ export type IgdbGameResult = {
   releasePlatformIds?: number[];
   genres: string[];
   developers: string[];
+  /** Remasters of this game (not entries of their own) and their release years, ascending. */
+  remasterCount: number;
+  remasterYears: number[];
 };
 
 export type IgdbCompanyResult = {

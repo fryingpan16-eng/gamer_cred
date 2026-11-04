@@ -4,7 +4,7 @@ import { studioGames, studioRoleCounts } from '../studioGames';
 
 const g = (id: number, name: string, releaseYear: number | null, rating: number | null, roles: IgdbCompanyGame['roles']): IgdbCompanyGame => ({
   kind: 'game', id, name, entryType: 'game', parentGame: null, collectionGames: [], slug: null, coverImageId: null,
-  releaseYear, rating, platforms: [], genres: [], developers: [], roles,
+  releaseYear, rating, platforms: [], genres: [], developers: [], remasterCount: 0, remasterYears: [], roles,
 });
 
 const GAMES = [

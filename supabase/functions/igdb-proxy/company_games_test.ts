@@ -17,6 +17,8 @@ const game = (id: number, name: string, releaseYear: number | null): IgdbGameRes
   platforms: [],
   genres: [],
   developers: [],
+  remasterCount: 0,
+  remasterYears: [],
 });
 
 Deno.test('companyGameIds: developed first, de-duplicated, capped', () => {

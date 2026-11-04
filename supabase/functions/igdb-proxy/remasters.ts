@@ -11,9 +11,11 @@ import type { GameRemaster } from '../_shared/igdb-contract.ts';
 
 import { GAME_TYPE, gameTypeOf, type CurationFields } from './curation.ts';
 
-/** IGDB fields for the game page's remaster list (append to the detail query). */
-export const REMASTER_DETAIL_FIELDS =
-  'remasters.name,remasters.first_release_date,remasters.version_parent,remasters.platforms.abbreviation,remasters.platforms.name';
+/** IGDB fields for every game result (search cards' "Also remastered" line). */
+export const REMASTER_RESULT_FIELDS = 'remasters.first_release_date,remasters.version_parent';
+
+/** Extra fields for the game page's full list (the detail query already has REMASTER_RESULT_FIELDS; IGDB fields must not repeat). */
+export const REMASTER_DETAIL_FIELDS = 'remasters.name,remasters.platforms.abbreviation,remasters.platforms.name';
 
 /** Most remaster names one original keeps as search aliases (and most originals fetched per search). */
 export const REMASTER_ORIGINALS_MAX = 50;
@@ -44,6 +46,18 @@ export function mapRemasters(raw: readonly (RawRemaster | number)[] | undefined)
     list.push({ id: r.id, name: r.name.trim(), year: yearOf(r.first_release_date), platforms });
   }
   return list.sort((a, b) => (a.year ?? 9999) - (b.year ?? 9999) || a.name.localeCompare(b.name));
+}
+
+/** For result cards: how many remasters (editions of one dropped) and their known years, ascending. */
+export function summarizeRemasters(raw: readonly (RawRemaster | number)[] | undefined): { remasterCount: number; remasterYears: number[] } {
+  const kept = new Map<number, number | null>();
+  for (const r of raw ?? []) {
+    if (typeof r === 'number') continue;
+    if (r.version_parent !== undefined && r.version_parent !== null) continue;
+    kept.set(r.id, yearOf(r.first_release_date));
+  }
+  const years = [...new Set([...kept.values()].filter((y): y is number => y !== null))].sort((a, b) => a - b);
+  return { remasterCount: kept.size, remasterYears: years };
 }
 
 /**
