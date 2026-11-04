@@ -2,6 +2,7 @@ import { Redirect, Stack, useLocalSearchParams } from 'expo-router';
 import { ScrollView, View } from 'react-native';
 
 import { FavoritesShowcase } from '@/components/profile/FavoritesShowcase';
+import { LikedGamesShowcase } from '@/components/profile/LikedGamesShowcase';
 import { FriendButton } from '@/components/profile/FriendButton';
 import { NowPlayingShowcase } from '@/components/profile/NowPlayingShowcase';
 import { ProfileHeader } from '@/components/profile/ProfileHeader';
@@ -13,6 +14,7 @@ import { useBlockedUsers, useBlockState, useBlockUser } from '@/hooks/useSafety'
 import { RetroGamingPCAlert, RetroGamingPCButton, RetroGamingPCPanel, RetroGamingPCSpinner } from '@/components/ui';
 import { useAuthStore } from '@/hooks/useAuth';
 import { useProfile } from '@/hooks/useProfile';
+import { MembersOnly } from '@/components/auth/MembersOnly';
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -48,7 +50,11 @@ export default function UserProfileScreen() {
           <View className="gap-2">
             <RetroGamingPCAlert tone="info" message={`You blocked ${name}. You don’t see each other on GamerCred.`} />
             <View className="flex-row justify-end">
-              <RetroGamingPCButton label={`Unblock ${name}`} loading={unblock.isPending} onPress={() => unblock.mutate({ userId: id, block: false })} />
+              <RetroGamingPCButton
+                label={`Unblock ${name}`}
+                loading={unblock.isPending}
+                onPress={() => unblock.mutate({ userId: id, block: false })}
+              />
             </View>
           </View>
         </RetroGamingPCPanel>
@@ -83,7 +89,9 @@ export default function UserProfileScreen() {
         profile={player}
         actions={
           <View className="gap-2">
-            <FriendButton otherId={player.id} otherName={player.username} />
+            <MembersOnly feature="add friends" fallback={null}>
+              <FriendButton otherId={player.id} otherName={player.username} />
+            </MembersOnly>
             <ProfileSafetyActions userId={player.id} username={player.username} />
           </View>
         }
@@ -92,6 +100,7 @@ export default function UserProfileScreen() {
         <View className="gap-3 md:flex-[3]">
           <NowPlayingShowcase userId={player.id} isOwner={false} visibility={player.now_playing_visibility} />
           <FavoritesShowcase userId={player.id} editable={false} />
+          <LikedGamesShowcase userId={player.id} isOwner={false} />
         </View>
         <View className="gap-3 md:flex-[2]">
           <ProfileRatings userId={player.id} isOwner={false} />

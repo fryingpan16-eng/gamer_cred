@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react-native';
 
-import { RATING_TIERS } from '@/constants/ratingRubric';
+import { PERFECT_TIER_GOLD, RATING_TIERS } from '@/constants/ratingRubric';
 import { THEME_NAMES, themePalette } from '@/constants/themes';
 import { contrast, mix } from '@/utils/color';
 
@@ -53,6 +53,17 @@ describe('game page score box scales', () => {
       expect(contrast(t.textMuted, bg)).toBeGreaterThanOrEqual(4.5);
       // clearly coloured: at least twice the old 10% tint
       expect(contrast(bg, t.dark)).toBeGreaterThan(contrast(mix(tier.color, t.dark, 0.2), t.dark) - 0.01);
+    }
+  });
+
+  it.each(THEME_NAMES)('%s: gold 5/5 stars stay readable on 5-star boxes and every surface', (name) => {
+    const t = themePalette(name);
+    const fiveStarBoxes = RATING_TIERS.filter((tier) => tier.stars === 5).map(
+      (tier) => tierBoxStyle({ numeric: tier.max, inputScale: 'numeric', input: String(tier.max) }, t)!.backgroundColor,
+    );
+    for (const bg of [...fiveStarBoxes, t.dark, t.card, t.panel]) {
+      // The "5★" label is text (4.5:1); the star glyphs themselves need 3:1.
+      expect(contrast(PERFECT_TIER_GOLD, bg)).toBeGreaterThanOrEqual(4.5);
     }
   });
 });

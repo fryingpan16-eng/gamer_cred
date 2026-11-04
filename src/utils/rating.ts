@@ -63,11 +63,7 @@ export function isValidNumeric(value: unknown): value is number {
 
 export function isValidStars(value: unknown): value is number {
   return (
-    typeof value === 'number' &&
-    Number.isFinite(value) &&
-    value >= STARS_MIN &&
-    value <= STARS_MAX &&
-    Number.isInteger(value / STARS_STEP)
+    typeof value === 'number' && Number.isFinite(value) && value >= STARS_MIN && value <= STARS_MAX && Number.isInteger(value / STARS_STEP)
   );
 }
 
@@ -178,12 +174,20 @@ export function starsToNumeric(stars: number): number {
   if (!isValidStars(stars)) throw new RangeError(`Stars must be 0.5–5 in half steps, got ${stars}`);
   // Five stars is a perfect score (the gold S), not the top of the plain S range.
   if (stars === STARS_MAX) return NUMERIC_MAX;
-  return Math.max(...coarseTargets().filter((t) => t.stars === stars).map((t) => t.max));
+  return Math.max(
+    ...coarseTargets()
+      .filter((t) => t.stars === stars)
+      .map((t) => t.max),
+  );
 }
 
 export function roundedToNumeric(rounded: RoundedValue): number {
   if (!isValidRounded(rounded)) throw new RangeError(`Rounded must be 5–10 or "${NOT_GOOD}", got ${String(rounded)}`);
-  return Math.max(...coarseTargets().filter((t) => t.rounded === rounded).map((t) => t.max));
+  return Math.max(
+    ...coarseTargets()
+      .filter((t) => t.rounded === rounded)
+      .map((t) => t.max),
+  );
 }
 
 export function ratingInputToNumeric(input: RatingInput): number {
@@ -326,6 +330,19 @@ export function isConsistentStoredRating(rating: StoredRating): boolean {
 }
 
 /** Buckets a 100-slot per-score histogram (index 0 = score 1) into tiers, best → worst. */
+/**
+ * Tier histogram with the perfect 100s folded into S (96–100), F first.
+ * `perfect` is how many of the S ratings were a perfect 100 (shown as a gold
+ * part of the S bar), so the top tier is one bar like every other tier.
+ */
+export function tierHistogram(countsByNumeric: readonly number[]): { tier: TierCode; count: number; perfect: number }[] {
+  const perfect = countsByNumeric[NUMERIC_MAX - 1] ?? 0;
+  return bucketByTier(countsByNumeric)
+    .filter((b) => !tierDefinition(b.tier).perfect)
+    .map((b) => (b.tier === 'S' ? { ...b, count: b.count + perfect, perfect } : { ...b, perfect: 0 }))
+    .reverse();
+}
+
 export function bucketByTier(countsByNumeric: readonly number[]): { tier: TierCode; count: number }[] {
   return RATING_TIERS.map((t) => {
     let count = 0;

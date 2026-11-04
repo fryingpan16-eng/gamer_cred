@@ -3,11 +3,11 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchAdminActivity, fetchAdminStatus, startAuthenticatorSetup, verifyAuthenticatorCode } from '@/services/adminSecurity';
 import { queryKeys } from '@/utils/queryKeys';
 
-import { useAuthStore } from './useAuth';
+import { useMemberId } from './useAuth';
 
 /** Admin membership + whether this sign-in passed the code check. */
 export function useAdminStatus() {
-  const userId = useAuthStore((s) => s.user?.id ?? null);
+  const userId = useMemberId();
   return useQuery({
     queryKey: queryKeys.safety.adminStatus(userId ?? 'none'),
     queryFn: fetchAdminStatus,

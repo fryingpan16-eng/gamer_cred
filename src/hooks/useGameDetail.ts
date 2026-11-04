@@ -1,6 +1,6 @@
-import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { fetchFriendRatingsForGame, fetchFriendReviewsForGame, fetchGameDetail, fetchGameReviews, fetchGameReviewStats } from '@/services/games';
+import { fetchFriendRatingsForGame, fetchGameDetail, fetchGameReviewStats } from '@/services/games';
 import { SearchServiceError } from '@/services/igdb';
 import { queryKeys } from '@/utils/queryKeys';
 
@@ -26,29 +26,10 @@ export function useGameDetail(gameId: number | null) {
   });
 }
 
-export function useGameReviews(gameId: number | null) {
-  return useInfiniteQuery({
-    queryKey: queryKeys.games.reviews(gameId ?? 0),
-    enabled: gameId !== null,
-    queryFn: ({ pageParam }) => fetchGameReviews(gameId!, pageParam),
-    initialPageParam: 0,
-    getNextPageParam: (last) => last.nextPage,
-  });
-}
-
-/** Friends' published reviews of this game, shown before other community reviews. */
-export function useFriendReviewsForGame(gameId: number | null) {
-  const viewerId = useAuthStore((s) => s.user?.id ?? null);
-  return useQuery({
-    queryKey: queryKeys.games.friendReviews(viewerId ?? 'anonymous', gameId ?? 0),
-    enabled: gameId !== null && viewerId !== null,
-    queryFn: () => fetchFriendReviewsForGame(gameId!),
-  });
-}
-
 /** Friends' ratings of this game — quick ratings and reviews (one score per friend). */
 export function useFriendRatingsForGame(gameId: number | null) {
-  const viewerId = useAuthStore((s) => s.user?.id ?? null);
+  // Guests have no friends to ask about.
+  const viewerId = useAuthStore((s) => (s.isGuest ? null : (s.user?.id ?? null)));
   return useQuery({
     queryKey: queryKeys.games.friendRatings(viewerId ?? 'anonymous', gameId ?? 0),
     enabled: gameId !== null && viewerId !== null,

@@ -5,6 +5,7 @@ import { RetroGamingPCAlert, RetroGamingPCPanel, RetroGamingPCSpinner } from '@/
 import { useAuthStore } from '@/hooks/useAuth';
 import { useTrendingPosts } from '@/hooks/useFeed';
 import { useGameLookup } from '@/hooks/useGames';
+import { useReviewLikes } from '@/hooks/useReviewBrowser';
 
 /** Recent reviews of the games that are trending right now. */
 export function TrendingPosts() {
@@ -12,6 +13,7 @@ export function TrendingPosts() {
   const posts = useTrendingPosts();
   const rows = posts.data ?? [];
   const games = useGameLookup(rows.map((r) => r.game_id));
+  const likes = useReviewLikes(rows.flatMap((r) => (r.review_id ? [r.review_id] : [])));
 
   return (
     <RetroGamingPCPanel title="Trending Posts">
@@ -24,7 +26,13 @@ export function TrendingPosts() {
       ) : (
         <View className="gap-2">
           {rows.map((item) => (
-            <FeedItemCard key={item.item_key} item={item} game={games.data?.get(item.game_id)} viewerId={viewerId} />
+            <FeedItemCard
+              key={item.item_key}
+              item={item}
+              game={games.data?.get(item.game_id)}
+              viewerId={viewerId}
+              like={item.review_id ? likes.data?.get(item.review_id) : undefined}
+            />
           ))}
         </View>
       )}

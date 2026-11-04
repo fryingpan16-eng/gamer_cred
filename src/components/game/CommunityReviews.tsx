@@ -1,148 +1,110 @@
 import { PERFECT_TIER_GOLD } from '@/constants/ratingRubric';
 import { router } from 'expo-router';
-import { useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
-import { ReportLink } from '@/components/safety/ReportLink';
-import { Thumbnail } from '@/components/search/Thumbnail';
-import { RetroGamingPCAlert, RetroGamingPCBadge, RetroGamingPCButton, RetroGamingPCCard, RetroGamingPCPanel, RetroGamingPCRating, RetroGamingPCSpinner } from '@/components/ui';
-import { useAuthStore } from '@/hooks/useAuth';
-import { useFriendReviewsForGame, useGameReviews, useGameReviewStats } from '@/hooks/useGameDetail';
-import type { GameReview, GameReviewStats } from '@/services/games';
+import { ReviewCard } from '@/components/review/ReviewCard';
+import { RetroGamingPCAlert, RetroGamingPCButton, RetroGamingPCPanel, RetroGamingPCSpinner } from '@/components/ui';
+import { useMemberId } from '@/hooks/useAuth';
+import { useGameReviewStats } from '@/hooks/useGameDetail';
+import { useReviewLikes, useReviewPreview } from '@/hooks/useReviewBrowser';
+import type { GameReviewStats } from '@/services/games';
 
-import { PlayedOnBadge } from './PlayedOnBadge';
-import { bucketByTier, tierDefinition, tierLabel, tierSpokenName } from '@/utils/rating';
-import { reviewRating } from '@/utils/ratingColumns';
+import { tierDefinition, tierHistogram, tierLabel, tierSpokenName } from '@/utils/rating';
 
-function formatDate(iso: string | null): string {
-  return iso ? new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '';
-}
-
-/** Tier histogram (F → perfect S), bars in the rubric's tier colours. */
+/**
+ * Tier histogram, F → S, bars in the rubric's tier colours. Perfect 100s are part
+ * of the S bar, shown as its gold top portion (and counted in the legend).
+ */
 function Distribution({ stats }: { stats: GameReviewStats }) {
-  const buckets = bucketByTier(stats.distribution).reverse();
+  const buckets = tierHistogram(stats.distribution);
   const max = Math.max(1, ...buckets.map((b) => b.count));
+  const perfect = buckets.find((b) => b.perfect > 0)?.perfect ?? 0;
   return (
-    <View
-      className="h-16 flex-1 flex-row items-end gap-px"
-      accessibilityLabel={`Tier distribution: ${buckets.map((b) => `${tierSpokenName(b.tier)} ${b.count}`).join(', ')}`}
-    >
-      {buckets.map(({ tier, count }) => (
-        <View key={tier} className="flex-1 items-center justify-end">
-          <Text className="font-mono text-retrogamingpc-xs text-retrogamingpc-text-muted">{count > 0 ? count : ''}</Text>
-          <View
-            className="w-full"
-            style={{
-              height: `${Math.max(4, (count / max) * 70)}%`,
-              backgroundColor: tierDefinition(tier).color,
-              opacity: count === 0 ? 0.25 : 1,
-            }}
-          />
-          <Text
-            className="font-mono text-retrogamingpc-xs text-retrogamingpc-text-muted"
-            style={tierDefinition(tier).perfect ? { color: PERFECT_TIER_GOLD, fontWeight: 'bold' } : undefined}
-          >
-            {tierLabel(tier)}
+    <View className="flex-1 gap-1">
+      <View
+        className="h-16 flex-row items-end gap-px"
+        accessibilityLabel={`Tier distribution: ${buckets
+          .map((b) => `${tierSpokenName(b.tier)} ${b.count}${b.perfect > 0 ? `, ${b.perfect} of them perfect` : ''}`)
+          .join(', ')}`}
+      >
+        {buckets.map(({ tier, count, perfect: gold }) => (
+          <View key={tier} className="flex-1 items-center justify-end">
+            <Text className="font-mono text-retrogamingpc-xs text-retrogamingpc-text-muted">{count > 0 ? count : ''}</Text>
+            <View
+              className="w-full justify-start overflow-hidden"
+              style={{
+                height: `${Math.max(4, (count / max) * 70)}%`,
+                backgroundColor: tierDefinition(tier).color,
+                opacity: count === 0 ? 0.25 : 1,
+              }}
+            >
+              {/* Perfect 100s: the gold top of the S bar. */}
+              {gold > 0 ? <View style={{ height: `${(gold / count) * 100}%`, backgroundColor: PERFECT_TIER_GOLD }} /> : null}
+            </View>
+            <Text className="font-mono text-retrogamingpc-xs text-retrogamingpc-text-muted">{tierLabel(tier)}</Text>
+          </View>
+        ))}
+      </View>
+      {perfect > 0 ? (
+        <View className="flex-row items-center gap-1">
+          <View className="h-2 w-2" style={{ backgroundColor: PERFECT_TIER_GOLD }} />
+          <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted">
+            <Text className="font-bold" style={{ color: PERFECT_TIER_GOLD }}>
+              {perfect}
+            </Text>{' '}
+            perfect 100{perfect === 1 ? '' : 's'} (in S)
           </Text>
         </View>
-      ))}
+      ) : null}
     </View>
   );
 }
 
-function ReviewCard({ review, isMine }: { review: GameReview; isMine: boolean }) {
-  const [expanded, setExpanded] = useState(false);
-  const author = review.author;
-  const openAuthor = () => author && router.push(isMine ? '/profile' : { pathname: '/user/[id]', params: { id: author.id } });
-  const long = (review.content?.length ?? 0) > 320;
+const PREVIEW = 3;
 
-  return (
-    <RetroGamingPCCard className="gap-2">
-      <View className="flex-row items-center gap-2">
-        <Pressable accessibilityRole="link" accessibilityLabel={`Open ${author?.username ?? 'player'}'s profile`} onPress={openAuthor}>
-          <Thumbnail uri={author?.avatar_url ?? null} fallback={author?.username ?? '?'} shape="square" accessibilityLabel="" />
-        </Pressable>
-        <View className="flex-1 gap-0.5">
-          <View className="flex-row items-center gap-1">
-            <Text onPress={openAuthor} className="text-retrogamingpc-base font-bold text-retrogamingpc-text-bright" numberOfLines={1}>
-              {author?.username ?? 'Unknown player'}
-            </Text>
-            {isMine ? <RetroGamingPCBadge label="You" variant="nowPlaying" /> : null}
-          </View>
-          <RetroGamingPCRating rating={reviewRating(review)} size="compact" />
-          <PlayedOnBadge platformId={review.platform_id} />
-          <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted">{formatDate(review.published_at)}</Text>
-        </View>
-      </View>
-      {review.content ? (
-        <>
-          <Text className="text-retrogamingpc-sm text-retrogamingpc-text" numberOfLines={expanded ? undefined : 6}>
-            {review.content}
-          </Text>
-          {long ? (
-            <Text onPress={() => setExpanded((v) => !v)} className="text-retrogamingpc-xs text-retrogamingpc-text-bright underline">
-              {expanded ? 'Show less' : 'Read more'}
-            </Text>
-          ) : null}
-        </>
-      ) : (
-        <Text className="text-retrogamingpc-xs italic text-retrogamingpc-text-muted">Score-only review (no written text).</Text>
-      )}
-      {!isMine && author ? (
-        <View className="flex-row justify-end">
-          <ReportLink subject={{ targetType: 'review', targetId: review.id, targetUserId: review.user_id, label: `${author.username}'s review`, ownerName: author.username }} />
-        </View>
-      ) : null}
-    </RetroGamingPCCard>
-  );
-}
-
-/** Tier distribution + paginated published reviews from everyone except your friends (shown above). */
+/** Tier distribution + the most popular few reviews; View all opens the review browser. */
 export function CommunityReviews({ gameId }: { gameId: number }) {
-  const viewerId = useAuthStore((s) => s.user?.id ?? null);
+  const viewerId = useMemberId();
   const stats = useGameReviewStats(gameId);
-  const reviews = useGameReviews(gameId);
-  // Friends' reviews are shown first in FriendRatings, so they're left out here.
-  const friends = useFriendReviewsForGame(gameId);
-  const friendIds = new Set((friends.data ?? []).map((f) => f.user_id));
-  const all = (reviews.data?.pages.flatMap((p) => p.reviews) ?? []).filter((r) => !friendIds.has(r.user_id));
+  const preview = useReviewPreview(gameId, 'popular', PREVIEW);
+  const reviews = preview.data?.reviews ?? [];
+  const likes = useReviewLikes(reviews.map((r) => r.id));
+  const openAll = () => router.push({ pathname: '/reviews/[gameId]', params: { gameId: String(gameId), tab: 'community' } });
+  const total = stats.data?.count ?? 0;
 
   return (
-    <RetroGamingPCPanel title={`Community Reviews${stats.data ? ` (${stats.data.count})` : ''}`}>
+    <RetroGamingPCPanel
+      title={`Community Reviews${stats.data ? ` (${total})` : ''}`}
+      onTitlePress={openAll}
+      titleAccessibilityLabel="Community reviews. Open all reviews"
+      headerRight={<RetroGamingPCButton variant="navigate" label="View all ▸" onPress={openAll} />}
+    >
       <View className="gap-3">
-        {stats.data && stats.data.count > 0 ? (
+        {stats.data && total > 0 ? (
           <View className="retrogamingpc-bevel-inset flex-row items-center gap-3 bg-retrogamingpc-dark p-2">
             <Distribution stats={stats.data} />
           </View>
         ) : null}
 
-        {reviews.isPending ? (
+        {preview.isPending ? (
           <RetroGamingPCSpinner label="Loading reviews…" />
-        ) : reviews.isError ? (
+        ) : preview.isError ? (
           <View className="gap-2">
-            <RetroGamingPCAlert message={reviews.error.message} />
+            <RetroGamingPCAlert message={preview.error.message} />
             <View className="flex-row justify-end">
-              <RetroGamingPCButton label="Retry" onPress={() => void reviews.refetch()} />
+              <RetroGamingPCButton label="Retry" onPress={() => void preview.refetch()} />
             </View>
           </View>
-        ) : all.length === 0 ? (
-          <Text className="text-retrogamingpc-sm text-retrogamingpc-text-muted">
-            {friendIds.size > 0 ? 'No other community reviews yet.' : 'No community reviews yet. Be the first to post one.'}
-          </Text>
+        ) : reviews.length === 0 ? (
+          <Text className="text-retrogamingpc-sm text-retrogamingpc-text-muted">No reviews yet. Be the first to post one.</Text>
         ) : (
           <View className="gap-2">
-            {all.map((review) => (
-              <ReviewCard key={review.id} review={review} isMine={review.user_id === viewerId} />
+            {reviews.map((review) => (
+              <ReviewCard key={review.id} review={review} viewerId={viewerId} like={likes.data?.get(review.id)} />
             ))}
-            {reviews.hasNextPage ? (
-              <View className="flex-row justify-center pt-1">
-                <RetroGamingPCButton
-                  label={reviews.isFetchingNextPage ? 'Loading…' : 'Load more reviews'}
-                  loading={reviews.isFetchingNextPage}
-                  onPress={() => void reviews.fetchNextPage()}
-                />
-              </View>
-            ) : null}
+            <View className="flex-row justify-center pt-1">
+              <RetroGamingPCButton variant="navigate" label="See all reviews" onPress={openAll} />
+            </View>
           </View>
         )}
       </View>

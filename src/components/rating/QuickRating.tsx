@@ -4,7 +4,16 @@ import { Platform, Pressable, Text, TextInput, View } from 'react-native';
 
 import { RetroGamingPCTierBadge } from '@/components/ui';
 import { ACTION_COLORS } from '@/constants/actionColors';
-import { NOT_GOOD, NUMERIC_MAX, NUMERIC_MIN, RATING_SCALE_LABELS, type RatingScale } from '@/constants/ratingRubric';
+import {
+  NOT_GOOD,
+  NUMERIC_MAX,
+  NUMERIC_MIN,
+  PERFECT_TIER_GOLD,
+  RATING_SCALE_LABELS,
+  STARS_MAX,
+  type RatingScale,
+} from '@/constants/ratingRubric';
+import { HERO_SCORE } from '@/constants/scoreBox';
 import { usePrimaryRatingScale } from '@/hooks/useAuth';
 import { useThemeColors } from '@/hooks/useTheme';
 import { cn } from '@/utils/cn';
@@ -25,14 +34,17 @@ import {
   tierDefinitionForNumeric,
   toStoredRating,
   type RatingInput,
-  type StoredRating, tierLabel, tierSpokenName } from '@/utils/rating';
+  type StoredRating,
+  tierLabel,
+  tierSpokenName,
+} from '@/utils/rating';
 
 export type QuickRatingProps = {
   gameId: number;
   /** The viewer's current rating (from a quick rating or their review — they are the same score). */
   value: StoredRating | null;
   onChange?: (value: StoredRating | null) => void;
-  size?: 'compact' | 'regular';
+  size?: 'compact' | 'regular' | 'hero';
   readOnly?: boolean;
   /** Defaults to the viewer's primary scale from Settings. */
   scale?: RatingScale;
@@ -47,6 +59,8 @@ export type QuickRatingProps = {
 const SIZES = {
   compact: { glyph: 22, cell: 30, chip: 32, height: 36, clear: 36 },
   regular: { glyph: 32, cell: 40, chip: 38, height: 44, clear: 44 },
+  /** The game page's Your rating box: same headline size as the Gamer Cred score beside it. */
+  hero: { glyph: HERO_SCORE.starGlyph, cell: HERO_SCORE.starCell, chip: 38, height: HERO_SCORE.rowHeight, clear: HERO_SCORE.rowHeight },
 } as const;
 
 type WebKeyEvent = { key: string; preventDefault: () => void };
@@ -171,7 +185,11 @@ function NumericField({
 
   if (!interactive) {
     return (
-      <Text testID={`quick-rating-${gameId}`} accessibilityLabel={`${label}: ${current === null ? 'not rated' : `${current} out of 100`}`} className="font-mono text-retrogamingpc-lg font-bold text-retrogamingpc-text-bright">
+      <Text
+        testID={`quick-rating-${gameId}`}
+        accessibilityLabel={`${label}: ${current === null ? 'not rated' : `${current} out of 100`}`}
+        className="font-mono text-retrogamingpc-lg font-bold text-retrogamingpc-text-bright"
+      >
         {current ?? '--'}
         <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted"> / {NUMERIC_MAX}</Text>
       </Text>
@@ -265,9 +283,10 @@ export function QuickRating({
       </Pressable>
     ) : null;
 
-  const tierBadge = value && showTierBadge ? (
-    <RetroGamingPCTierBadge tier={numericToTier(value.numeric)} showDescriptor={size === 'regular'} size="compact" />
-  ) : null;
+  const tierBadge =
+    value && showTierBadge ? (
+      <RetroGamingPCTierBadge tier={numericToTier(value.numeric)} showDescriptor={size !== 'compact'} size="compact" />
+    ) : null;
 
   if (scale === 'numeric') {
     return (
@@ -292,68 +311,68 @@ export function QuickRating({
   const highlighted = preview ?? shown;
 
   const control =
-    scale === 'stars' ? (
-      Array.from({ length: 5 }, (_, i) => {
-        const starsShown = highlighted ? Number(highlighted.value) : 0;
-        const fill = starsShown - i; // ≥1 full, 0.5 half, ≤0 empty
-        const icon = fill >= 1 ? 'star' : fill >= 0.5 ? 'star-half-full' : 'star-outline';
-        return (
-          <View key={i} style={{ width: dims.cell, height: dims.height }} className="items-center justify-center">
-            <MaterialCommunityIcons name={icon} size={dims.glyph} color={fill > 0 ? themeColors.highlight : themeColors.accent} />
-            {interactive ? (
-              <View className="absolute inset-0 flex-row">
-                {([i + 0.5, i + 1] as const).map((half) => {
-                  const input: RatingInput = { scale: 'stars', value: half };
-                  return (
-                    <Pressable
-                      key={half}
-                      testID={`quick-rating-${gameId}-${half}`}
-                      accessible={false}
-                      focusable={false}
-                      className="flex-1"
-                      onPress={() => commit(nextRatingForTap(value, input))}
-                      onHoverIn={() => setPreview(input)}
-                      onHoverOut={() => setPreview(null)}
-                    />
-                  );
-                })}
-              </View>
-            ) : null}
-          </View>
-        );
-      })
-    ) : (
-      options.map((input) => {
-        const def =
-          input.scale === 'tier'
-            ? tierDefinition(input.value)
-            : tierDefinitionForNumeric(roundedToNumeric(input.scale === 'rounded' ? input.value : NOT_GOOD));
-        const text =
-          input.scale === 'rounded' && input.value === NOT_GOOD
-            ? size === 'compact'
-              ? 'NG'
-              : NOT_GOOD
-            : input.scale === 'tier'
-              ? tierLabel(input.value)
-              : String(input.value);
-        return (
-          <Chip
-            key={String(input.value)}
-            testID={`quick-rating-${gameId}-${String(input.value)}`}
-            color={def.color}
-            textColor={def.textColor}
-            selected={sameInput(shown, input)}
-            previewed={sameInput(preview, input)}
-            dimmed={shown !== null || preview !== null}
-            width={dims.chip}
-            height={dims.height}
-            onPress={interactive ? () => commit(nextRatingForTap(value, input)) : undefined}
-          >
-            {text}
-          </Chip>
-        );
-      })
-    );
+    scale === 'stars'
+      ? Array.from({ length: 5 }, (_, i) => {
+          const starsShown = highlighted ? Number(highlighted.value) : 0;
+          const fill = starsShown - i; // ≥1 full, 0.5 half, ≤0 empty
+          // A full 5/5 shines gold, like the perfect-score S.
+          const filledColor = starsShown >= STARS_MAX ? PERFECT_TIER_GOLD : themeColors.highlight;
+          const icon = fill >= 1 ? 'star' : fill >= 0.5 ? 'star-half-full' : 'star-outline';
+          return (
+            <View key={i} style={{ width: dims.cell, height: dims.height }} className="items-center justify-center">
+              <MaterialCommunityIcons name={icon} size={dims.glyph} color={fill > 0 ? filledColor : themeColors.accent} />
+              {interactive ? (
+                <View className="absolute inset-0 flex-row">
+                  {([i + 0.5, i + 1] as const).map((half) => {
+                    const input: RatingInput = { scale: 'stars', value: half };
+                    return (
+                      <Pressable
+                        key={half}
+                        testID={`quick-rating-${gameId}-${half}`}
+                        accessible={false}
+                        focusable={false}
+                        className="flex-1"
+                        onPress={() => commit(nextRatingForTap(value, input))}
+                        onHoverIn={() => setPreview(input)}
+                        onHoverOut={() => setPreview(null)}
+                      />
+                    );
+                  })}
+                </View>
+              ) : null}
+            </View>
+          );
+        })
+      : options.map((input) => {
+          const def =
+            input.scale === 'tier'
+              ? tierDefinition(input.value)
+              : tierDefinitionForNumeric(roundedToNumeric(input.scale === 'rounded' ? input.value : NOT_GOOD));
+          const text =
+            input.scale === 'rounded' && input.value === NOT_GOOD
+              ? size === 'compact'
+                ? 'NG'
+                : NOT_GOOD
+              : input.scale === 'tier'
+                ? tierLabel(input.value)
+                : String(input.value);
+          return (
+            <Chip
+              key={String(input.value)}
+              testID={`quick-rating-${gameId}-${String(input.value)}`}
+              color={def.color}
+              textColor={def.textColor}
+              selected={sameInput(shown, input)}
+              previewed={sameInput(preview, input)}
+              dimmed={shown !== null || preview !== null}
+              width={dims.chip}
+              height={dims.height}
+              onPress={interactive ? () => commit(nextRatingForTap(value, input)) : undefined}
+            >
+              {text}
+            </Chip>
+          );
+        });
 
   return (
     <View className={cn('flex-row flex-wrap items-center gap-1', className)}>
@@ -375,13 +394,23 @@ export function QuickRating({
       >
         {control}
       </View>
-      {scale === 'tier' ? (
-        size === 'regular' && value ? (
+      {scale === 'stars' && size === 'hero' ? (
+        // Headline value, styled like the Gamer Cred score's.
+        <Text
+          className={cn(HERO_SCORE.valueClass, value ? 'text-retrogamingpc-text-bright' : 'text-retrogamingpc-text-muted')}
+          style={shown && Number(shown.value) >= STARS_MAX ? { color: PERFECT_TIER_GOLD } : undefined}
+        >
+          {shown ? `${shown.value}★` : '--'}
+        </Text>
+      ) : scale === 'tier' ? (
+        size !== 'compact' && value ? (
           <Text className="text-retrogamingpc-xs text-retrogamingpc-text">{tierDefinitionForNumeric(value.numeric).descriptor}</Text>
         ) : null
       ) : scale === 'rounded' ? (
         value ? (
-          <Text className="font-mono text-retrogamingpc-xs text-retrogamingpc-text-bright">{shown ? formatRounded(shown.scale === 'rounded' ? shown.value : NOT_GOOD) : ''}</Text>
+          <Text className="font-mono text-retrogamingpc-xs text-retrogamingpc-text-bright">
+            {shown ? formatRounded(shown.scale === 'rounded' ? shown.value : NOT_GOOD) : ''}
+          </Text>
         ) : null
       ) : value ? (
         tierBadge

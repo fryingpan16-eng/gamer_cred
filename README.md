@@ -33,7 +33,7 @@ One tab bar at the top switches between three views:
   - **Trending Games:** the games the most players rated or reviewed in the last 14 days.
   - **Trending Posts:** recent reviews of those trending games.
   - **Latest from the Community:** everyone's newest reviews, loading more as you scroll.
-- **Friends:** your friends' reviews and Now Playing activity.
+- **Friends:** your friends' reviews, Now Playing activity and ♥ likes.
 - **Lists:**
   - **Curated Lists:** featured by the app's admins (hand-picked or smart lists).
   - **Your Lists:** with **New List**.
@@ -44,9 +44,9 @@ One tab bar at the top switches between three views:
 - **Ranked** lists show #1, #2, #3…; the owner reorders with ▲ ▼ and removes with ✕.
 - Lists are **public** (on your profile and in search) or **private** (only you).
 - **Admins** feature public lists on Home and choose their order. Featured lists must stay public.
-- **Smart lists (admins only):** instead of hand-picked games, the list stores a rule and fills itself live from Gamer Cred ratings, e.g. "Top 500 games", "Top 500 expansions" or "every S-tier game".
+- **Smart lists (admins only):** instead of hand-picked games, the list stores a rule and fills itself from Gamer Cred ratings, recalculated once a day (nightly, plus straight away when the rule changes), e.g. "Top 500 games", "Top 500 expansions" or "every S-tier game".
   - Rule: type (games, expansions, DLC, remakes, collections), tier, release years or decade, genre, platform played on, and size (up to 500).
-  - Ranked by the plain Gamer Cred average.
+  - Ranked by the plain Gamer Cred average, or by **♥ likes** ("Most liked").
   - A game qualifies once it has at least as many ratings as the 75th percentile of rating counts for its type, and never fewer than 3, so the bar rises as the app grows.
 
 ### Search
@@ -75,6 +75,7 @@ Search covers three kinds of thing:
 Charts of your own logged games, all computed in Postgres:
 - **Gamer Profile:** a short written summary of your tastes. It's generated in the app from your stats, with no AI involved.
 - **Ratings:** one tab per scale (1–100, Tier, Stars, Rounded), always in the tier colours.
+- **Liked Games:** your likes by series, studio, genre and decade.
 - **Breakdowns:** Platforms, Studios (top 10 with "Show all"), Genres (count or average), Rating Habits (harsh vs. generous), You vs Community (with "hot takes"), Release Era and Logged Over Time.
 
 Every chart shows the exact value when you tap a bar, and has a table view that screen readers use. Missing data goes into an "Unknown" bucket.
@@ -83,6 +84,7 @@ Every chart shows the exact value when you tap a bar, and has a table view that 
 - **Now Playing:** the four slots, with privacy options (public, friends only or private).
 - **Top 4 Favorites:** tap a cover to open the game. The owner can reorder (◀ ▶) or remove (✕) entries.
 - **Friends:** tap the friend count for the friends list (yours also shows requests).
+- **♥ Liked Games:** the latest 8 liked covers, with **View all** for the full list (newest first, with a name filter).
 - **Ratings:** your most recent ratings. Tap **Ratings ▸** for a spreadsheet of every game you've rated.
   - It has sortable columns, search, and filters for tier, score range, platform, genre and whether you've reviewed the game.
   - Only you and your friends can sort and filter it.
@@ -94,8 +96,16 @@ Every chart shows the exact value when you tap a bar, and has a table view that 
 - A banner with cover, developer, publisher, release info, genres and platforms.
 - **Gamer Cred score:** the community average, shown large in your default scale, then in 1–100, stars and tier.
 - **Your rating:** the same layout as an interactive control, plus your "played on" platform, a **Write a review** button and **Add to Now Playing**.
+- **♥ Like:** one tap to show interest without rating or reviewing; the Gamer Cred box shows how many players like the game. Liking never creates a rating.
 - Both score boxes are coloured by the tier of their score.
 - **Friends' Ratings** (above the screenshots), About, Screenshots, Community Reviews, game facts, and PC system requirements (from RAWG).
+
+### Reviews
+One system, reached from everywhere:
+- **Review card:** the same preview in Home feeds, Trending Posts, the game page, the review browser and profiles. Avatar or name → profile; game → game page; anywhere else → the full review.
+- **Review browser** (`app/reviews/[gameId].tsx`): one game's reviews, **Community** or **Friends** tab, sorted **Popular / Recent / Highest / Lowest**. Opens from the game page's Community Reviews (View all) and Friends' Ratings (Friends tab). The Friends tab ends with friends who rated without writing a review.
+- **Full review** (`app/review/[id].tsx`): the ♥ like, Report, and "All reviews of this game".
+- **♥ on reviews:** any published review but your own. Counts are private: only the author sees how many likes their review got. Popular sorts by likes, then newest.
 
 ### Settings
 - Profile picture: upload and crop. Pictures are screened automatically (Google Cloud Vision SafeSearch) before anyone sees them; borderline ones wait for an admin.
@@ -145,6 +155,12 @@ where user_id = (select id from public.profiles where username = 'their_username
 
 ### Authentication
 - Email and password sign-up with email confirmation, plus Google sign-in.
+- **Browse as Guest** (on Login): an anonymous, read-only session with no email.
+  - Guests can read everything a member can: Home, search, game pages, profiles, reviews and lists.
+  - Rating, reviews, Now Playing, lists, friends, reports and settings show "Create a free account".
+  - The database enforces it (migration 000027: members-only write rules, no profile for guests); the game-search proxy gives guests 30 requests a minute.
+  - Guest accounts older than 30 days are deleted nightly.
+- **Bot protection:** sign-in, sign-up and guest sessions pass a Cloudflare Turnstile check (Supabase Auth CAPTCHA), plus Supabase's per-IP limits.
 - Sessions are stored with `expo-secure-store` on device.
 - Every screen except login and register requires an account.
 
@@ -166,7 +182,7 @@ Every rating is stored once, as a canonical score from **1 to 100**, together wi
 | **F** | 1–49 | 0.5–2 | NOT GOOD | Not Good |
 
 - **Your scale:** each user picks a default scale in Settings (new players start on **stars**). Every rating control (quick rating and review form) uses that scale:
-  - **stars:** tap a half or full star;
+  - **stars:** tap a half or full star (a full 5/5 shows in gold);
   - **tier:** tap a tier chip;
   - **rounded:** tap 5–10 or NOT GOOD;
   - **1–100:** type a score, or use − / +.
@@ -271,7 +287,9 @@ Every table has row-level security with explicit read and write policies.
 | `content_reports` | Reports on reviews, lists, ratings and players. Reporters see their own; admins resolve them. |
 | `terms_acceptances` | Which Terms version each user accepted |
 | `api_rate_limits` | Per-user request counters for the game-database proxy (service role only) |
-| `games` | A durable copy of IGDB metadata used by Stats and the ratings list |
+| `games` | A durable copy of IGDB metadata used by Stats and the ratings list (incl. series) |
+| `game_likes` | ♥ likes: one per player per game. Public to signed-in players, owner-only writes, members only. |
+| `review_likes` | ♥ on reviews. Private: you read only your own; authors see their own counts via `review_like_info`. |
 | `igdb_cache` | The proxy's response cache (`cache_key`, `data` JSONB, `updated_at`) |
 | `game_overrides` | Manual include/exclude overrides for catalogue curation |
 
@@ -308,6 +326,10 @@ Storage: a private `avatar-uploads` bucket (each user can write only their own p
 | 000024 | Stars as the default rating scale for new players |
 | 000025 | Two-step sign-in for admin powers, admin activity log |
 | 000026 | Security hardening: friend-request guard, database text filter, reads need a session, proxy rate limit, scheduled cache cleanup |
+| 000027 | Guest access: read-only anonymous sessions, members-only writes, guest cleanup |
+| 000028 | Smart lists saved and refreshed nightly instead of on every view |
+| 000029 | ♥ Game likes, likes in the Friends feed, "Most liked" smart lists, liked-games stats, game series |
+| 000030 | Private review likes, the review browser (`game_reviews_browse`) |
 
 ### avatar Edge Function
 - `submit` screens an uploaded picture with Google Cloud Vision SafeSearch, then publishes, rejects or holds it.
@@ -368,6 +390,12 @@ In the Supabase dashboard, under **Authentication → URL Configuration**, add t
 - your production web domain's `/auth/callback`
 
 Then enable the **Google** provider if you want Google sign-in.
+
+**Guests and bot protection** (optional; without them the app works, just with no guest button check):
+1. **Authentication → Sign In / Providers:** turn on **Allow anonymous sign-ins**.
+2. Cloudflare → **Turnstile → Add widget** (Managed). Hostnames: your web domain, plus `localhost` for development.
+3. Put the **site key** (public) in `.env` as `EXPO_PUBLIC_TURNSTILE_SITE_KEY`, and your web address as `EXPO_PUBLIC_SITE_URL`; restart Expo.
+4. Only once the app with those values is running: **Authentication → Attack Protection → CAPTCHA**, provider Turnstile, paste the **secret key**. (Turning this on first would make every sign-in fail.)
 
 ### 3. Database and Edge Function
 ```bash

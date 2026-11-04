@@ -2,21 +2,27 @@ import { router } from 'expo-router';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { Thumbnail } from '@/components/search/Thumbnail';
-import { RetroGamingPCAlert, RetroGamingPCPanel, RetroGamingPCRating, RetroGamingPCSpinner } from '@/components/ui';
+import { RetroGamingPCAlert, RetroGamingPCButton, RetroGamingPCPanel, RetroGamingPCRating, RetroGamingPCSpinner } from '@/components/ui';
 import { platformInfo } from '@/constants/platforms';
 import { useFriendRatingsForGame } from '@/hooks/useGameDetail';
 import { reviewRating } from '@/utils/ratingColumns';
 
 /**
  * Your friends' ratings of this game (quick ratings and reviews — one score
- * per friend), shown before other community reviews. Tap opens their review
- * when they wrote one, otherwise their profile.
+ * per friend). Tapping the card opens the review browser on its Friends tab.
  */
 export function FriendRatings({ gameId }: { gameId: number }) {
   const friends = useFriendRatingsForGame(gameId);
+  const openFriends = () => router.push({ pathname: '/reviews/[gameId]', params: { gameId: String(gameId), tab: 'friends' } });
+  const any = (friends.data?.length ?? 0) > 0;
 
   return (
-    <RetroGamingPCPanel title={`Friends' Ratings${friends.data?.length ? ` (${friends.data.length})` : ''}`}>
+    <RetroGamingPCPanel
+      title={`Friends' Ratings${friends.data?.length ? ` (${friends.data.length})` : ''}`}
+      onTitlePress={any ? openFriends : undefined}
+      titleAccessibilityLabel="Friends' ratings. Open your friends' reviews"
+      headerRight={any ? <RetroGamingPCButton variant="navigate" label="View all ▸" onPress={openFriends} /> : undefined}
+    >
       {friends.isPending ? (
         <RetroGamingPCSpinner label="Loading friends' ratings…" />
       ) : friends.isError ? (
@@ -29,12 +35,8 @@ export function FriendRatings({ gameId }: { gameId: number }) {
             <Pressable
               key={f.user_id}
               accessibilityRole="link"
-              accessibilityLabel={f.review_id ? `${f.username}'s review` : `${f.username}'s profile`}
-              onPress={() =>
-                f.review_id
-                  ? router.push({ pathname: '/review/[id]', params: { id: f.review_id } })
-                  : router.push({ pathname: '/user/[id]', params: { id: f.user_id } })
-              }
+              accessibilityLabel={`${f.username}. Open your friends' reviews`}
+              onPress={openFriends}
               className="w-[92px] items-center gap-1"
             >
               <Thumbnail uri={f.avatar_url} fallback={f.username} shape="square" accessibilityLabel="" />

@@ -10,6 +10,7 @@ import { listSearchPattern } from '@/services/lists';
 
 import { ListCards } from './ListCard';
 import { ListEditorModal } from './ListEditorModal';
+import { GuestPrompt } from '@/components/auth/MembersOnly';
 
 /** "+ New List" → editor → the new list's page with the game picker open. */
 export function NewListButton({ label = 'New List' }: { label?: string }) {
@@ -64,7 +65,15 @@ export function FeaturedListsPanel() {
 /** The viewer's own lists, with New List. */
 export function YourListsPanel() {
   const viewerId = useAuthStore((s) => s.user?.id ?? null);
-  const mine = useUserLists(viewerId);
+  const isGuest = useAuthStore((s) => s.isGuest);
+  const mine = useUserLists(isGuest ? null : viewerId);
+  if (isGuest) {
+    return (
+      <RetroGamingPCPanel title="Your Lists">
+        <GuestPrompt feature="make your own game lists" compact />
+      </RetroGamingPCPanel>
+    );
+  }
   return (
     <RetroGamingPCPanel title={`Your Lists${mine.data ? ` (${mine.data.length})` : ''}`} headerRight={<NewListButton />}>
       {mine.isPending ? (

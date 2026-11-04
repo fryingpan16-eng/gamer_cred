@@ -3,6 +3,7 @@ import { contrast as contrastRatio } from '@/utils/color';
 import { reviewFormSchema, slotDetailsSchema, storedRatingSchema } from '@/utils/reviewSchemas';
 import {
   bucketByTier,
+  tierHistogram,
   deriveAllScales,
   formatNumeric,
   formatRatingInScale,
@@ -57,11 +58,11 @@ describe('rubric integrity', () => {
     for (const t of RATING_TIERS.filter((x) => !x.perfect)) expect(t.label).toBe(t.tier);
   });
 
-  it('uses the specified badge colours, with S** distinct from S', () => {
+  it('uses the specified badge colours: both S tiers share the dark purple, the perfect one has gold text', () => {
     const colors = Object.fromEntries(RATING_TIERS.map((t) => [t.tier, t.color]));
     expect(colors).toEqual({
       'S**': '#5A2BB0',
-      S: '#9B7FD4',
+      S: '#5A2BB0',
       'A+': '#3A7FC1',
       A: '#9CCB8A',
       B: '#D9EBC9',
@@ -69,6 +70,10 @@ describe('rubric integrity', () => {
       D: '#F4A96B',
       F: '#E57373',
     });
+    const s = RATING_TIERS.find((t) => t.tier === 'S')!;
+    const perfect = RATING_TIERS.find((t) => t.tier === 'S**')!;
+    expect(s.textColor).not.toBe(perfect.textColor);
+    expect(contrastRatio(s.textColor, s.color)).toBeGreaterThanOrEqual(7);
   });
 });
 
@@ -329,6 +334,23 @@ describe('rating validation schemas', () => {
     expect(storedRatingSchema.safeParse({ numeric: 87.5, inputScale: 'numeric', input: '87.5' }).success).toBe(false);
     expect(storedRatingSchema.safeParse({ numeric: 89, inputScale: 'stars', input: '4.25' }).success).toBe(false);
     expect(storedRatingSchema.safeParse(87).success).toBe(false);
-    expect(slotDetailsSchema.safeParse({ notes: '', preliminaryScore: toStoredRating({ scale: 'rounded', value: NOT_GOOD }) }).success).toBe(true);
+    expect(
+      slotDetailsSchema.safeParse({ notes: '', preliminaryScore: toStoredRating({ scale: 'rounded', value: NOT_GOOD }) }).success,
+    ).toBe(true);
+  });
+});
+
+describe('tierHistogram', () => {
+  it('folds perfect 100s into one S bar (F first) and counts them', () => {
+    const counts = Array.from({ length: 100 }, () => 0);
+    counts[99] = 3; // 100
+    counts[96] = 2; // 97
+    counts[91] = 1; // 92 → A+
+    counts[9] = 4; // 10 → F
+    const h = tierHistogram(counts);
+    expect(h.map((b) => b.tier)).toEqual(['F', 'D', 'C', 'B', 'A', 'A+', 'S']);
+    expect(h.at(-1)).toEqual({ tier: 'S', count: 5, perfect: 3 });
+    expect(h.find((b) => b.tier === 'A+')).toEqual({ tier: 'A+', count: 1, perfect: 0 });
+    expect(h[0]).toEqual({ tier: 'F', count: 4, perfect: 0 });
   });
 });

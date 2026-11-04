@@ -89,3 +89,15 @@ export async function fetchLoggedOverTime() {
   if (error) fail(error);
   return data.map((r) => ({ month: String(r.month), games: Number(r.games) }));
 }
+
+export type LikedDimension = 'series' | 'studios' | 'genres' | 'era';
+
+/** Your liked games by series / studio / genre / era (migration 000029). `limit` null = every row. */
+export async function fetchLikedStats(dimension: LikedDimension, limit: number | null) {
+  const { data, error } = await supabase.rpc('stats_liked', { p_dimension: dimension, p_limit: limit });
+  if (error) fail(error);
+  return {
+    rows: data.map((r) => ({ name: r.label, games: Number(r.games) })),
+    total: data[0] ? Number(data[0].total_labels) : 0,
+  };
+}

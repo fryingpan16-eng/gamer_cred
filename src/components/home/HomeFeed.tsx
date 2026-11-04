@@ -6,6 +6,7 @@ import { RetroGamingPCAlert, RetroGamingPCButton, RetroGamingPCCard, RetroGaming
 import { useAuthStore } from '@/hooks/useAuth';
 import { useActivityFeed } from '@/hooks/useFeed';
 import { useGameLookup } from '@/hooks/useGames';
+import { useReviewLikes } from '@/hooks/useReviewBrowser';
 import { useThemeColors } from '@/hooks/useTheme';
 import type { FeedScope } from '@/services/feed';
 
@@ -44,6 +45,7 @@ export function HomeFeed({ scope, header, empty, onRefreshHeader }: HomeFeedProp
   const feed = useActivityFeed(scope);
   const items = useMemo(() => feed.data?.pages.flatMap((p) => p.items) ?? [], [feed.data]);
   const games = useGameLookup(items.map((i) => i.game_id));
+  const likes = useReviewLikes(items.flatMap((i) => (i.review_id ? [i.review_id] : [])));
 
   return (
     <FlatList
@@ -51,7 +53,14 @@ export function HomeFeed({ scope, header, empty, onRefreshHeader }: HomeFeedProp
       contentContainerClassName="w-full gap-2 self-center p-3 md:max-w-[860px]"
       data={feed.isPending || feed.isError ? [] : items}
       keyExtractor={(item) => item.item_key}
-      renderItem={({ item }) => <FeedItemCard item={item} game={games.data?.get(item.game_id)} viewerId={viewerId} />}
+      renderItem={({ item }) => (
+        <FeedItemCard
+          item={item}
+          game={games.data?.get(item.game_id)}
+          viewerId={viewerId}
+          like={item.review_id ? likes.data?.get(item.review_id) : undefined}
+        />
+      )}
       onEndReachedThreshold={0.5}
       onEndReached={() => {
         if (feed.hasNextPage && !feed.isFetchingNextPage) void feed.fetchNextPage();

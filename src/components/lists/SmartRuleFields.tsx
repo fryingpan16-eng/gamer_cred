@@ -3,10 +3,20 @@ import { Pressable, Text, View } from 'react-native';
 import { PlatformPicker } from '@/components/studio/PlatformPicker';
 import { RetroGamingPCInput } from '@/components/ui';
 import { cn } from '@/utils/cn';
-import { SMART_ENTRY_TYPES, SMART_GENRES, SMART_LIST_MAX, SMART_TIERS, type SmartEntryType, type SmartTier } from '@/utils/smartLists';
+import {
+  SMART_ENTRY_TYPES,
+  SMART_GENRES,
+  SMART_LIST_MAX,
+  SMART_RANK_BY,
+  SMART_TIERS,
+  type SmartEntryType,
+  type SmartRankBy,
+  type SmartTier,
+} from '@/utils/smartLists';
 
 /** The rule as typed: years and limit stay strings until the form is saved. */
 export type SmartRuleDraft = {
+  rankBy: SmartRankBy;
   entryTypes: SmartEntryType[];
   tiers: SmartTier[];
   yearFrom: string;
@@ -73,9 +83,18 @@ export function SmartRuleFields({
   return (
     <View className="gap-3 border-l-2 border-l-retrogamingpc-highlight pl-2" pointerEvents={disabled ? 'none' : 'auto'}>
       <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted">
-        Ranked by Gamer Cred average. A game qualifies once it has as many ratings as the top 25% most-rated games of its type (at least 3),
-        so the bar rises as the app grows. Updates by itself.
+        {value.rankBy === 'likes'
+          ? 'Ranked by how many players like each game. Recalculated once a day.'
+          : 'Ranked by Gamer Cred average. A game qualifies once it has as many ratings as the top 25% most-rated games of its type (at least 3), so the bar rises as the app grows. Recalculated once a day.'}
       </Text>
+
+      <Field label="Rank by">
+        <View className="flex-row flex-wrap gap-1">
+          {SMART_RANK_BY.map((r) => (
+            <Chip key={r.key} label={r.label} selected={value.rankBy === r.key} onPress={() => set({ rankBy: r.key })} />
+          ))}
+        </View>
+      </Field>
 
       <Field label="Type" error={errors.entryTypes}>
         <View className="flex-row flex-wrap gap-1">
@@ -90,7 +109,10 @@ export function SmartRuleFields({
         </View>
       </Field>
 
-      <Field label="Tier" hint="None picked = any tier.">
+      <Field
+        label="Tier"
+        hint={value.rankBy === 'likes' ? 'Uses the game’s Gamer Cred average. None picked = any tier.' : 'None picked = any tier.'}
+      >
         <View className="flex-row flex-wrap gap-1">
           {SMART_TIERS.map((t) => (
             <Chip
@@ -152,12 +174,15 @@ export function SmartRuleFields({
         </View>
       </Field>
 
-      <PlatformPicker
-        label="Platform (only ratings played on it count)"
-        value={value.platformId}
-        onChange={(platformId) => set({ platformId })}
-        noneLabel="Any platform"
-      />
+      {/* Likes have no platform; this only narrows the ratings behind an average. */}
+      {value.rankBy === 'likes' ? null : (
+        <PlatformPicker
+          label="Platform (only ratings played on it count)"
+          value={value.platformId}
+          onChange={(platformId) => set({ platformId })}
+          noneLabel="Any platform"
+        />
+      )}
 
       <RetroGamingPCInput
         label="How many games"

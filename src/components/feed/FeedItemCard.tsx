@@ -3,6 +3,9 @@ import { Pressable, Text, View } from 'react-native';
 
 import { Thumbnail } from '@/components/search/Thumbnail';
 import { RetroGamingPCBadge, RetroGamingPCCard, RetroGamingPCRating } from '@/components/ui';
+import { ReviewCard } from '@/components/review/ReviewCard';
+import { LIKE_COLOR } from '@/constants/likeColor';
+import { cardFromFeedRow, type ReviewLikeInfo } from '@/services/reviewBrowser';
 import type { ActivityFeedRow } from '@/types/database.types';
 import { igdbImageUrl, type IgdbGameResult } from '@/types/igdb';
 import { reviewRating, slotRating } from '@/utils/ratingColumns';
@@ -12,13 +15,34 @@ type FeedItemCardProps = {
   item: ActivityFeedRow;
   game: IgdbGameResult | undefined;
   viewerId: string | null;
+  /** Your ♥ on this review (review items only). */
+  like?: ReviewLikeInfo;
 };
 
 /**
  * One activity entry: avatar (→ profile) · "who did what" line · rating · excerpt · cover (→ game).
- * Reviews show stars; Now Playing entries show the preliminary score badge.
+ * Reviews show stars; Now Playing entries show the preliminary score badge; likes show a ♥.
  */
-export function FeedItemCard({ item, game, viewerId }: FeedItemCardProps) {
+export function FeedItemCard({ item, game, viewerId, like }: FeedItemCardProps) {
+  // Reviews use the app's one review card (tap opens the full review).
+  if (item.kind === 'review' && item.review_id) {
+    return (
+      <ReviewCard
+        review={cardFromFeedRow(item)}
+        viewerId={viewerId}
+        like={like}
+        showGame
+        game={game}
+        dateStyle="relative"
+        excerptLines={3}
+      />
+    );
+  }
+  return <ActivityCard item={item} game={game} viewerId={viewerId} />;
+}
+
+/** Now Playing and ♥ like entries. */
+function ActivityCard({ item, game, viewerId }: Omit<FeedItemCardProps, 'like'>) {
   const isMe = item.actor_id === viewerId;
   const gameName = game?.name ?? `Game #${item.game_id}`;
   const openActor = () => router.push(isMe ? '/profile' : { pathname: '/user/[id]', params: { id: item.actor_id } });
@@ -35,7 +59,7 @@ export function FeedItemCard({ item, game, viewerId }: FeedItemCardProps) {
           <Text onPress={openActor} className="font-bold text-retrogamingpc-text-bright">
             {isMe ? 'You' : item.actor_username}
           </Text>
-          {item.kind === 'review' ? ' reviewed ' : ' is playing '}
+          {item.kind === 'review' ? ' reviewed ' : item.kind === 'like' ? ' liked ' : ' is playing '}
           <Text onPress={openGame} className="font-bold text-retrogamingpc-text-bright">
             {gameName}
           </Text>
@@ -43,6 +67,10 @@ export function FeedItemCard({ item, game, viewerId }: FeedItemCardProps) {
 
         {item.kind === 'review' ? (
           <RetroGamingPCRating rating={reviewRating(item)} size="compact" />
+        ) : item.kind === 'like' ? (
+          <Text className="text-retrogamingpc-sm font-bold" style={{ color: LIKE_COLOR }} accessibilityLabel="Liked">
+            ♥
+          </Text>
         ) : (
           <View className="flex-row flex-wrap gap-1">
             <RetroGamingPCBadge label={`Now Playing · Slot ${item.slot_index ?? '?'}`} variant="nowPlaying" />

@@ -269,6 +269,20 @@ export type Database = {
        * (user, game), separate from reviews. RLS: public read, owner write. Kept
        * equal to the score / platform on the user's review by sync triggers.
        */
+      /** ♥ on a review (migration 000030). Private: you only read your own rows. */
+      review_likes: {
+        Row: { user_id: string; review_id: string; created_at: Timestamp };
+        Insert: { user_id: string; review_id: string; created_at?: Timestamp };
+        Update: { user_id?: string; review_id?: string; created_at?: Timestamp };
+        Relationships: [];
+      };
+      /** ♥ likes: one per player per game (migration 000029). */
+      game_likes: {
+        Row: { user_id: string; game_id: number; created_at: Timestamp };
+        Insert: { user_id: string; game_id: number; created_at?: Timestamp };
+        Update: { user_id?: string; game_id?: number; created_at?: Timestamp };
+        Relationships: [];
+      };
       game_ratings: {
         Row: {
           user_id: string;
@@ -414,7 +428,12 @@ export type Database = {
           reason: ReportReason;
           details?: string | null;
         };
-        Update: { status?: 'open' | 'actioned' | 'dismissed'; resolved_at?: Timestamp | null; resolved_by?: string | null; resolution_note?: string | null };
+        Update: {
+          status?: 'open' | 'actioned' | 'dismissed';
+          resolved_at?: Timestamp | null;
+          resolved_by?: string | null;
+          resolution_note?: string | null;
+        };
         Relationships: [];
       };
 
@@ -435,6 +454,8 @@ export type Database = {
           genres: string[];
           developers: string[];
           entry_type: string | null;
+          /** IGDB franchises (migration 000029). */
+          series: string[];
           updated_at: Timestamp;
         };
         Insert: {
@@ -524,6 +545,40 @@ export type Database = {
         Args: { p_limit?: number | null };
         Returns: { developer: string; games: number; total_studios: number }[];
       };
+      /** Whether you like each review; like counts only for your own reviews (migration 000030). */
+      review_like_info: {
+        Args: { p_review_ids: string[] };
+        Returns: { review_id: string; liked: boolean; like_count: number | null }[];
+      };
+      /** One game's published reviews for the review browser (migration 000030). */
+      game_reviews_browse: {
+        Args: {
+          p_game_id: number;
+          p_scope?: 'community' | 'friends';
+          p_sort?: 'popular' | 'recent' | 'highest' | 'lowest';
+          p_offset?: number;
+          p_limit?: number;
+        };
+        Returns: {
+          id: string;
+          user_id: string;
+          game_id: number;
+          rating: number | null;
+          rating_input_scale: Database['public']['Enums']['rating_scale'] | null;
+          rating_input: string | null;
+          content: string | null;
+          platform_id: number | null;
+          published_at: string | null;
+          updated_at: string;
+          author_username: string;
+          author_avatar_url: string | null;
+        }[];
+      };
+      /** Your liked games by series / studios / genres / era (migration 000029). */
+      stats_liked: {
+        Args: { p_dimension: 'series' | 'studios' | 'genres' | 'era'; p_limit?: number | null };
+        Returns: { label: string; games: number; total_labels: number }[];
+      };
       stats_genres: {
         Args: Record<string, never>;
         Returns: { genre: string; games: number; rated_games: number; average_rating: number | null }[];
@@ -561,7 +616,10 @@ export type Database = {
       /** Safety (migration 000021). */
       block_user: { Args: { p_user: string }; Returns: undefined };
       unblock_user: { Args: { p_user: string }; Returns: undefined };
-      my_blocked_users: { Args: Record<string, never>; Returns: { user_id: string; username: string; avatar_url: string | null; blocked_at: string }[] };
+      my_blocked_users: {
+        Args: Record<string, never>;
+        Returns: { user_id: string; username: string; avatar_url: string | null; blocked_at: string }[];
+      };
       block_state: { Args: { p_user: string }; Returns: 'none' | 'blocked_by_me' | 'blocked_me' };
       admin_reports: {
         Args: { p_status?: 'open' | 'actioned' | 'dismissed'; p_limit?: number };
@@ -673,7 +731,7 @@ export type FriendReviewRow = {
 /** Row returned by the activity_feed RPC (migration 000006). */
 export type ActivityFeedRow = {
   item_key: string;
-  kind: 'review' | 'now_playing';
+  kind: 'review' | 'now_playing' | 'like';
   occurred_at: Timestamp;
   actor_id: string;
   actor_username: string;

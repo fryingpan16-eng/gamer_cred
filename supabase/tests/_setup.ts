@@ -26,7 +26,14 @@ const BASE_SCHEMA = `
     as $$ select nullif(current_setting('test.uid', true), '')::uuid $$;
   -- JWT claims: sessions are two-step verified (aal2) unless a test sets test.aal.
   create function auth.jwt() returns jsonb language sql stable
-    as $$ select jsonb_build_object('aal', coalesce(nullif(current_setting('test.aal', true), ''), 'aal2')) $$;
+    as $$ select jsonb_build_object(
+      'aal', coalesce(nullif(current_setting('test.aal', true), ''), 'aal2'),
+      'is_anonymous', coalesce(nullif(current_setting('test.guest', true), ''), 'false')::boolean) $$;
+  -- Sign-in accounts (the columns the migrations use).
+  create table auth.users (
+    id uuid primary key, email text, raw_user_meta_data jsonb,
+    is_anonymous boolean not null default false, created_at timestamptz not null default now()
+  );
   create type public.review_status as enum ('draft', 'published');
   create type public.rating_scale as enum ('numeric', 'tier', 'stars', 'rounded');
   create table public.profiles (id uuid primary key, username text, avatar_url text);
@@ -71,7 +78,7 @@ const BASE_SCHEMA = `
   alter table public.profiles enable row level security;
   create policy "profiles: public read" on public.profiles for select using (true);
   create policy "profiles: owner update" on public.profiles for update to authenticated using ((select auth.uid()) = id) with check ((select auth.uid()) = id);
-  create table public.now_playing (user_id uuid not null references public.profiles (id) on delete cascade, slot_index smallint not null, game_id bigint not null, notes text, primary key (user_id, slot_index));
+  create table public.now_playing (user_id uuid not null references public.profiles (id) on delete cascade, slot_index smallint not null, game_id bigint not null, notes text, updated_at timestamptz not null default now(), preliminary_score smallint, preliminary_input_scale public.rating_scale, preliminary_input text, primary key (user_id, slot_index));
   create table public.user_favorites (user_id uuid not null references public.profiles (id) on delete cascade, rank smallint not null, game_id bigint not null, primary key (user_id, rank));
   create table public.user_platforms (user_id uuid not null references public.profiles (id) on delete cascade, platform_id bigint not null, devices text[] not null default '{}', primary key (user_id, platform_id));
   alter table public.now_playing enable row level security;
@@ -95,13 +102,14 @@ const GRANTS = `
 const migration = (name: string) => Deno.readTextFile(new URL(`../migrations/${name}`, import.meta.url));
 
 /** Fresh database. `beforeMigrations` runs between the stub schema and 000014 (e.g. cache rows for the backfill). */
-export async function freshDb(opts: { beforeMigrations?: string; through?: 14 | 15 | 16 | 17 | 19 | 20 | 21 | 22 | 23 | 25 | 26 } = {}): Promise<PGlite> {
+export async function freshDb(opts: { beforeMigrations?: string; through?: 14 | 15 | 16 | 17 | 19 | 20 | 21 | 22 | 23 | 25 | 26 | 27 | 28 | 29 | 30 } = {}): Promise<PGlite> {
   const db = new PGlite({ extensions: { pg_trgm } });
   await db.exec(BASE_SCHEMA);
-  await db.exec(`insert into public.profiles (id, username) values ('${ME}', 'me'), ('${OTHER}', 'other'), ('${THIRD}', 'third');`);
+  await db.exec(`insert into auth.users (id) values ('${ME}'), ('${OTHER}'), ('${THIRD}');
+    insert into public.profiles (id, username) values ('${ME}', 'me'), ('${OTHER}', 'other'), ('${THIRD}', 'third');`);
   if (opts.beforeMigrations) await db.exec(opts.beforeMigrations);
   await db.exec(await migration('000014_games_and_stats.sql'));
-  const through = opts.through ?? 26;
+  const through = opts.through ?? 30;
   if (through >= 15) await db.exec(await migration('000015_quick_ratings.sql'));
   if (through >= 16) await db.exec(await migration('000016_public_ratings_and_platform.sql'));
   if (through >= 17) await db.exec(await migration('000017_user_ratings_table.sql'));
@@ -113,8 +121,17 @@ export async function freshDb(opts: { beforeMigrations?: string; through?: 14 | 
   // 000024 only changes a profiles column default the stub schema doesn't have.
   if (through >= 25) await db.exec(await migration('000025_admin_security.sql'));
   if (through >= 26) await db.exec(await migration('000026_security_hardening.sql'));
+  if (through >= 27) await db.exec(await migration('000027_guest_access.sql'));
+  if (through >= 28) await db.exec(await migration('000028_smart_lists_daily.sql'));
+  if (through >= 29) await db.exec(await migration('000029_game_likes.sql'));
+  if (through >= 30) await db.exec(await migration('000030_review_likes.sql'));
   await db.exec(GRANTS);
   return db;
+}
+
+/** Make later asUser calls run as a guest (anonymous sign-in) or a member. */
+export async function setGuest(db: PGlite, guest: boolean) {
+  await db.exec(`reset role; select set_config('test.guest', '${guest}', false);`);
 }
 
 /** Make later asUser calls run with a session that is (aal2) or isn't (aal1) two-step verified. */

@@ -14,7 +14,8 @@ import { queryKeys } from '@/utils/queryKeys';
 import { useAuthStore } from './useAuth';
 
 function useViewerId(): string | null {
-  return useAuthStore((s) => s.user?.id ?? null);
+  // Members only: guests have no data of their own.
+  return useAuthStore((s) => (s.isGuest ? null : (s.user?.id ?? null)));
 }
 
 /** Now Playing rows for a user (defaults to the signed-in user). */

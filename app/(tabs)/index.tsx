@@ -9,6 +9,8 @@ import { TrendingPosts } from '@/components/home/TrendingPosts';
 import { FeaturedListsPanel, ListBrowser, YourListsPanel } from '@/components/lists/HomeLists';
 import { RetroGamingPCButton, RetroGamingPCTabs, type RetroGamingPCTabItem } from '@/components/ui';
 import { queryKeys } from '@/utils/queryKeys';
+import { GuestBanner, GuestScreen } from '@/components/auth/MembersOnly';
+import { useIsGuest } from '@/hooks/useAuth';
 
 type HomeTab = 'community' | 'friends' | 'lists';
 
@@ -58,12 +60,18 @@ function CommunityTab() {
 
 /** Friends: what your friends are playing and reviewing. */
 function FriendsTab() {
+  const isGuest = useIsGuest();
+  if (isGuest) return <GuestScreen title="Friends" feature="add friends and see what they're playing" />;
   return (
     <HomeFeed
       scope="friends"
       empty={
-        <EmptyBox title="No friend activity yet" body="Add friends to see what they're playing and reviewing.">
-          <RetroGamingPCButton variant="navigate" label="Find Friends" onPress={() => router.push({ pathname: '/search', params: { tab: 'users' } })} />
+        <EmptyBox title="No friend activity yet" body="Add friends to see what they're playing, reviewing and liking.">
+          <RetroGamingPCButton
+            variant="navigate"
+            label="Find Friends"
+            onPress={() => router.push({ pathname: '/search', params: { tab: 'users' } })}
+          />
         </EmptyBox>
       }
     />
@@ -74,7 +82,11 @@ function FriendsTab() {
 function ListsTab() {
   return (
     <ScrollView
-      automaticallyAdjustKeyboardInsets className="flex-1" contentContainerClassName="w-full gap-3 self-center p-3 md:max-w-[860px]" keyboardShouldPersistTaps="handled">
+      automaticallyAdjustKeyboardInsets
+      className="flex-1"
+      contentContainerClassName="w-full gap-3 self-center p-3 md:max-w-[860px]"
+      keyboardShouldPersistTaps="handled"
+    >
       <FeaturedListsPanel />
       <YourListsPanel />
       <ListBrowser />
@@ -96,6 +108,9 @@ export default function HomeScreen() {
         <View className="w-full self-center md:max-w-[860px]">
           <RetroGamingPCTabs items={HOME_TABS} value={active} onChange={(next) => router.setParams({ tab: next })} fill />
         </View>
+      </View>
+      <View className="w-full self-center px-3 pt-2 md:max-w-[860px]">
+        <GuestBanner />
       </View>
       {/* Only the visible tab is mounted, so only its data loads. */}
       {active === 'community' ? <CommunityTab /> : null}

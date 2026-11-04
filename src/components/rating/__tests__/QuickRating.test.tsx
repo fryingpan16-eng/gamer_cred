@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
 
+import { PERFECT_TIER_GOLD } from '@/constants/ratingRubric';
 import { useAuthStore } from '@/hooks/useAuth';
 import { storedFromStars } from '@/utils/quickRating';
 import { toStoredRating } from '@/utils/rating';
@@ -16,6 +17,18 @@ function setPrimaryScale(scale: 'numeric' | 'tier' | 'stars' | 'rounded') {
 afterEach(() => useAuthStore.setState({ profile: null }));
 
 describe('QuickRating', () => {
+  it('game-page size shows the headline value; a full 5/5 is gold', async () => {
+    setPrimaryScale('stars');
+    const { rerender } = await render(
+      <QuickRating gameId={1} value={storedFromStars(4)} onChange={jest.fn()} size="hero" showTierBadge={false} />,
+    );
+    expect(screen.getByText('4★').props.style).toBeUndefined();
+    await rerender(<QuickRating gameId={1} value={storedFromStars(5)} onChange={jest.fn()} size="hero" showTierBadge={false} />);
+    expect(screen.getByText('5★').props.style).toEqual({ color: PERFECT_TIER_GOLD });
+    await rerender(<QuickRating gameId={1} value={null} onChange={jest.fn()} size="hero" showTierBadge={false} />);
+    expect(screen.getByText('--')).toBeTruthy();
+  });
+
   it('uses the viewer’s chosen scale from Settings', async () => {
     setPrimaryScale('tier');
     await render(<QuickRating gameId={1} gameName="Hades" value={null} onChange={jest.fn()} />);

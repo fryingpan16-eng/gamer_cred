@@ -1,12 +1,14 @@
 import { Feather } from '@expo/vector-icons';
-import { Link } from 'expo-router';
+import { Link, router } from 'expo-router';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
 
+import { HumanCheck } from '@/components/auth/HumanCheck';
 import { GoogleSignInButton } from '@/components/GoogleSignInButton';
 import { RetroGamingPCAlert, RetroGamingPCButton, RetroGamingPCInput, RetroGamingPCPanel } from '@/components/ui';
 import { useAuthAction } from '@/hooks/useAuthAction';
-import { signInWithEmail, signInWithGoogle } from '@/services/auth';
+import { useHumanCheck } from '@/hooks/useHumanCheck';
+import { signInAsGuest, signInWithEmail, signInWithGoogle } from '@/services/auth';
 import { loginSchema, validate, type FieldErrors, type LoginInput } from '@/utils/authSchemas';
 import { useThemeColors } from '@/hooks/useTheme';
 
@@ -18,8 +20,10 @@ export default function LoginScreen() {
 
   const google = useAuthAction(signInWithGoogle);
   const emailLogin = useAuthAction(signInWithEmail);
-  const busy = google.pending || emailLogin.pending;
-  const formError = google.error ?? emailLogin.error;
+  const guest = useAuthAction(signInAsGuest);
+  const human = useHumanCheck();
+  const busy = google.pending || emailLogin.pending || guest.pending;
+  const formError = google.error ?? emailLogin.error ?? guest.error;
 
   const submit = () => {
     const parsed = validate(loginSchema, { email, password });
@@ -29,14 +33,15 @@ export default function LoginScreen() {
     }
     setFieldErrors({});
     google.setError(null);
+    guest.setError(null);
     // On success the auth listener flips the root guard and redirects to Home.
-    void emailLogin.run(parsed.data);
+    void emailLogin.run(parsed.data, human.take());
   };
 
   return (
     <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView
-      automaticallyAdjustKeyboardInsets
+        automaticallyAdjustKeyboardInsets
         className="flex-1 bg-retrogamingpc-dark"
         contentContainerClassName="flex-grow items-center justify-center p-4"
         keyboardShouldPersistTaps="handled"
@@ -87,16 +92,41 @@ export default function LoginScreen() {
               icon={<Feather name="lock" size={12} color={themeColors.textMuted} />}
             />
 
+            <HumanCheck key={human.widgetKey} onToken={human.onToken} />
+
             <View className="flex-row items-center justify-between pt-1">
               <Link href="/register" className="text-retrogamingpc-sm text-retrogamingpc-text-bright underline">
                 Create account
               </Link>
-              <RetroGamingPCButton variant="save"
+              <RetroGamingPCButton
+                variant="save"
                 label={emailLogin.pending ? 'Signing in…' : 'Login'}
                 loading={emailLogin.pending}
-                disabled={busy}
+                disabled={busy || !human.ready}
                 onPress={submit}
               />
+            </View>
+
+            <View className="gap-1 border-t border-t-retrogamingpc-accent pt-3">
+              <RetroGamingPCButton
+                variant="navigate"
+                label={guest.pending ? 'Opening…' : 'Browse as Guest'}
+                loading={guest.pending}
+                disabled={busy || !human.ready}
+                onPress={() => {
+                  google.setError(null);
+                  emailLogin.setError(null);
+                  void guest.run(human.take());
+                }}
+              />
+              <Text className="text-center text-retrogamingpc-xs text-retrogamingpc-text-muted">
+                Look around without an account. You can read everything; rating and reviewing need a free account. By browsing you agree to
+                the{' '}
+                <Text onPress={() => router.push('/terms')} className="text-retrogamingpc-text-bright underline">
+                  Terms
+                </Text>
+                .
+              </Text>
             </View>
           </View>
         </RetroGamingPCPanel>

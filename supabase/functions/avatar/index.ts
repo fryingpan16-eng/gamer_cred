@@ -91,7 +91,8 @@ Deno.serve(async (req) => {
     };
 
     const deps: AvatarDeps = {
-      callerId: auth.user?.id ?? null,
+      // Guests (anonymous sign-in) have no profile and can't set a picture.
+      callerId: auth.user && !auth.user.is_anonymous ? auth.user.id : null,
       // Admin powers need a two-step-verified session (migration 000025); the token was validated above.
       isAdmin: async (userId) => {
         if (!isVerifiedSession(token)) return false;

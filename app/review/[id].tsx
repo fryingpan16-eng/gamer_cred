@@ -12,9 +12,11 @@ import {
   RetroGamingPCRating,
   RetroGamingPCSpinner,
 } from '@/components/ui';
+import { ReviewLikeControl } from '@/components/review/ReviewCard';
 import { ReportLink } from '@/components/safety/ReportLink';
 import { useAuthStore } from '@/hooks/useAuth';
 import { useGameLookup } from '@/hooks/useGames';
+import { useReviewLikes } from '@/hooks/useReviewBrowser';
 import { useReview } from '@/hooks/useReviews';
 import { useStudioStore } from '@/hooks/useStudioStore';
 import { reviewRating } from '@/utils/ratingColumns';
@@ -33,6 +35,7 @@ export default function ReviewScreen() {
   const viewerId = useAuthStore((s) => s.user?.id ?? null);
   const startReview = useStudioStore((s) => s.startReview);
   const games = useGameLookup(review.data ? [review.data.game_id] : []);
+  const likes = useReviewLikes(valid && review.data?.status === 'published' ? [id] : []);
 
   if (valid && review.isPending) {
     return (
@@ -78,11 +81,15 @@ export default function ReviewScreen() {
               <Thumbnail uri={author?.avatar_url ?? null} fallback={author?.username ?? '?'} shape="square" accessibilityLabel="" />
               <View>
                 <View className="flex-row items-center gap-1">
-                  <Text className="text-retrogamingpc-base font-bold text-retrogamingpc-text-bright">{author?.username ?? 'Unknown player'}</Text>
+                  <Text className="text-retrogamingpc-base font-bold text-retrogamingpc-text-bright">
+                    {author?.username ?? 'Unknown player'}
+                  </Text>
                   {isMine ? <RetroGamingPCBadge label="You" variant="nowPlaying" /> : null}
                   {data.status === 'draft' ? <RetroGamingPCBadge label="Draft" variant="draft" /> : null}
                 </View>
-                <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted">{formatDate(data.published_at ?? data.updated_at)}</Text>
+                <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted">
+                  {formatDate(data.published_at ?? data.updated_at)}
+                </Text>
               </View>
             </Pressable>
             <RetroGamingPCRating rating={reviewRating(data)} expanded />
@@ -101,18 +108,36 @@ export default function ReviewScreen() {
         )}
       </RetroGamingPCPanel>
 
+      {data.status === 'published' ? (
+        <View className="flex-row flex-wrap items-center justify-between gap-2">
+          <ReviewLikeControl reviewId={data.id} isMine={isMine} like={likes.data?.get(data.id)} />
+          <RetroGamingPCButton
+            variant="navigate"
+            label={`All reviews of ${game?.name ?? 'this game'} ▸`}
+            onPress={() => router.push({ pathname: '/reviews/[gameId]', params: { gameId: String(data.game_id) } })}
+          />
+        </View>
+      ) : null}
+
       {!isMine && author ? (
         <View className="flex-row justify-end">
           <ReportLink
             label="Report review"
-            subject={{ targetType: 'review', targetId: data.id, targetUserId: data.user_id, label: 'this review', ownerName: author.username }}
+            subject={{
+              targetType: 'review',
+              targetId: data.id,
+              targetUserId: data.user_id,
+              label: 'this review',
+              ownerName: author.username,
+            }}
           />
         </View>
       ) : null}
 
       {isMine ? (
         <View className="flex-row justify-end">
-          <RetroGamingPCButton variant="navigate"
+          <RetroGamingPCButton
+            variant="navigate"
             label="Edit in Review Studio"
             onPress={() => {
               startReview({ gameId: data.game_id });

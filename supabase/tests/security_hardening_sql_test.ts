@@ -94,7 +94,6 @@ Deno.test('sign-up names that fail the filter become neutral', async () => {
   // Stand-ins for the real auth schema pieces handle_new_user uses.
   await db.exec(
     `reset role;
-     create table auth.users (id uuid primary key, email text, raw_user_meta_data jsonb);
      create or replace function public.is_username_available(candidate text) returns boolean language sql stable
        as $$ select not exists (select 1 from public.profiles where lower(username) = lower(candidate)) $$;
      create trigger on_auth_user_created after insert on auth.users for each row execute function public.handle_new_user();`,

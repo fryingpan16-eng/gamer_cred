@@ -99,9 +99,25 @@ Deno.test('the bar rises as other games collect more ratings', async () => {
   const id = await smartList(db, { entryTypes: ['expansion'] });
   assertEquals(ids(await run(db, OTHER, id)), [5]);
   await rate(db, 6, [90, 91, 92, 93, 94, 95, 96]); // now 8 ratings → counts [3, 8] → 75th percentile 6.75 → 7
+  // Lists update once a day (000028): unchanged until the nightly refresh…
+  assertEquals(ids(await run(db, OTHER, id)), [5]);
+  await asOwner(db, 'select public.refresh_all_smart_lists()');
   const after = await run(db, OTHER, id);
   assertEquals(after?.requirements, { expansion: 7 });
   assertEquals(ids(after), [6]);
+});
+
+Deno.test('daily lists: saved with a date; a changed rule shows straight away', async () => {
+  const db = await setup();
+  await seedGames(db);
+  const id = await smartList(db, { entryTypes: ['game'] });
+  const first = (await run(db, OTHER, id)) as SmartResult & { computedAt?: string };
+  assertEquals(typeof first.computedAt, 'string');
+  assertEquals(ids(first), [1, 2, 3]);
+  await asUser(db, ME, `update public.lists set smart_rule = '{"entryTypes":["game"],"tiers":["S"]}' where id = $1`, [id]);
+  assertEquals(ids(await run(db, OTHER, id)), [1]);
+  // Nobody can read or write the saved results directly.
+  assertEquals((await asUser(db, OTHER, 'select * from public.smart_list_cache')).length, 0);
 });
 
 Deno.test('filters: tier, years, genre, platform and limit', async () => {

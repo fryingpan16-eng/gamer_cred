@@ -833,6 +833,9 @@ async function handleDetail(id: number): Promise<Response> {
       if (!game) throw new HttpError(404, `Game ${id} is not in the GamerCred catalogue`);
       // The detail record also refreshes the lightweight per-game record used by lookups.
       await cacheGameRecords(db, [game], new Date().toISOString());
+      // Series (IGDB franchises) only come with the full page; the Stats page groups liked games by them (000029).
+      const { error: seriesError } = await db.from('games').update({ series: game.franchises }).eq('igdb_id', game.id);
+      if (seriesError) console.error('[igdb-proxy] series write failed', seriesError.message);
       return [game];
     }, { stampRules: true });
     const data: IgdbDetailResponse = { game: payload.results[0] as IgdbGameDetail, cached: false, fetchedAt: payload.fetchedAt };
@@ -891,6 +894,8 @@ async function handleCompany(id: number): Promise<Response> {
 
 /** Per signed-in user (migration 000026). Search is debounced; a studio page or a 500-game smart list is ~10 calls. */
 const RATE_LIMIT_PER_MINUTE = 120;
+/** Guests (anonymous sign-in, migration 000027) browse with a tighter limit. */
+const GUEST_RATE_LIMIT_PER_MINUTE = 30;
 
 /**
  * Only signed-in players may use the proxy (the public anon key alone is not enough),
@@ -904,10 +909,11 @@ async function requireCaller(req: Request): Promise<void> {
   const userId = data?.claims.sub;
   if (error || !userId || data.claims.role !== 'authenticated') throw new HttpError(401, 'Sign in to search the game database.');
 
+  const guest = data.claims.is_anonymous === true;
   const { data: allowed, error: limitError } = await db.rpc('take_rate_limit', {
     p_user: userId,
-    p_bucket: 'igdb',
-    p_limit: RATE_LIMIT_PER_MINUTE,
+    p_bucket: guest ? 'igdb-guest' : 'igdb',
+    p_limit: guest ? GUEST_RATE_LIMIT_PER_MINUTE : RATE_LIMIT_PER_MINUTE,
     p_window_seconds: 60,
   });
   // A counter hiccup shouldn't take search down for everyone: log it and let the call through.

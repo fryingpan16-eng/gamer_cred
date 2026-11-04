@@ -53,8 +53,17 @@ const YEAR_MIN = 1950;
 const YEAR_MAX = 2100;
 const year = z.number().int().min(YEAR_MIN, 'Use a year from 1950 on.').max(YEAR_MAX, 'That year is too far ahead.').nullable();
 
+/** What a smart list ranks by (likes: migration 000029). */
+export const SMART_RANK_BY = [
+  { key: 'average', label: 'Gamer Cred average' },
+  { key: 'likes', label: '♥ Likes' },
+] as const;
+export type SmartRankBy = (typeof SMART_RANK_BY)[number]['key'];
+
 export const smartRuleSchema = z
   .object({
+    /** Older rules (before likes) have no rankBy: they rank by average. */
+    rankBy: z.enum(['average', 'likes']).default('average'),
     entryTypes: z
       .array(z.enum(SMART_ENTRY_TYPES.map((t) => t.key) as [SmartEntryType, ...SmartEntryType[]]))
       .min(1, 'Pick at least one type.'),
@@ -73,6 +82,7 @@ export const smartRuleSchema = z
 export type SmartRule = z.infer<typeof smartRuleSchema>;
 
 export const DEFAULT_SMART_RULE: SmartRule = {
+  rankBy: 'average',
   entryTypes: ['game'],
   tiers: [],
   yearFrom: null,
@@ -92,12 +102,17 @@ export function parseSmartRule(raw: unknown): SmartRule | null {
 /** What smart_list_games returns. */
 export const smartListResultSchema = z.object({
   requirements: z.record(z.string(), z.number()),
+  /** When the list was last worked out (lists refresh once a day, migration 000028). */
+  computedAt: z.string().optional(),
   games: z.array(
     z.object({
       rank: z.number(),
       gameId: z.number(),
-      average: z.number(),
+      /** Gamer Cred average; null on a "Most liked" list for a game nobody has rated. */
+      average: z.number().nullable(),
       ratingCount: z.number(),
+      /** "Most liked" lists only. */
+      likeCount: z.number().optional(),
     }),
   ),
 });
@@ -119,12 +134,12 @@ function yearsText(from: number | null, to: number | null): string | null {
 export function describeSmartRule(rule: SmartRule): string {
   const genres = rule.genres.map((g) => SMART_GENRES.find((x) => x.value === g)?.label ?? g);
   const types = SMART_ENTRY_TYPES.filter((t) => rule.entryTypes.includes(t.key)).map((t) => t.plural);
-  const head = `Top ${rule.limit} ${genres.length > 0 ? `${genres.join(' / ')} ` : ''}${types.join(' & ')}`;
+  const head = `${rule.rankBy === 'likes' ? 'Most liked' : 'Top'} ${rule.limit} ${genres.length > 0 ? `${genres.join(' / ')} ` : ''}${types.join(' & ')}`;
   const parts = [
     head,
     rule.tiers.length > 0 ? `${rule.tiers.join(' / ')} tier` : null,
     yearsText(rule.yearFrom, rule.yearTo),
-    rule.platformId !== null ? `played on ${platformInfo(rule.platformId).short}` : null,
+    rule.platformId !== null && rule.rankBy !== 'likes' ? `played on ${platformInfo(rule.platformId).short}` : null,
   ];
   return parts.filter(Boolean).join(' · ');
 }

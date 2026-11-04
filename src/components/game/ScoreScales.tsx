@@ -2,7 +2,8 @@ import type { ReactNode } from 'react';
 import { Text, View } from 'react-native';
 
 import { RetroGamingPCStarRating } from '@/components/ui';
-import type { RatingScale } from '@/constants/ratingRubric';
+import { PERFECT_TIER_GOLD, STARS_MAX, type RatingScale } from '@/constants/ratingRubric';
+import { HERO_SCORE } from '@/constants/scoreBox';
 import { useThemeColors } from '@/hooks/useTheme';
 import { cn } from '@/utils/cn';
 import { mix, readableTintAlpha } from '@/utils/color';
@@ -13,7 +14,10 @@ import {
   formatStars,
   tierDefinition,
   tierDefinitionForNumeric,
-  type StoredRating, tierBorderColor, tierSpokenName } from '@/utils/rating';
+  type StoredRating,
+  tierBorderColor,
+  tierSpokenName,
+} from '@/utils/rating';
 
 /** Light hairline between the scales in a score box. */
 export const SCALE_DIVIDER = 'rgba(255,255,255,0.16)';
@@ -44,7 +48,7 @@ function ScaleValue({
   emphasis: Emphasis;
 }) {
   const big = emphasis === 'primary';
-  const valueClass = cn('font-mono font-bold text-retrogamingpc-text-bright', big ? 'text-[28px] leading-[32px]' : 'text-[16px] leading-[19px]');
+  const valueClass = cn('text-retrogamingpc-text-bright', big ? HERO_SCORE.valueClass : 'font-mono font-bold text-[16px] leading-[19px]');
   const unitClass = cn('font-mono text-retrogamingpc-text-muted', big ? 'text-retrogamingpc-lg' : 'text-retrogamingpc-sm');
 
   if (!rating) return <Text className={cn(valueClass, 'text-retrogamingpc-text-muted')}>--</Text>;
@@ -60,9 +64,16 @@ function ScaleValue({
       );
     case 'stars':
       return (
-        <View className="flex-row items-center gap-1.5">
-          <RetroGamingPCStarRating stars={derived.stars} size={big ? 24 : 16} showValue={false} />
-          <Text className={valueClass}>{formatStars(derived.stars)}</Text>
+        <View className="flex-row flex-wrap items-center gap-1.5">
+          <RetroGamingPCStarRating
+            stars={derived.stars}
+            size={big ? HERO_SCORE.starGlyph : 16}
+            cell={big ? HERO_SCORE.starCell : undefined}
+            showValue={false}
+          />
+          <Text className={valueClass} style={derived.stars >= STARS_MAX ? { color: PERFECT_TIER_GOLD } : undefined}>
+            {formatStars(derived.stars)}
+          </Text>
         </View>
       );
     case 'tier': {
@@ -73,7 +84,10 @@ function ScaleValue({
             className={cn('items-center justify-center border', big ? 'min-w-[48px] px-2 py-0.5' : 'min-w-[34px] px-1.5 py-px')}
             style={{ backgroundColor: def.color, borderColor: tierBorderColor(def.tier) }}
           >
-            <Text className={cn('font-mono font-bold', big ? 'text-[24px] leading-[28px]' : 'text-[15px] leading-[18px]')} style={{ color: def.textColor }}>
+            <Text
+              className={cn('font-mono font-bold', big ? 'text-[24px] leading-[28px]' : 'text-[15px] leading-[18px]')}
+              style={{ color: def.textColor }}
+            >
               {def.label}
             </Text>
           </View>
@@ -102,7 +116,14 @@ export type ScoreScalesProps = {
  * A score in several scales at once: the default scale large, then 1–100,
  * stars and tier at a readable size. Unrated shows "--" so the box keeps its shape.
  */
-export function ScoreScales({ rating, primaryScale, numericText, omitPrimary = false, dividerBeforeFirst = false, className }: ScoreScalesProps) {
+export function ScoreScales({
+  rating,
+  primaryScale,
+  numericText,
+  omitPrimary = false,
+  dividerBeforeFirst = false,
+  className,
+}: ScoreScalesProps) {
   const scales = scoreBoxScales(primaryScale);
   const shown = omitPrimary ? scales.slice(1) : scales;
   return (
@@ -114,7 +135,7 @@ export function ScoreScales({ rating, primaryScale, numericText, omitPrimary = f
           <View
             key={scale}
             className={cn('flex-row items-center gap-2 py-1.5', divided && 'border-t')}
-            style={divided ? { borderTopColor: SCALE_DIVIDER } : undefined}
+            style={[divided ? { borderTopColor: SCALE_DIVIDER } : null, primary ? { minHeight: HERO_SCORE.rowHeight } : null]}
           >
             {primary ? null : <Text className="w-10 text-retrogamingpc-xs text-retrogamingpc-text-muted">{LABELS[scale]}</Text>}
             <ScaleValue scale={scale} rating={rating} numericText={numericText} emphasis={primary ? 'primary' : 'secondary'} />
@@ -151,7 +172,10 @@ export function TierScoreBox({ rating, title, children }: { rating: StoredRating
   const tierLabel = rating ? tierDefinitionForNumeric(rating.numeric) : null;
   return (
     <View
-      className={cn('min-w-[200px] flex-1 bg-retrogamingpc-dark px-2 pb-1 pt-2', style ? 'border-2 border-l-[6px]' : 'retrogamingpc-bevel-inset')}
+      className={cn(
+        'min-w-[200px] flex-1 bg-retrogamingpc-dark px-2 pb-1 pt-2',
+        style ? 'border-2 border-l-[6px]' : 'retrogamingpc-bevel-inset',
+      )}
       style={style}
       accessibilityLabel={tierLabel ? `${title}, tier ${tierSpokenName(tierLabel.tier)}` : title}
     >

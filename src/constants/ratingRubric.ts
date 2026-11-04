@@ -61,7 +61,7 @@ export type TierDefinition = {
 export const RATING_TIERS: readonly TierDefinition[] = [
   // Perfect 100: a gold S on deep purple (gold ≥ 4.5:1 on it).
   { tier: 'S**', label: 'S', min: 100, max: 100, descriptor: 'Masterpiece', stars: 5, rounded: 10, color: '#5A2BB0', textColor: PERFECT_TIER_GOLD, explicitOnly: true, perfect: true },
-  { tier: 'S', label: 'S', min: 96, max: 99, descriptor: 'Masterpiece', stars: 5, rounded: 10, color: '#9B7FD4', textColor: '#1B1530' },
+  { tier: 'S', label: 'S', min: 96, max: 99, descriptor: 'Masterpiece', stars: 5, rounded: 10, color: '#5A2BB0', textColor: '#FFFFFF' },
   { tier: 'A+', label: 'A+', min: 90, max: 95, descriptor: 'Classic', stars: 4.5, rounded: 9, color: '#3A7FC1', textColor: '#FFFFFF' },
   { tier: 'A', label: 'A', min: 80, max: 89, descriptor: 'Excellent–Fantastic', stars: 4, rounded: 8, color: '#9CCB8A', textColor: '#1C2A16' },
   { tier: 'B', label: 'B', min: 70, max: 79, descriptor: 'Good–Great', stars: 3.5, rounded: 7, color: '#D9EBC9', textColor: '#26331C' },

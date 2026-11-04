@@ -16,6 +16,9 @@ describe('smartRuleSchema', () => {
     expect(parseSmartRule(null)).toBeNull();
     expect(parseSmartRule({ entryTypes: 'game' })).toBeNull();
     expect(parseSmartRule(DEFAULT_SMART_RULE)).toEqual(DEFAULT_SMART_RULE);
+    // Rules saved before likes existed rank by average.
+    const { rankBy: _omit, ...old } = DEFAULT_SMART_RULE;
+    expect(parseSmartRule(old)?.rankBy).toBe('average');
   });
 });
 
@@ -35,6 +38,9 @@ describe('describeSmartRule', () => {
       }),
     ).toBe('Top 100 RPG games · S tier · the 2000s · played on Switch');
     expect(describeSmartRule({ ...DEFAULT_SMART_RULE, yearFrom: 2015, yearTo: null })).toBe('Top 500 games · 2015 onward');
+    expect(describeSmartRule({ ...DEFAULT_SMART_RULE, rankBy: 'likes', entryTypes: ['expansion'], limit: 100 })).toBe(
+      'Most liked 100 expansions',
+    );
   });
 });
 

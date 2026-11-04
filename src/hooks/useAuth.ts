@@ -17,6 +17,8 @@ type AuthState = {
   profile: Profile | null;
   profileStatus: ProfileStatus;
   profileError: string | null;
+  /** Browsing as a guest (anonymous sign-in, migration 000027): read-only, no profile. */
+  isGuest: boolean;
   /** Subscribes to Supabase auth events. Call once from the root layout; returns cleanup. */
   initialize: () => () => void;
   refreshProfile: () => Promise<void>;
@@ -39,6 +41,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
     profile: null,
     profileStatus: 'idle',
     profileError: null,
+    isGuest: false,
 
     initialize: () => {
       const unbindAppState = bindAuthAutoRefreshToAppState();
@@ -48,7 +51,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
         const previousUserId = get().user?.id;
         const user = session?.user ?? null;
 
-        set({ session, user, status: session ? 'signedIn' : 'signedOut' });
+        set({ session, user, status: session ? 'signedIn' : 'signedOut', isGuest: user?.is_anonymous === true });
 
         if (!user) {
           set({ profile: null, profileStatus: 'idle', profileError: null });
@@ -60,6 +63,11 @@ export const useAuthStore = create<AuthState>()((set, get) => {
         if (user.id !== previousUserId) {
           if (previousUserId) queryClient.clear();
           set({ profile: null });
+          // Guests have no profile to load.
+          if (user.is_anonymous) {
+            set({ profileStatus: 'ready', profileError: null });
+            return;
+          }
           // Supabase warns against awaiting client calls inside this callback (lock deadlock).
           setTimeout(() => void loadProfile(user.id), 0);
         }
@@ -73,7 +81,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
 
     refreshProfile: async () => {
       const userId = get().user?.id;
-      if (userId) await loadProfile(userId);
+      if (userId && !get().isGuest) await loadProfile(userId);
     },
   };
 });
@@ -81,6 +89,20 @@ export const useAuthStore = create<AuthState>()((set, get) => {
 /** The viewer's primary rating scale (entry control + prominent display); Numeric by default. */
 export function usePrimaryRatingScale(): RatingScale {
   return useAuthStore((s) => s.profile?.primary_rating_scale ?? DEFAULT_RATING_SCALE);
+}
+
+/**
+ * The signed-in MEMBER's id; null for guests and signed-out visitors. Use it for
+ * "my data" queries (my ratings, reviews, stats, friends…): guests have none, so
+ * those requests are skipped instead of coming back empty.
+ */
+export function useMemberId(): string | null {
+  return useAuthStore((s) => (s.isGuest ? null : (s.user?.id ?? null)));
+}
+
+/** True while browsing as a guest (read-only). */
+export function useIsGuest(): boolean {
+  return useAuthStore((s) => s.isGuest);
 }
 
 /** Convenience hook for screens: current auth snapshot. */

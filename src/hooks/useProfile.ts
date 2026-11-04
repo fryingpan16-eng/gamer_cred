@@ -37,8 +37,9 @@ import { queryKeys } from '@/utils/queryKeys';
 import { useAuthStore } from './useAuth';
 import { useThemeStore } from './useTheme';
 
+/** The signed-in member (null for guests, who have no profile or data of their own). */
 export function useViewerId(): string | null {
-  return useAuthStore((s) => s.user?.id ?? null);
+  return useAuthStore((s) => (s.isGuest ? null : (s.user?.id ?? null)));
 }
 
 /**

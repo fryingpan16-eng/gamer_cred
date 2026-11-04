@@ -30,13 +30,18 @@ export const queryKeys = {
   reviews: {
     all: () => [...queryKeys.all, 'reviews'] as const,
     /** The signed-in user's own reviews (drafts included), optionally filtered by status. */
-    mine: (userId: string, status?: 'draft' | 'published') =>
-      [...queryKeys.reviews.all(), 'mine', userId, status ?? 'all'] as const,
+    mine: (userId: string, status?: 'draft' | 'published') => [...queryKeys.reviews.all(), 'mine', userId, status ?? 'all'] as const,
     mineForGame: (userId: string, gameId: number) => [...queryKeys.reviews.all(), 'mine', userId, 'game', gameId] as const,
     byGame: (gameId: number) => [...queryKeys.reviews.all(), 'game', gameId] as const,
     /** Published reviews on a profile. */
     byUser: (userId: string) => [...queryKeys.reviews.all(), 'user', userId] as const,
     detail: (reviewId: string) => [...queryKeys.reviews.all(), 'detail', reviewId] as const,
+    /** The review browser: one game, Community or Friends, in a sort order (migration 000030). */
+    browse: (gameId: number, scope: string, sort: string) => [...queryKeys.reviews.all(), 'browse', gameId, scope, sort] as const,
+    /** ♥ on reviews: yours, plus counts on your own reviews. Ids sorted so equal sets share an entry. */
+    likesAll: () => [...queryKeys.reviews.all(), 'likes'] as const,
+    likes: (viewerId: string, reviewIds: readonly string[]) =>
+      [...queryKeys.reviews.likesAll(), viewerId, [...new Set(reviewIds)].sort()] as const,
   },
 
   /** The signed-in user's own quick ratings (private; migration 000015). */
@@ -87,8 +92,7 @@ export const queryKeys = {
     byUser: (userId: string) => [...queryKeys.friendships.all(), userId] as const,
     pending: (userId: string) => [...queryKeys.friendships.all(), userId, 'pending'] as const,
     /** Viewer's relationship to another player (direction-aware). */
-    relation: (viewerId: string, otherId: string) =>
-      [...queryKeys.friendships.all(), viewerId, 'relation', otherId] as const,
+    relation: (viewerId: string, otherId: string) => [...queryKeys.friendships.all(), viewerId, 'relation', otherId] as const,
     count: (userId: string) => [...queryKeys.friendships.all(), 'count', userId] as const,
     /** A player's friends page (plus pending requests when it's your own). */
     list: (userId: string) => [...queryKeys.friendships.all(), 'list', userId] as const,
@@ -104,6 +108,15 @@ export const queryKeys = {
   },
 
   /** Stats page aggregates — always the signed-in user's own (keyed per viewer). */
+  /** ♥ likes (migration 000029). */
+  likes: {
+    all: () => [...queryKeys.all, 'likes'] as const,
+    /** A game's like count + whether the viewer likes it. */
+    game: (gameId: number, viewerId: string) => [...queryKeys.likes.all(), 'game', gameId, viewerId] as const,
+    /** A player's liked games, newest first. */
+    byUser: (userId: string) => [...queryKeys.likes.all(), 'user', userId] as const,
+  },
+
   stats: {
     all: () => [...queryKeys.all, 'stats'] as const,
     byUser: (userId: string) => [...queryKeys.stats.all(), userId] as const,
@@ -141,10 +154,8 @@ export const queryKeys = {
     all: () => [...queryKeys.all, 'search'] as const,
     entity: (entity: SearchEntity) => [...queryKeys.search.all(), entity] as const,
     /** Proxy-backed catalogue search (IGDB games/companies, RAWG creators). Viewer-independent. */
-    igdb: (entity: IgdbEntityType, term: string) =>
-      [...queryKeys.search.all(), 'catalog', entity, normalizeSearchQuery(term)] as const,
+    igdb: (entity: IgdbEntityType, term: string) => [...queryKeys.search.all(), 'catalog', entity, normalizeSearchQuery(term)] as const,
     /** User search embeds the viewer's friendship state, so it is keyed per viewer. */
-    users: (viewerId: string, term: string) =>
-      [...queryKeys.search.entity('users'), viewerId, term.trim().toLowerCase()] as const,
+    users: (viewerId: string, term: string) => [...queryKeys.search.entity('users'), viewerId, term.trim().toLowerCase()] as const,
   },
 } as const;

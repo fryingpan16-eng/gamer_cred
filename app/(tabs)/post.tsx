@@ -1,8 +1,10 @@
 import { ScrollView, View } from 'react-native';
 
+import { GuestScreen } from '@/components/auth/MembersOnly';
 import { DraftList } from '@/components/studio/DraftList';
 import { NowPlayingGrid } from '@/components/studio/NowPlayingGrid';
 import { ReviewStudio } from '@/components/studio/ReviewStudio';
+import { useIsGuest } from '@/hooks/useAuth';
 
 /**
  * Post / Review Studio:
@@ -12,6 +14,8 @@ import { ReviewStudio } from '@/components/studio/ReviewStudio';
  * Desktop places the studio and drafts side by side beneath the grid.
  */
 export default function PostScreen() {
+  const isGuest = useIsGuest();
+  if (isGuest) return <GuestScreen title="Now Playing" feature="track what you're playing and write reviews" />;
   return (
     <ScrollView
       automaticallyAdjustKeyboardInsets

@@ -1,23 +1,19 @@
-import { router } from 'expo-router';
 import { Text, View } from 'react-native';
 
-import { Thumbnail } from '@/components/search/Thumbnail';
-import { RetroGamingPCAlert, RetroGamingPCCard, RetroGamingPCPanel, RetroGamingPCRating, RetroGamingPCSpinner } from '@/components/ui';
+import { ReviewCard } from '@/components/review/ReviewCard';
+import { RetroGamingPCAlert, RetroGamingPCPanel, RetroGamingPCSpinner } from '@/components/ui';
+import { useMemberId } from '@/hooks/useAuth';
 import { useGameLookup } from '@/hooks/useGames';
 import { usePublishedReviews } from '@/hooks/useProfile';
-import { igdbImageUrl } from '@/types/igdb';
-import { reviewRating } from '@/utils/ratingColumns';
-
-import { PlayedOnBadge } from '@/components/game/PlayedOnBadge';
-
-function formatDate(iso: string | null): string {
-  return iso ? new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '';
-}
+import { useReviewLikes } from '@/hooks/useReviewBrowser';
+import { cardFromReview } from '@/services/reviewBrowser';
 
 /** A player's published reviews (RLS hides their drafts from everyone else). */
 export function PublishedReviews({ userId, isOwner }: { userId: string; isOwner: boolean }) {
   const reviews = usePublishedReviews(userId);
   const games = useGameLookup((reviews.data ?? []).map((r) => r.game_id));
+  const likes = useReviewLikes((reviews.data ?? []).map((r) => r.id));
+  const viewerId = useMemberId();
 
   return (
     <RetroGamingPCPanel title={`Reviews${reviews.data ? ` (${reviews.data.length})` : ''}`}>
@@ -31,37 +27,18 @@ export function PublishedReviews({ userId, isOwner }: { userId: string; isOwner:
         </Text>
       ) : (
         <View className="gap-2">
-          {reviews.data.map((review) => {
-            const game = games.data?.get(review.game_id);
-            return (
-              <RetroGamingPCCard
-                key={review.id}
-                className="flex-row gap-3"
-                accessibilityLabel={`Review of ${game?.name ?? 'game'}`}
-                onPress={() => router.push({ pathname: '/review/[id]', params: { id: review.id } })}
-              >
-                <Thumbnail
-                  uri={game?.coverImageId ? igdbImageUrl(game.coverImageId, 'cover_small', true) : null}
-                  fallback={game?.name ?? '?'}
-                  shape="cover"
-                  accessibilityLabel={`${game?.name ?? 'Game'} cover`}
-                />
-                <View className="flex-1 gap-1">
-                  <Text className="text-retrogamingpc-base font-bold text-retrogamingpc-text-bright" numberOfLines={1}>
-                    {game?.name ?? `Game #${review.game_id}`}
-                  </Text>
-                  <RetroGamingPCRating rating={reviewRating(review)} size="compact" />
-                  <PlayedOnBadge platformId={review.platform_id} />
-                  {review.content ? (
-                    <Text className="text-retrogamingpc-xs text-retrogamingpc-text" numberOfLines={3}>
-                      {review.content}
-                    </Text>
-                  ) : null}
-                  <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted">{formatDate(review.published_at)}</Text>
-                </View>
-              </RetroGamingPCCard>
-            );
-          })}
+          {reviews.data.map((review) => (
+            <ReviewCard
+              key={review.id}
+              review={cardFromReview(review)}
+              viewerId={viewerId}
+              like={likes.data?.get(review.id)}
+              showGame
+              showAuthor={false}
+              game={games.data?.get(review.game_id)}
+              excerptLines={3}
+            />
+          ))}
         </View>
       )}
     </RetroGamingPCPanel>

@@ -33,6 +33,7 @@ import { showToast } from '@/hooks/useToastStore';
 import type { ListDetail } from '@/services/lists';
 import { igdbImageUrl, type IgdbGameResult } from '@/types/igdb';
 import { cn } from '@/utils/cn';
+import { LIKE_COLOR } from '@/constants/likeColor';
 import { LIST_MAX_GAMES } from '@/utils/listSchemas';
 import { numericToTier } from '@/utils/rating';
 import { describeRequirements, describeSmartRule, type SmartListGame } from '@/utils/smartLists';
@@ -173,11 +174,34 @@ function GameRow({
         </View>
       </Pressable>
       {score ? (
-        <View className="items-end gap-0.5" accessibilityLabel={`Gamer Cred average ${score.average}, ${score.ratingCount} ratings`}>
-          <View className="flex-row items-center gap-1">
-            <Text className="font-mono text-retrogamingpc-base font-bold text-retrogamingpc-text-bright">{score.average.toFixed(1)}</Text>
-            <RetroGamingPCTierBadge tier={numericToTier(Math.round(score.average))} showDescriptor={false} size="compact" />
-          </View>
+        <View
+          className="items-end gap-0.5"
+          accessibilityLabel={[
+            score.likeCount !== undefined ? `${score.likeCount} likes` : null,
+            score.average !== null ? `Gamer Cred average ${score.average}` : null,
+            `${score.ratingCount} ratings`,
+          ]
+            .filter(Boolean)
+            .join(', ')}
+        >
+          {score.likeCount !== undefined ? (
+            <Text className="font-mono text-retrogamingpc-base font-bold" style={{ color: LIKE_COLOR }}>
+              ♥ {score.likeCount}
+            </Text>
+          ) : null}
+          {score.average !== null ? (
+            <View className="flex-row items-center gap-1">
+              <Text
+                className={cn(
+                  'font-mono font-bold text-retrogamingpc-text-bright',
+                  score.likeCount !== undefined ? 'text-retrogamingpc-xs' : 'text-retrogamingpc-base',
+                )}
+              >
+                {score.average.toFixed(1)}
+              </Text>
+              <RetroGamingPCTierBadge tier={numericToTier(Math.round(score.average))} showDescriptor={false} size="compact" />
+            </View>
+          ) : null}
           <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted">
             {score.ratingCount} rating{score.ratingCount === 1 ? '' : 's'}
           </Text>
@@ -263,7 +287,9 @@ export default function ListScreen() {
               'Unknown player'
             )}
             {smartRule
-              ? ` · ${smart.data ? `${gameIds.length} game${gameIds.length === 1 ? '' : 's'}` : 'loading'} · updates automatically`
+              ? ` · ${smart.data ? `${gameIds.length} game${gameIds.length === 1 ? '' : 's'}` : 'loading'} · updated daily${
+                  smart.data?.computedAt ? `, last on ${fmtDate(smart.data.computedAt)}` : ''
+                }`
               : ` · ${gameIds.length} game${gameIds.length === 1 ? '' : 's'} · updated ${fmtDate(data.updatedAt)}`}
           </Text>
           {data.description ? (
@@ -273,8 +299,9 @@ export default function ListScreen() {
             <View className="retrogamingpc-bevel-inset gap-0.5 bg-retrogamingpc-dark p-2">
               <Text className="text-retrogamingpc-xs font-bold text-retrogamingpc-text">{describeSmartRule(smartRule)}</Text>
               <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted">
-                Ranked by Gamer Cred average. {smart.data ? describeRequirements(smart.data.requirements) : ''} The bar rises as more
-                players rate games.
+                {smartRule.rankBy === 'likes'
+                  ? 'Ranked by how many players like each game. Recalculated once a day.'
+                  : `Ranked by Gamer Cred average. ${smart.data ? describeRequirements(smart.data.requirements) : ''} Recalculated once a day, so the bar rises as more players rate games.`}
               </Text>
             </View>
           ) : null}

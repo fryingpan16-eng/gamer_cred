@@ -22,7 +22,8 @@ import { showToast } from './useToastStore';
 const SAVE_DEBOUNCE_MS = 400;
 
 function useViewerId(): string | null {
-  return useAuthStore((s) => s.user?.id ?? null);
+  // Members only: guests have no data of their own.
+  return useAuthStore((s) => (s.isGuest ? null : (s.user?.id ?? null)));
 }
 
 const currentViewerId = (): string | null => useAuthStore.getState().user?.id ?? null;

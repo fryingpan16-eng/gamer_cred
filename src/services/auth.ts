@@ -8,10 +8,7 @@ import type { LoginInput, RegisterInput } from '@/utils/authSchemas';
 
 import { isSupabaseConfigured, supabase } from './supabase';
 
-export type AuthResult =
-  | { ok: true }
-  | { ok: false; cancelled: true; error?: undefined }
-  | { ok: false; cancelled?: false; error: string };
+export type AuthResult = { ok: true } | { ok: false; cancelled: true; error?: undefined } | { ok: false; cancelled?: false; error: string };
 
 export type SignUpResult = AuthResult | { ok: true; needsEmailConfirmation: true };
 
@@ -46,6 +43,8 @@ const FRIENDLY_ERRORS: Record<string, string> = {
   flow_state_expired: 'Sign-in took too long. Please try again.',
   flow_state_not_found: 'Sign-in session expired. Please try again.',
   bad_code_verifier: 'Sign-in could not be verified. Please try again.',
+  captcha_failed: 'The human check didn’t go through. Wait for it to finish, then try again.',
+  anonymous_provider_disabled: 'Guest browsing isn’t switched on yet.',
 };
 
 export function toAuthErrorMessage(error: unknown): string {
@@ -111,10 +110,7 @@ export function completeOAuthSignIn(params: OAuthCallbackParams): Promise<AuthRe
 
   const exchange = (async (): Promise<AuthResult> => {
     try {
-      const { error } = await supabase.auth.exchangeCodeForSession(
-        code,
-        params.sb_flow_id ? { flowId: params.sb_flow_id } : undefined,
-      );
+      const { error } = await supabase.auth.exchangeCodeForSession(code, params.sb_flow_id ? { flowId: params.sb_flow_id } : undefined);
       if (error) {
         // A parallel handler may have already won the exchange.
         const { data } = await supabase.auth.getSession();
@@ -169,10 +165,11 @@ export async function signInWithGoogle(): Promise<AuthResult> {
   }
 }
 
-export async function signInWithEmail({ email, password }: LoginInput): Promise<AuthResult> {
+/** `captchaToken`: the Turnstile token (single use) when the human check is on. */
+export async function signInWithEmail({ email, password }: LoginInput, captchaToken?: string): Promise<AuthResult> {
   if (!isSupabaseConfigured) return { ok: false, error: toAuthErrorMessage(null) };
   try {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await supabase.auth.signInWithPassword({ email, password, options: { captchaToken } });
     return error ? { ok: false, error: toAuthErrorMessage(error) } : { ok: true };
   } catch (error) {
     return { ok: false, error: toAuthErrorMessage(error) };
@@ -188,7 +185,7 @@ export async function isUsernameAvailable(username: string): Promise<boolean | n
  * Email sign-up. The username travels in user metadata and is claimed by the
  * `handle_new_user` trigger (migration 000002), which creates the profile row.
  */
-export async function signUpWithEmail({ username, email, password }: RegisterInput): Promise<SignUpResult> {
+export async function signUpWithEmail({ username, email, password }: RegisterInput, captchaToken?: string): Promise<SignUpResult> {
   if (!isSupabaseConfigured) return { ok: false, error: toAuthErrorMessage(null) };
   try {
     const available = await isUsernameAvailable(username);
@@ -198,11 +195,25 @@ export async function signUpWithEmail({ username, email, password }: RegisterInp
       email,
       password,
       // accepted_terms_version: the Terms are recorded on first sign-in (TermsGate).
-      options: { data: { username, accepted_terms_version: TERMS_VERSION }, emailRedirectTo: getAuthRedirectUrl() },
+      options: { data: { username, accepted_terms_version: TERMS_VERSION }, emailRedirectTo: getAuthRedirectUrl(), captchaToken },
     });
     if (error) return { ok: false, error: toAuthErrorMessage(error) };
     // With "Confirm email" enabled Supabase returns a user but no session.
     return data.session ? { ok: true } : { ok: true, needsEmailConfirmation: true };
+  } catch (error) {
+    return { ok: false, error: toAuthErrorMessage(error) };
+  }
+}
+
+/**
+ * Guest browsing (migration 000027): an anonymous, read-only session. No email,
+ * no profile; the database refuses every write. Behind the human check.
+ */
+export async function signInAsGuest(captchaToken?: string): Promise<AuthResult> {
+  if (!isSupabaseConfigured) return { ok: false, error: toAuthErrorMessage(null) };
+  try {
+    const { error } = await supabase.auth.signInAnonymously({ options: { captchaToken } });
+    return error ? { ok: false, error: toAuthErrorMessage(error) } : { ok: true };
   } catch (error) {
     return { ok: false, error: toAuthErrorMessage(error) };
   }

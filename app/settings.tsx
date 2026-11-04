@@ -14,11 +14,14 @@ import { ThemeSetting } from '@/components/settings/ThemeSetting';
 import { RetroGamingPCAlert, RetroGamingPCButton, RetroGamingPCPanel, RetroGamingPCSpinner } from '@/components/ui';
 import { useAuthStore } from '@/hooks/useAuth';
 import { useProfile } from '@/hooks/useProfile';
+import { GuestScreen } from '@/components/auth/MembersOnly';
 
 /** Settings (opened from the Profile tab): profile picture, appearance, hardware & platforms, ratings, privacy, account. */
 export default function SettingsScreen() {
   const userId = useAuthStore((s) => s.user?.id ?? null);
-  const profile = useProfile(userId);
+  const isGuest = useAuthStore((s) => s.isGuest);
+  const profile = useProfile(isGuest ? null : userId);
+  if (isGuest) return <GuestScreen title="Settings" feature="set up your profile, platforms and rating style" />;
 
   return (
     <ScrollView

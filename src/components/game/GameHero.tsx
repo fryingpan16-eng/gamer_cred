@@ -1,9 +1,13 @@
 import { Image, Text, View } from 'react-native';
 
 import { CoverTile } from '@/components/profile/CoverTile';
+import { LIKE_COLOR } from '@/constants/likeColor';
+import { HERO_SCORE } from '@/constants/scoreBox';
+import { useGameLikes } from '@/hooks/useLikes';
 import { QuickRating } from '@/components/rating/QuickRating';
 import { RetroGamingPCBadge } from '@/components/ui';
-import { usePrimaryRatingScale } from '@/hooks/useAuth';
+import { GuestPrompt } from '@/components/auth/MembersOnly';
+import { useIsGuest, usePrimaryRatingScale } from '@/hooks/useAuth';
 import { useIsDesktop } from '@/hooks/useIsDesktop';
 import { PlayedOnControl } from '@/components/rating/PlayedOnControl';
 import { useGameRatingControl, useMyGameRating } from '@/hooks/useRatings';
@@ -15,12 +19,15 @@ import type { StoredRating } from '@/utils/rating';
 import { EntryTypeBadge } from './EntryTypeBadge';
 import { SCALE_DIVIDER, ScoreScales, TierScoreBox } from './ScoreScales';
 import { NowPlayingButton } from './GameActions';
+import { LikeButton } from './LikeButton';
 import { WriteReviewButton } from './WriteReviewButton';
 
 type GameHeroProps = { game: IgdbGameDetail; stats: GameReviewStats | undefined };
 
 function firstRelease(game: IgdbGameDetail): string | null {
-  return game.releaseDates.find((r) => r.date)?.human ?? game.releaseDates[0]?.human ?? (game.releaseYear ? String(game.releaseYear) : null);
+  return (
+    game.releaseDates.find((r) => r.date)?.human ?? game.releaseDates[0]?.human ?? (game.releaseYear ? String(game.releaseYear) : null)
+  );
 }
 
 /**
@@ -36,6 +43,8 @@ export function GameHero({ game, stats }: GameHeroProps) {
   const control = useGameRatingControl(game, myRating.rating);
   const primaryScale = usePrimaryRatingScale();
   const isDesktop = useIsDesktop();
+  const isGuest = useIsGuest();
+  const likes = useGameLikes(game.id);
   // Community average (canonical 1–100) shown like any rating, in the viewer's chosen scale.
   const community: StoredRating | null =
     stats && stats.count > 0 && stats.average !== null
@@ -59,45 +68,62 @@ export function GameHero({ game, stats }: GameHeroProps) {
           />
           <Text className="border-t pt-1 text-retrogamingpc-xs text-retrogamingpc-text-muted" style={{ borderTopColor: SCALE_DIVIDER }}>
             {stats ? (stats.count > 0 ? `${stats.count} rating${stats.count === 1 ? '' : 's'}` : 'No ratings yet') : '…'}
+            {likes.data && likes.data.count > 0 ? (
+              <Text style={{ color: LIKE_COLOR }}>
+                {'  ·  ♥ '}
+                {likes.data.count} {likes.data.count === 1 ? 'like' : 'likes'}
+              </Text>
+            ) : null}
           </Text>
         </TierScoreBox>
-        <TierScoreBox rating={myRating.rating} title="Your rating">
-          <Text className="retrogamingpc-label pb-1">Your rating</Text>
-          {/* Your default scale, large and tappable; the other scales follow below. */}
-          <QuickRating
-            gameId={game.id}
-            gameName={game.name}
-            size="regular"
-            showTierBadge={false}
-            value={myRating.rating}
-            readOnly={myRating.isPending}
-            onChange={control.setRating}
-          />
-          <PlayedOnControl
-            gameId={game.id}
-            platformId={control.platformId}
-            isDefault={control.isDefaultPlatform}
-            defaultPlatformId={control.defaultPlatformId}
-            disabled={myRating.isPending}
-            onChange={control.setPlatform}
-          />
-          <ScoreScales rating={myRating.rating} primaryScale={primaryScale} omitPrimary dividerBeforeFirst className="mt-1" />
-          <Text className="border-t pt-1 text-retrogamingpc-xs text-retrogamingpc-text-muted" style={{ borderTopColor: SCALE_DIVIDER }}>
-            {myRating.rating
-              ? mine.data
-                ? 'Also the score on your review.'
-                : 'Public on your profile — counts toward your stats and the Gamer Cred score.'
-              : primaryScale === 'numeric'
-                ? 'Type a score and press Enter, or use − / +.'
-                : 'Tap to rate. Tap it again to clear.'}
-          </Text>
-        </TierScoreBox>
+        {isGuest ? null : (
+          <TierScoreBox rating={myRating.rating} title="Your rating">
+            <Text className="retrogamingpc-label pb-0.5">Your rating</Text>
+            {/* Your default scale, tappable, at the same headline size as the Gamer Cred score; the other scales follow below. */}
+            <View className="justify-center py-1.5" style={{ minHeight: HERO_SCORE.rowHeight }}>
+              <QuickRating
+                gameId={game.id}
+                gameName={game.name}
+                size="hero"
+                showTierBadge={false}
+                value={myRating.rating}
+                readOnly={myRating.isPending}
+                onChange={control.setRating}
+              />
+            </View>
+            <PlayedOnControl
+              gameId={game.id}
+              platformId={control.platformId}
+              isDefault={control.isDefaultPlatform}
+              defaultPlatformId={control.defaultPlatformId}
+              disabled={myRating.isPending}
+              onChange={control.setPlatform}
+            />
+            <ScoreScales rating={myRating.rating} primaryScale={primaryScale} omitPrimary dividerBeforeFirst className="mt-1" />
+            <Text className="border-t pt-1 text-retrogamingpc-xs text-retrogamingpc-text-muted" style={{ borderTopColor: SCALE_DIVIDER }}>
+              {myRating.rating
+                ? mine.data
+                  ? 'Also the score on your review.'
+                  : 'Public on your profile — counts toward your stats and the Gamer Cred score.'
+                : primaryScale === 'numeric'
+                  ? 'Type a score and press Enter, or use − / +.'
+                  : 'Tap to rate. Tap it again to clear.'}
+            </Text>
+          </TierScoreBox>
+        )}
       </View>
       {/* Review on the left, Now Playing bottom-right of the hero card. */}
-      <View className="flex-row flex-wrap items-center justify-between gap-2 pt-1">
-        <WriteReviewButton gameId={game.id} />
-        <NowPlayingButton game={game} />
-      </View>
+      {isGuest ? (
+        <GuestPrompt feature="like, rate or review this game, or add it to Now Playing" compact />
+      ) : (
+        <View className="flex-row flex-wrap items-center justify-between gap-2 pt-1">
+          <View className="flex-row flex-wrap items-center gap-2">
+            <WriteReviewButton gameId={game.id} />
+            <LikeButton gameId={game.id} gameName={game.name} />
+          </View>
+          <NowPlayingButton game={game} />
+        </View>
+      )}
     </>
   );
 

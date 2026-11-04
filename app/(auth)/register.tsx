@@ -3,9 +3,11 @@ import { Link, router } from 'expo-router';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
 
+import { HumanCheck } from '@/components/auth/HumanCheck';
 import { GoogleSignInButton } from '@/components/GoogleSignInButton';
 import { RetroGamingPCAlert, RetroGamingPCButton, RetroGamingPCCheckbox, RetroGamingPCInput, RetroGamingPCPanel } from '@/components/ui';
 import { useAuthAction } from '@/hooks/useAuthAction';
+import { useHumanCheck } from '@/hooks/useHumanCheck';
 import { signInWithGoogle, signUpWithEmail } from '@/services/auth';
 import { registerSchema, validate, type FieldErrors, type RegisterInput } from '@/utils/authSchemas';
 import { useThemeColors } from '@/hooks/useTheme';
@@ -21,6 +23,7 @@ export default function RegisterScreen() {
 
   const google = useAuthAction(signInWithGoogle);
   const signUp = useAuthAction(signUpWithEmail);
+  const human = useHumanCheck();
   const busy = google.pending || signUp.pending;
   const formError = google.error ?? signUp.error;
 
@@ -32,7 +35,7 @@ export default function RegisterScreen() {
     }
     setFieldErrors({});
     google.setError(null);
-    const result = await signUp.run(parsed.data);
+    const result = await signUp.run(parsed.data, human.take());
     if (result?.ok && 'needsEmailConfirmation' in result) setConfirmationSentTo(parsed.data.email);
   };
 
@@ -59,7 +62,7 @@ export default function RegisterScreen() {
   return (
     <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView
-      automaticallyAdjustKeyboardInsets
+        automaticallyAdjustKeyboardInsets
         className="flex-1 bg-retrogamingpc-dark"
         contentContainerClassName="flex-grow items-center justify-center p-4"
         keyboardShouldPersistTaps="handled"
@@ -134,17 +137,22 @@ export default function RegisterScreen() {
               <Text onPress={() => router.push('/terms')} className="pl-6 text-retrogamingpc-xs text-retrogamingpc-text-bright underline">
                 Read them
               </Text>
-              {fieldErrors.acceptedTerms ? <Text className="pl-6 text-retrogamingpc-xs text-retrogamingpc-error">▲ {fieldErrors.acceptedTerms}</Text> : null}
+              {fieldErrors.acceptedTerms ? (
+                <Text className="pl-6 text-retrogamingpc-xs text-retrogamingpc-error">▲ {fieldErrors.acceptedTerms}</Text>
+              ) : null}
             </View>
+
+            <HumanCheck key={human.widgetKey} onToken={human.onToken} />
 
             <View className="flex-row items-center justify-between pt-1">
               <Link href="/login" className="text-retrogamingpc-sm text-retrogamingpc-text-bright underline">
                 Have an account?
               </Link>
-              <RetroGamingPCButton variant="save"
+              <RetroGamingPCButton
+                variant="save"
                 label={signUp.pending ? 'Creating…' : 'Register'}
                 loading={signUp.pending}
-                disabled={busy}
+                disabled={busy || !human.ready}
                 onPress={() => void submit()}
               />
             </View>

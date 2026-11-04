@@ -124,10 +124,12 @@ function RootNavigator() {
           <Stack.Screen name="user/[id]" options={{ title: 'Player' }} />
           <Stack.Screen name="settings" options={{ title: 'Settings' }} />
           <Stack.Screen name="review/[id]" options={{ title: 'Review' }} />
+          <Stack.Screen name="reviews/[gameId]" options={{ title: 'Reviews' }} />
           <Stack.Screen name="ratings/[userId]" options={{ title: 'Ratings' }} />
           <Stack.Screen name="list/[id]" options={{ title: 'List' }} />
           <Stack.Screen name="studio/[id]" options={{ title: 'Studio' }} />
           <Stack.Screen name="friends/[userId]" options={{ title: 'Friends' }} />
+          <Stack.Screen name="likes/[userId]" options={{ title: 'Liked Games' }} />
           <Stack.Screen name="admin/reports" options={{ title: 'Moderation' }} />
         </Stack.Protected>
 
