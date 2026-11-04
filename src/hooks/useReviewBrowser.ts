@@ -1,4 +1,4 @@
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import {
   browseGameReviews,
@@ -45,6 +45,25 @@ export function useReviewLikes(reviewIds: readonly string[]) {
     staleTime: 60_000,
     placeholderData: (previous) => previous,
   });
+}
+
+/**
+ * Your ♥ for a paged list: one query per page (each well under the 200-id limit),
+ * so earlier pages aren't refetched when a new one loads. Returns one merged map.
+ */
+export function useReviewLikesByPage(pages: readonly (readonly string[])[]) {
+  const viewerId = useMemberId();
+  const results = useQueries({
+    queries: pages.map((ids) => ({
+      queryKey: queryKeys.reviews.likes(viewerId ?? 'guest', ids),
+      queryFn: () => fetchReviewLikeInfo(ids),
+      enabled: viewerId !== null && ids.length > 0,
+      staleTime: 60_000,
+    })),
+  });
+  const merged = new Map<string, ReviewLikeInfo>();
+  for (const r of results) for (const [id, info] of r.data ?? []) merged.set(id, info);
+  return merged;
 }
 
 /** ♥ / un-♥ a review: instant everywhere it's shown, rolled back if it fails. */

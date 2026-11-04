@@ -80,7 +80,7 @@ const BASE_SCHEMA = `
   create policy "profiles: owner update" on public.profiles for update to authenticated using ((select auth.uid()) = id) with check ((select auth.uid()) = id);
   create table public.now_playing (user_id uuid not null references public.profiles (id) on delete cascade, slot_index smallint not null, game_id bigint not null, notes text, updated_at timestamptz not null default now(), preliminary_score smallint, preliminary_input_scale public.rating_scale, preliminary_input text, primary key (user_id, slot_index));
   create table public.user_favorites (user_id uuid not null references public.profiles (id) on delete cascade, rank smallint not null, game_id bigint not null, primary key (user_id, rank));
-  create table public.user_platforms (user_id uuid not null references public.profiles (id) on delete cascade, platform_id bigint not null, devices text[] not null default '{}', primary key (user_id, platform_id));
+  create table public.user_platforms (user_id uuid not null references public.profiles (id) on delete cascade, platform_id bigint not null, devices text[] not null default '{}', pc_specs text, primary key (user_id, platform_id));
   alter table public.now_playing enable row level security;
   alter table public.user_favorites enable row level security;
   alter table public.user_platforms enable row level security;
@@ -102,14 +102,14 @@ const GRANTS = `
 const migration = (name: string) => Deno.readTextFile(new URL(`../migrations/${name}`, import.meta.url));
 
 /** Fresh database. `beforeMigrations` runs between the stub schema and 000014 (e.g. cache rows for the backfill). */
-export async function freshDb(opts: { beforeMigrations?: string; through?: 14 | 15 | 16 | 17 | 19 | 20 | 21 | 22 | 23 | 25 | 26 | 27 | 28 | 29 | 30 | 31 | 32 | 33 } = {}): Promise<PGlite> {
+export async function freshDb(opts: { beforeMigrations?: string; through?: 14 | 15 | 16 | 17 | 19 | 20 | 21 | 22 | 23 | 25 | 26 | 27 | 28 | 29 | 30 | 31 | 32 | 33 | 34 } = {}): Promise<PGlite> {
   const db = new PGlite({ extensions: { pg_trgm } });
   await db.exec(BASE_SCHEMA);
   await db.exec(`insert into auth.users (id) values ('${ME}'), ('${OTHER}'), ('${THIRD}');
     insert into public.profiles (id, username) values ('${ME}', 'me'), ('${OTHER}', 'other'), ('${THIRD}', 'third');`);
   if (opts.beforeMigrations) await db.exec(opts.beforeMigrations);
   await db.exec(await migration('000014_games_and_stats.sql'));
-  const through = opts.through ?? 33;
+  const through = opts.through ?? 34;
   if (through >= 15) await db.exec(await migration('000015_quick_ratings.sql'));
   if (through >= 16) await db.exec(await migration('000016_public_ratings_and_platform.sql'));
   if (through >= 17) await db.exec(await migration('000017_user_ratings_table.sql'));
@@ -128,6 +128,7 @@ export async function freshDb(opts: { beforeMigrations?: string; through?: 14 | 
   if (through >= 31) await db.exec(await migration('000031_rls_performance.sql'));
   if (through >= 32) await db.exec(await migration('000032_review_fixes.sql'));
   if (through >= 33) await db.exec(await migration('000033_bug_fixes_batch1.sql'));
+  if (through >= 34) await db.exec(await migration('000034_bug_fixes_batch2.sql'));
   await db.exec(GRANTS);
   return db;
 }

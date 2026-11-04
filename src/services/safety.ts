@@ -85,7 +85,11 @@ export async function fetchAdminReports(status: 'open' | 'actioned' | 'dismissed
 }
 
 /** Admin: dismiss every open report on a target, or remove the content and mark them actioned. */
-export async function resolveReports(target: { type: ReportTarget; id: string; userId: string }, remove: boolean, note?: string): Promise<number> {
+export async function resolveReports(
+  target: { type: ReportTarget; id: string; userId: string },
+  remove: boolean,
+  note?: string,
+): Promise<number> {
   const { data, error } = await supabase.rpc('admin_resolve_reports', {
     p_target_type: target.type,
     p_target_id: target.id,
@@ -100,13 +104,21 @@ export async function resolveReports(target: { type: ReportTarget; id: string; u
 // ---- terms ----------------------------------------------------------------------
 
 export async function hasAcceptedTerms(userId: string, version: string): Promise<boolean> {
-  const { data, error } = await supabase.from('terms_acceptances').select('version').eq('user_id', userId).eq('version', version).maybeSingle();
+  const { data, error } = await supabase
+    .from('terms_acceptances')
+    .select('version')
+    .eq('user_id', userId)
+    .eq('version', version)
+    .maybeSingle();
   if (error) fail(error, 'Could not check the terms.');
   return data !== null;
 }
 
 export async function acceptTerms(userId: string, version: string): Promise<void> {
-  const { error } = await supabase.from('terms_acceptances').upsert({ user_id: userId, version }, { onConflict: 'user_id,version' });
+  // Already accepted (another tab, a double tap) is fine: keep the first row, no update needed.
+  const { error } = await supabase
+    .from('terms_acceptances')
+    .upsert({ user_id: userId, version }, { onConflict: 'user_id,version', ignoreDuplicates: true });
   if (error) fail(error, 'Could not save your acceptance.');
 }
 

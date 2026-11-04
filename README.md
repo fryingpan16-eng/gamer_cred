@@ -333,6 +333,7 @@ Storage: a private `avatar-uploads` bucket (each user can write only their own p
 | 000031 | Faster row rules (blocked list and guest/admin checks run once per request), duplicate indexes removed |
 | 000032 | Blocked-player list moved to a private schema (it could reveal who blocked you); review browser counts likes only for Popular |
 | 000033 | Review fixes: no client-supplied sign-up pictures, username check before sign-in, nobody learns who blocked them, reports name the real owner (ratings per player) |
+| 000034 | PC specs go through the database text filter |
 
 ### avatar Edge Function
 - `submit` screens an uploaded picture with Google Cloud Vision SafeSearch, then publishes, rejects or holds it.

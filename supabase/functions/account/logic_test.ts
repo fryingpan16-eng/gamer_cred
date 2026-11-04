@@ -31,11 +31,11 @@ function fakes(callerId: string | null, admins: string[] = []) {
   return { deps, calls };
 }
 
-Deno.test('delete_self removes the avatar files, then the auth user (which cascades all data)', async () => {
+Deno.test('delete_self deletes the auth user (which cascades all data), then the avatar files', async () => {
   const { deps, calls } = fakes(ME);
   const res = await handleAccount(parseRequest({ action: 'delete_self' }), deps);
   assertEquals(res, { status: 200, body: { success: true, data: { deleted: ME } } });
-  assertEquals(calls, [`storage:${ME}/avatar.jpg`, `auth:${ME}`]);
+  assertEquals(calls, [`auth:${ME}`, `storage:${ME}/avatar.jpg`]);
 });
 
 Deno.test('signed out or malformed requests delete nothing', async () => {
@@ -47,7 +47,7 @@ Deno.test('signed out or malformed requests delete nothing', async () => {
   assertEquals([...a.calls, ...b.calls], []);
 });
 
-Deno.test('only admins remove other users; reports about them are closed first', async () => {
+Deno.test('only admins remove other users; reports close only after the account is gone', async () => {
   const notAdmin = fakes(ME);
   assertEquals((await handleAccount({ action: 'admin_delete_user', user_id: BAD }, notAdmin.deps)).status, 403);
   assertEquals(notAdmin.calls, []);
@@ -55,7 +55,27 @@ Deno.test('only admins remove other users; reports about them are closed first',
   const admin = fakes(ME, [ME]);
   const res = await handleAccount({ action: 'admin_delete_user', user_id: BAD }, admin.deps);
   assertEquals(res.status, 200);
-  assertEquals(admin.calls, [`reports:${BAD}:${ME}`, `storage:${BAD}/avatar.jpg`, `auth:${BAD}`, `log:${ME}:user.remove:${BAD}`]);
+  assertEquals(admin.calls, [`auth:${BAD}`, `storage:${BAD}/avatar.jpg`, `reports:${BAD}:${ME}`, `log:${ME}:user.remove:${BAD}`]);
   // an admin can't remove themselves through the moderation path
   assertEquals((await handleAccount({ action: 'admin_delete_user', user_id: ME }, fakes(ME, [ME]).deps)).status, 400);
+});
+
+Deno.test('a failed deletion changes nothing: files kept, reports still open', async () => {
+  const admin = fakes(ME, [ME]);
+  admin.deps.deleteAuthUser = () => Promise.reject(new Error('network'));
+  let threw = false;
+  try {
+    await handleAccount({ action: 'admin_delete_user', user_id: BAD }, admin.deps);
+  } catch {
+    threw = true;
+  }
+  assertEquals(threw, true);
+  assertEquals(admin.calls, []);
+});
+
+Deno.test('a failed picture cleanup does not fail the deletion', async () => {
+  const self = fakes(ME);
+  self.deps.removeAvatarFiles = () => Promise.reject(new Error('storage down'));
+  assertEquals((await handleAccount({ action: 'delete_self' }, self.deps)).status, 200);
+  assertEquals(self.calls, [`auth:${ME}`]);
 });

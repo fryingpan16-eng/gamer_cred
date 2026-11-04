@@ -7,6 +7,7 @@ import type { ReviewFormValues } from '@/utils/reviewSchemas';
 import { queryKeys } from '@/utils/queryKeys';
 
 import { useAuthStore } from './useAuth';
+import { showToast } from './useToastStore';
 
 function useViewerId(): string | null {
   return useAuthStore((s) => s.user?.id ?? null);
@@ -57,7 +58,14 @@ export function useSaveReview() {
     mutationFn: async (vars: SaveReviewVariables): Promise<Review> => {
       if (!viewerId) throw new Error('You must be signed in.');
       const review = await saveReview(viewerId, vars);
-      if (vars.clearSlot !== undefined && vars.status === 'published') await clearSlot(viewerId, vars.clearSlot);
+      if (vars.clearSlot !== undefined && vars.status === 'published') {
+        // The review is already published: a failed slot clean-up must not report the publish as failed.
+        try {
+          await clearSlot(viewerId, vars.clearSlot);
+        } catch {
+          showToast(`Review published, but Now Playing slot ${vars.clearSlot} couldn't be freed. Remove it from the slot.`, 'info');
+        }
+      }
       return review;
     },
     onSuccess: (review, vars) => {
@@ -96,8 +104,7 @@ export function useSaveReviewDraft() {
   const mutation = useSaveReview();
   return {
     ...mutation,
-    saveDraft: (values: Omit<SaveReviewVariables, 'status' | 'clearSlot'>) =>
-      mutation.mutateAsync({ ...values, status: 'draft' }),
+    saveDraft: (values: Omit<SaveReviewVariables, 'status' | 'clearSlot'>) => mutation.mutateAsync({ ...values, status: 'draft' }),
   };
 }
 

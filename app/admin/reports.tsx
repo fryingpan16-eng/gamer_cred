@@ -17,6 +17,7 @@ import {
 } from '@/components/ui';
 import { REPORT_RESPONSE_HOURS } from '@/constants/legal';
 import { useAdminActivity, useAdminStatus } from '@/hooks/useAdminSecurity';
+import { useIsGuest } from '@/hooks/useAuth';
 import { useIsAdmin } from '@/hooks/useLists';
 import { useAdminReports, useDecideHeldAvatar, useHeldAvatars, useModerate, type ModerationAction } from '@/hooks/useSafety';
 import type { HeldPicture } from '@/services/avatar';
@@ -229,6 +230,7 @@ const CONFIRM: Record<ModerationAction['action'], { title: string; message: stri
 export default function ModerationScreen() {
   const isAdmin = useIsAdmin();
   const adminStatus = useAdminStatus();
+  const isGuest = useIsGuest();
   const [tab, setTab] = useState<Tab>('open');
   const status: Status = tab === 'pictures' || tab === 'activity' ? 'open' : tab;
   const reports = useAdminReports(status);
@@ -243,6 +245,15 @@ export default function ModerationScreen() {
   const moderate = useModerate();
   const [pending, setPending] = useState<ModerationAction | null>(null);
 
+  // Guests never get admin data (those checks are switched off), so don't wait on them.
+  if (isGuest) {
+    return (
+      <View className="flex-1 bg-retrogamingpc-dark p-3">
+        <Stack.Screen options={{ title: 'Moderation' }} />
+        <RetroGamingPCAlert message="Only app admins can open the moderation queue." />
+      </View>
+    );
+  }
   if (isAdmin.isPending || adminStatus.isPending) return <RetroGamingPCSpinner label="Checking access…" />;
   // Admins whose sign-in isn't code-verified yet get the unlock / setup box instead.
   if (!isAdmin.data && adminStatus.data?.member) {

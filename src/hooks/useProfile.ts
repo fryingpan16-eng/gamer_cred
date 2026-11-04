@@ -21,12 +21,7 @@ import {
   updateUiTheme,
 } from '@/services/profile';
 import { removeAvatar, uploadAvatar, type AvatarUploadResult, type PreparedAvatar } from '@/services/avatar';
-import {
-  removeFriendship,
-  respondToFriendRequest,
-  sendFriendRequest,
-  type FriendRelation,
-} from '@/services/users';
+import { removeFriendship, respondToFriendRequest, sendFriendRequest, type FriendRelation } from '@/services/users';
 import type { FavoriteRank, Profile, UserFavorite, UserPlatform } from '@/types/database.types';
 import type { NowPlayingVisibility } from '@/constants/privacy';
 import type { RatingScale } from '@/constants/ratingRubric';
@@ -223,9 +218,7 @@ function applyFavoriteAction(rows: UserFavorite[] = [], vars: FavoriteAction, us
     next = next.filter((r) => r.rank !== vars.rank && r.game_id !== vars.gameId);
     next.push({ user_id: userId, game_id: vars.gameId, rank: vars.rank });
   } else if (vars.action === 'swap') {
-    next = next.map((r) =>
-      r.rank === vars.a ? { ...r, rank: vars.b } : r.rank === vars.b ? { ...r, rank: vars.a } : r,
-    );
+    next = next.map((r) => (r.rank === vars.a ? { ...r, rank: vars.b } : r.rank === vars.b ? { ...r, rank: vars.a } : r));
   } else {
     next = next.filter((r) => r.rank !== vars.rank);
   }
@@ -384,9 +377,10 @@ export function useFriendRequestMutation(otherId: string) {
       }
     }),
     onSettled: () => {
-      void queryClient.invalidateQueries({ queryKey: relationKey() });
-      void queryClient.invalidateQueries({ queryKey: queryKeys.friendships.count(otherId) });
-      if (viewerId) void queryClient.invalidateQueries({ queryKey: queryKeys.friendships.count(viewerId) });
+      // Relation, counts and both players' friends lists all live under friendships; the
+      // Friends feed changes too when a friendship starts or ends.
+      void queryClient.invalidateQueries({ queryKey: queryKeys.friendships.all() });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.feed.all() });
       void queryClient.invalidateQueries({ queryKey: queryKeys.search.entity('users') });
     },
   });

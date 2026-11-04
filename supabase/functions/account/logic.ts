@@ -38,10 +38,21 @@ export function parseRequest(body: unknown): AccountRequest | null {
   return null;
 }
 
+/**
+ * The sign-in account is deleted FIRST (it cascades every table): if that fails,
+ * nothing else has changed. Picture files are cleaned up afterwards, best effort —
+ * a failure there only leaves an orphaned file, never a half-deleted account.
+ */
 async function deleteEverything(userId: string, deps: AccountDeps): Promise<void> {
   const files = await deps.listAvatarFiles(userId);
-  if (files.length > 0) await deps.removeAvatarFiles(files);
   await deps.deleteAuthUser(userId);
+  if (files.length > 0) {
+    try {
+      await deps.removeAvatarFiles(files);
+    } catch (error) {
+      console.error('[account] avatar cleanup failed after deletion', error);
+    }
+  }
 }
 
 export async function handleAccount(req: AccountRequest | null, deps: AccountDeps): Promise<AccountResult> {
@@ -60,8 +71,9 @@ export async function handleAccount(req: AccountRequest | null, deps: AccountDep
   if (req.user_id === deps.callerId) {
     return { status: 400, body: { success: false, error: 'Use “Delete account” in Settings to delete your own account.' } };
   }
-  await deps.closeReportsAbout(req.user_id, deps.callerId);
+  // Delete first; only then close their reports (so a failed removal leaves them in the queue).
   await deleteEverything(req.user_id, deps);
+  await deps.closeReportsAbout(req.user_id, deps.callerId);
   await deps.logAdmin(deps.callerId, 'user.remove', 'user', req.user_id);
   return { status: 200, body: { success: true, data: { deleted: req.user_id } } };
 }

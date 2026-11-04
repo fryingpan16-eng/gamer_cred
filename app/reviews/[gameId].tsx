@@ -16,7 +16,7 @@ import {
 import { useIsGuest, useMemberId } from '@/hooks/useAuth';
 import { useFriendRatingsForGame } from '@/hooks/useGameDetail';
 import { useGameLookup } from '@/hooks/useGames';
-import { useReviewBrowser, useReviewLikes } from '@/hooks/useReviewBrowser';
+import { useReviewBrowser, useReviewLikesByPage } from '@/hooks/useReviewBrowser';
 import type { ReviewScope, ReviewSort } from '@/services/reviewBrowser';
 import { igdbImageUrl } from '@/types/igdb';
 import { reviewRating } from '@/utils/ratingColumns';
@@ -84,8 +84,12 @@ export default function ReviewBrowserScreen() {
   const games = useGameLookup(validGame ? [gameId] : []);
   const game = games.data?.get(gameId);
   const list = useReviewBrowser(validGame ? gameId : null, scope, sort, !lockedForGuest);
-  const reviews = list.data?.pages.flatMap((p) => p.reviews) ?? [];
-  const likes = useReviewLikes(reviews.map((r) => r.id));
+  const pages = list.data?.pages ?? [];
+  // Pages are fetched by position, so a review published (or Popular reshuffled) mid-scroll can
+  // reappear on the next page: keep the first copy only.
+  const seen = new Set<string>();
+  const reviews = pages.flatMap((p) => p.reviews).filter((r) => (seen.has(r.id) ? false : (seen.add(r.id), true)));
+  const likes = useReviewLikesByPage(pages.map((p) => p.reviews.map((r) => r.id)));
 
   if (!validGame) {
     return (
@@ -133,7 +137,7 @@ export default function ReviewBrowserScreen() {
           keyExtractor={(r) => r.id}
           contentContainerClassName="gap-2 p-3 md:max-w-[860px] md:w-full md:self-center"
           ListHeaderComponent={header}
-          renderItem={({ item }) => <ReviewCard review={item} viewerId={viewerId} like={likes.data?.get(item.id)} excerptLines={6} />}
+          renderItem={({ item }) => <ReviewCard review={item} viewerId={viewerId} like={likes.get(item.id)} excerptLines={6} />}
           onEndReached={() => {
             if (list.hasNextPage && !list.isFetchingNextPage) void list.fetchNextPage();
           }}

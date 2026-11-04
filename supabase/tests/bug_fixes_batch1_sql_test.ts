@@ -87,3 +87,11 @@ Deno.test('reports name the real owner; rating reports are per player', async ()
   const open = await asOwner<{ target_user_id: string }>(db, `select target_user_id from public.content_reports where target_type = 'rating' and status = 'open'`);
   assertEquals(open.map((r) => r.target_user_id), [THIRD]);
 });
+
+Deno.test('batch 2: PC specs go through the database text filter too (000034)', async () => {
+  const db = await freshDb();
+  await assertRejects(() =>
+    asOwner(db, `insert into public.user_platforms (user_id, platform_id, pc_specs) values ('${ME}', 6, '{"cpu":"shit box 9000"}')`),
+  );
+  await asOwner(db, `insert into public.user_platforms (user_id, platform_id, pc_specs) values ('${ME}', 6, '{"cpu":"Ryzen 7","ram":"32 GB"}')`);
+});
