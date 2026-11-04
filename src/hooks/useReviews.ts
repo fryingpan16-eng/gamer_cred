@@ -86,6 +86,7 @@ export function useSaveReview() {
       void queryClient.invalidateQueries({ queryKey: queryKeys.games.reviewStatsAll() });
       void queryClient.invalidateQueries({ queryKey: queryKeys.games.friendReviewsAll() });
       void queryClient.invalidateQueries({ queryKey: queryKeys.stats.all() });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.backlog.all() }); // rating a game takes it off the backlog (000035)
       // A review's score is also the user's quick rating (sync trigger, migration 000015).
       void queryClient.invalidateQueries({ queryKey: queryKeys.ratings.all() });
     },
@@ -123,6 +124,7 @@ export function useDeleteReview() {
       void queryClient.invalidateQueries({ queryKey: queryKeys.games.reviewStatsAll() });
       void queryClient.invalidateQueries({ queryKey: queryKeys.games.friendReviewsAll() });
       void queryClient.invalidateQueries({ queryKey: queryKeys.stats.all() });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.backlog.all() }); // rating a game takes it off the backlog (000035)
     },
   });
 }

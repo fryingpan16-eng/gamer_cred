@@ -69,6 +69,7 @@ Search covers three kinds of thing:
 - **Review Studio:** the only place full reviews are written, either from a Now Playing slot or for any game.
   - The writer opens as an overlay pinned to the top of the screen that shrinks above the keyboard, so you can always see what you type.
   - One action bar: Save Draft and Publish (or Unpublish and Update Review once published). Closing with unsaved changes asks first.
+- **Backlog:** games you want to play next, between Now Playing and Review Studio. Add with **+ Add** here or **+ Backlog** on any game page; remove with ✕; **🔓 Public / 🔒 Private** toggle (also in Settings → Privacy). The Now Playing game picker shows your backlog before you search. A game leaves the backlog once you rate it (a quick rating or a published review); starting it in Now Playing keeps it there, tagged "Now Playing".
 - **Drafts:** your unpublished reviews, ready to resume.
 
 ### Stats
@@ -85,6 +86,7 @@ Every chart shows the exact value when you tap a bar, and has a table view that 
 - **Top 4 Favorites:** tap a cover to open the game. The owner can reorder (◀ ▶) or remove (✕) entries.
 - **Friends:** tap the friend count for the friends list (yours also shows requests).
 - **♥ Liked Games:** the latest 8 liked covers, with **View all** for the full list (newest first, with a name filter).
+- **Backlog:** the same layout; hidden from others when private.
 - **Ratings:** your most recent ratings. Tap **Ratings ▸** for a spreadsheet of every game you've rated.
   - It has sortable columns, search, and filters for tier, score range, platform, genre and whether you've reviewed the game.
   - Only you and your friends can sort and filter it.
@@ -289,6 +291,7 @@ Every table has row-level security with explicit read and write policies.
 | `api_rate_limits` | Per-user request counters for the game-database proxy (service role only) |
 | `games` | A durable copy of IGDB metadata used by Stats and the ratings list (incl. series) |
 | `game_likes` | ♥ likes: one per player per game. Public to signed-in players, owner-only writes, members only. |
+| `game_backlog` | Want-to-play backlog, newest first. Readable when public (or yours); owner-only writes, members only. |
 | `review_likes` | ♥ on reviews. Private: you read only your own; authors see their own counts via `review_like_info`. |
 | `igdb_cache` | The proxy's response cache (`cache_key`, `data` JSONB, `updated_at`) |
 | `game_overrides` | Manual include/exclude overrides for catalogue curation |
@@ -334,6 +337,7 @@ Storage: a private `avatar-uploads` bucket (each user can write only their own p
 | 000032 | Blocked-player list moved to a private schema (it could reveal who blocked you); review browser counts likes only for Popular |
 | 000033 | Review fixes: no client-supplied sign-up pictures, username check before sign-in, nobody learns who blocked them, reports name the real owner (ratings per player) |
 | 000034 | PC specs go through the database text filter |
+| 000035 | Backlog (`game_backlog`, public/private, leaves the backlog when rated) |
 
 ### avatar Edge Function
 - `submit` screens an uploaded picture with Google Cloud Vision SafeSearch, then publishes, rejects or holds it.
@@ -505,6 +509,46 @@ Phases 1–11 are complete: setup, auth, search, Review Studio, profiles, game p
 - **Support the dev:** a "Buy the dev a tea" (Ko-fi) link, **web only** (app-store rules).
 - **Supporter tier** (cosmetic only: badge, gold-trimmed review cards, extra themes, profile banner), via Ko-fi memberships on the web; store payments once the phone apps ship.
 - Tasteful "Sponsored" feed cards only if the audience grows.
+
+**Roadmap after alpha** (draft order: reshuffle freely):
+
+*Phase A: learn and polish*
+- Act on alpha tester feedback first.
+- Crash/error reporting (e.g. Sentry) and privacy-friendly usage analytics (e.g. Plausible or PostHog).
+- "Add to list" button on game pages.
+- Ratings in the activity feed (today only reviews appear).
+- In-app notifications: friend requests, friends reviewing games you like, your list featured, private "someone liked your review".
+- "Download my data" export.
+
+*Phase B: core gaming features*
+- Game statuses beyond Now Playing: Want to play / Playing / Played / Dropped, with a backlog view.
+- Play diary: start and finish dates, optional hours played and replays; feeds new stats (games finished per year, backlog size).
+- Steam library import (owned games + playtime) for instant onboarding.
+- Recommendations ("Because you liked…", "Popular with your friends"), built from likes, ratings and friends with SQL, no AI.
+- Year in review ("Wrapped"): a shareable end-of-year summary.
+
+*Phase C: growth and sharing*
+- Shareable retro-styled image cards for reviews and profiles.
+- Public share pages on the web for a review or list, with a "Join GamerCred" prompt.
+- Release calendar, "Notify me when it's out", and a "Coming soon" row on Home.
+- Series, platform and creator pages (like studio pages).
+
+*Phase D: phone apps and store launch*
+- Native builds with EAS (Android APK first, then TestFlight).
+- Push notifications.
+- Store listings (icon, screenshots, privacy labels).
+- Store payments for tips or supporters.
+
+*Phase E: community depth (if the community is active)*
+- Follow critics (one-way, separate from friends).
+- Comments on reviews (once moderation can keep up).
+- Profile achievements (cosmetic).
+- Moderation tooling: user search, temporary suspensions, appeals, automatic spam flagging.
+
+*Ongoing*
+- Scale work: precomputed stats, keyset paging for very long lists (closes the rare "skipped review" gap in the review browser), image caching.
+- Accessibility and translations.
+- Optional weekly email digest.
 
 Still open:
 - Decide how standalone expansions should be grouped.

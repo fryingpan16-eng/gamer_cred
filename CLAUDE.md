@@ -30,6 +30,7 @@ The core app features a bottom navigation bar (migrating to a desktop sidebar on
      Tapping a studio opens \`app/studio/[id].tsx\`: the company plus every game it developed or published (proxy action \`company\`), each linking to its game page.
    - **Users / Friends**: Search community profiles by username to view profiles and send friend requests.
 3. **Now Playing tab — Post / Review Studio (\`app/(tabs)/post.tsx\`)**: 
+   - **Backlog** (migration 000035, \`src/components/backlog/\`): want-to-play list between Now Playing and Review Studio; public/private (\`profiles.backlog_visibility\`); shown first in the Now Playing picker (\`GamePickerModal\` \`suggestions\`); leaves the backlog when the game is rated (trigger on \`game_ratings\`), never just by starting it.
    - **Now Playing Grid**: 4 active slots. Empty slots allow adding a game. Filled slots allow removal (with confirmation modal), running notes, and preliminary scoring.
    - **Publishing**: Convert a Now Playing draft into a published community review.
    - **Standalone Review**: Review any game directly without occupying a Now Playing slot.

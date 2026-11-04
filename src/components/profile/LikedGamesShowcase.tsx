@@ -1,25 +1,21 @@
 import { router } from 'expo-router';
-import { Pressable, Text, View } from 'react-native';
+import { Text } from 'react-native';
 
-import { RetroGamingPCAlert, RetroGamingPCButton, RetroGamingPCPanel, RetroGamingPCSpinner } from '@/components/ui';
+import { CoverShowcase } from '@/components/games/CoverShowcase';
+import { RetroGamingPCButton } from '@/components/ui';
 import { LIKE_COLOR } from '@/constants/likeColor';
-import { useGameLookup } from '@/hooks/useGames';
 import { useLikedGames } from '@/hooks/useLikes';
-
-import { CoverTile } from './CoverTile';
-
-const PREVIEW = 8;
 
 /** ♥ Liked Games on a profile: the latest 8 covers, and View all for the full list. */
 export function LikedGamesShowcase({ userId, isOwner }: { userId: string; isOwner: boolean }) {
   const liked = useLikedGames(userId);
-  const ids = (liked.data?.gameIds ?? []).slice(0, PREVIEW);
-  const games = useGameLookup(ids);
   const total = liked.data?.total ?? 0;
-
   return (
-    <RetroGamingPCPanel
+    <CoverShowcase
       title={`♥ Liked Games${liked.data ? ` (${total})` : ''}`}
+      gameIds={liked.data?.gameIds}
+      isPending={liked.isPending}
+      error={liked.error}
       headerRight={
         total > 0 ? (
           <RetroGamingPCButton
@@ -29,12 +25,7 @@ export function LikedGamesShowcase({ userId, isOwner }: { userId: string; isOwne
           />
         ) : undefined
       }
-    >
-      {liked.isPending ? (
-        <RetroGamingPCSpinner label="Loading liked games…" />
-      ) : liked.isError ? (
-        <RetroGamingPCAlert message={liked.error.message} />
-      ) : ids.length === 0 ? (
+      empty={
         <Text className="text-retrogamingpc-sm text-retrogamingpc-text-muted">
           {isOwner ? (
             <>
@@ -44,25 +35,7 @@ export function LikedGamesShowcase({ userId, isOwner }: { userId: string; isOwne
             'No liked games yet.'
           )}
         </Text>
-      ) : (
-        <View className="flex-row flex-wrap gap-2">
-          {ids.map((id) => {
-            const game = games.data?.get(id);
-            return (
-              <Pressable
-                key={id}
-                accessibilityRole="link"
-                accessibilityLabel={`${game?.name ?? 'Game'}. Open game page`}
-                onPress={() => router.push({ pathname: '/game/[id]', params: { id: String(id) } })}
-                className="w-[22%] min-w-[64px] flex-grow"
-                style={{ maxWidth: 120 }}
-              >
-                <CoverTile game={game} gameId={id} loading={games.isPending} />
-              </Pressable>
-            );
-          })}
-        </View>
-      )}
-    </RetroGamingPCPanel>
+      }
+    />
   );
 }

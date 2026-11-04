@@ -40,7 +40,8 @@ export const queryKeys = {
     browseAll: () => [...queryKeys.reviews.all(), 'browse'] as const,
     browse: (gameId: number, scope: string, sort: string) => [...queryKeys.reviews.browseAll(), gameId, scope, sort] as const,
     /** The game page's first few community reviews. */
-    preview: (gameId: number, sort: string, count: number) => [...queryKeys.reviews.browse(gameId, 'community', sort), 'preview', count] as const,
+    preview: (gameId: number, sort: string, count: number) =>
+      [...queryKeys.reviews.browse(gameId, 'community', sort), 'preview', count] as const,
     /** ♥ on reviews: yours, plus counts on your own reviews. Ids sorted so equal sets share an entry. */
     likesAll: () => [...queryKeys.reviews.all(), 'likes'] as const,
     likes: (viewerId: string, reviewIds: readonly string[]) =>
@@ -111,6 +112,12 @@ export const queryKeys = {
   },
 
   /** Stats page aggregates — always the signed-in user's own (keyed per viewer). */
+  /** Want-to-play backlog (migration 000035). */
+  backlog: {
+    all: () => [...queryKeys.all, 'backlog'] as const,
+    byUser: (userId: string) => [...queryKeys.backlog.all(), userId] as const,
+  },
+
   /** ♥ likes (migration 000029). */
   likes: {
     all: () => [...queryKeys.all, 'likes'] as const,

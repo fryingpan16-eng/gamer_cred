@@ -1,9 +1,18 @@
 import { useMemo } from 'react';
 import { View } from 'react-native';
 
-import { RetroGamingPCAlert, RetroGamingPCBadge, RetroGamingPCButton, RetroGamingPCConfirmModal, RetroGamingPCPanel, RetroGamingPCSpinner } from '@/components/ui';
+import {
+  RetroGamingPCAlert,
+  RetroGamingPCBadge,
+  RetroGamingPCButton,
+  RetroGamingPCConfirmModal,
+  RetroGamingPCPanel,
+  RetroGamingPCSpinner,
+} from '@/components/ui';
 import { useGameLookup } from '@/hooks/useGames';
 import { useNowPlaying, useRemoveNowPlayingSlot, useUpdateNowPlayingSlot } from '@/hooks/useNowPlaying';
+import { useMemberId } from '@/hooks/useAuth';
+import { useBacklog } from '@/hooks/useBacklog';
 import { useStudioStore } from '@/hooks/useStudioStore';
 import { NOW_PLAYING_SLOTS } from '@/services/nowPlaying';
 import type { NowPlaying, NowPlayingSlot } from '@/types/database.types';
@@ -21,6 +30,7 @@ export function NowPlayingGrid() {
   const updateSlot = useUpdateNowPlayingSlot();
   const removeSlot = useRemoveNowPlayingSlot();
 
+  const backlog = useBacklog(useMemberId());
   const { modal, selectedSlot, openModal, closeModal, startReview } = useStudioStore();
 
   const rowBySlot = useMemo(() => {
@@ -59,7 +69,12 @@ export function NowPlayingGrid() {
       ) : (
         <View className="gap-2">
           {mutationError ? <RetroGamingPCAlert message={mutationError} /> : null}
-          {games.isError ? <RetroGamingPCAlert tone="info" message="Couldn't load some game details. Titles will appear when the game database is reachable." /> : null}
+          {games.isError ? (
+            <RetroGamingPCAlert
+              tone="info"
+              message="Couldn't load some game details. Titles will appear when the game database is reachable."
+            />
+          ) : null}
           {/* 2×2 on phones, 4 across on desktop. Fixed widths keep the grid stable while data loads. */}
           <View className="flex-row flex-wrap gap-2">
             {NOW_PLAYING_SLOTS.map((slot) => {
@@ -96,6 +111,11 @@ export function NowPlayingGrid() {
         title={modalSlot && rowBySlot.has(modalSlot) ? `Swap game — Slot ${modalSlot}` : `Add game — Slot ${modalSlot ?? ''}`}
         currentGameId={modalSlot ? rowBySlot.get(modalSlot)?.game_id : null}
         unavailable={modalSlot ? unavailableFor(modalSlot) : undefined}
+        suggestions={{
+          title: 'Your backlog',
+          gameIds: backlog.data?.gameIds ?? [],
+          emptyText: 'Your backlog is empty. Search for any game above, or add games to your backlog to see them here first.',
+        }}
         onClose={closeModal}
         onPick={(game) => {
           if (modalSlot === null) return;

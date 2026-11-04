@@ -4,7 +4,15 @@ import { useCallback, useEffect, useState } from 'react';
 import { create } from 'zustand';
 
 import { defaultPlayedOnPlatform } from '@/constants/platforms';
-import { clearGameRating, fetchMyRatings, fetchRatingsTable, fetchUserRatings, rateGame, type GameRatingEntry, type MyRatings } from '@/services/ratings';
+import {
+  clearGameRating,
+  fetchMyRatings,
+  fetchRatingsTable,
+  fetchUserRatings,
+  rateGame,
+  type GameRatingEntry,
+  type MyRatings,
+} from '@/services/ratings';
 import type { StoredRating } from '@/utils/rating';
 import { RatingQueue } from '@/utils/ratingQueue';
 import { queryKeys } from '@/utils/queryKeys';
@@ -62,6 +70,7 @@ function patchCachedRating(queryClient: QueryClient, userId: string, gameId: num
 /** A rating changes the user's score everywhere it shows (stats, Gamer Cred average, their review's score). */
 function invalidateAfterRating(queryClient: QueryClient) {
   void queryClient.invalidateQueries({ queryKey: queryKeys.stats.all() });
+  void queryClient.invalidateQueries({ queryKey: queryKeys.backlog.all() }); // rating a game takes it off the backlog (000035)
   void queryClient.invalidateQueries({ queryKey: queryKeys.games.reviewStatsAll() });
   // The sync trigger also updates the score on the user's review of this game, if any.
   void queryClient.invalidateQueries({ queryKey: queryKeys.reviews.all() });
@@ -183,7 +192,7 @@ export function useGameRatingControl(game: { id: number; releasePlatformIds?: nu
   // A platform picked before the game is rated; applied with the first rating.
   const [pendingPlatform, setPendingPlatform] = useState<number | null | undefined>(undefined);
   const fallback = defaultPlayedOnPlatform(game.releasePlatformIds);
-  const platformId = current ? current.platformId ?? fallback : pendingPlatform !== undefined ? pendingPlatform : fallback;
+  const platformId = current ? (current.platformId ?? fallback) : pendingPlatform !== undefined ? pendingPlatform : fallback;
   const isDefaultPlatform = current ? current.platformId === null || current.platformId === fallback : pendingPlatform === undefined;
 
   const setRating = (next: StoredRating | null) => rate(game.id, next ? { ...next, platformId } : null, current);

@@ -1,6 +1,7 @@
 import { ScrollView, View } from 'react-native';
 
 import { GuestScreen } from '@/components/auth/MembersOnly';
+import { BacklogPanel } from '@/components/backlog/BacklogPanel';
 import { DraftList } from '@/components/studio/DraftList';
 import { NowPlayingGrid } from '@/components/studio/NowPlayingGrid';
 import { ReviewStudio } from '@/components/studio/ReviewStudio';
@@ -9,8 +10,9 @@ import { useIsGuest } from '@/hooks/useAuth';
 /**
  * Post / Review Studio:
  *   1. Now Playing — 4 slots with running notes & preliminary scores
- *   2. Review Studio — "Review a Game…"; the writer opens as a top-aligned overlay
- *   3. Drafts — saved backlog notes to resume
+ *   2. Backlog — games you want to play next (public or private)
+ *   3. Review Studio — "Review a Game…"; the writer opens as a top-aligned overlay
+ *   4. Drafts — saved backlog notes to resume
  * Desktop places the studio and drafts side by side beneath the grid.
  */
 export default function PostScreen() {
@@ -24,6 +26,7 @@ export default function PostScreen() {
       keyboardShouldPersistTaps="handled"
     >
       <NowPlayingGrid />
+      <BacklogPanel />
       <View className="gap-3 md:flex-row md:items-start">
         <View className="md:flex-[3]">
           <ReviewStudio />

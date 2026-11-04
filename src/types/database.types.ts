@@ -31,6 +31,8 @@ export type Database = {
           ui_theme: Database['public']['Enums']['ui_theme'];
           /** Who can see this player's Now Playing (RLS, migration 000010). */
           now_playing_visibility: Database['public']['Enums']['now_playing_visibility'];
+          /** Who can see this player's backlog (migration 000035). */
+          backlog_visibility: 'public' | 'private';
           updated_at: Timestamp;
         };
         Insert: {
@@ -40,6 +42,7 @@ export type Database = {
           primary_rating_scale?: Database['public']['Enums']['rating_scale'];
           ui_theme?: Database['public']['Enums']['ui_theme'];
           now_playing_visibility?: Database['public']['Enums']['now_playing_visibility'];
+          backlog_visibility?: 'public' | 'private';
           updated_at?: Timestamp;
         };
         Update: {
@@ -49,6 +52,7 @@ export type Database = {
           primary_rating_scale?: Database['public']['Enums']['rating_scale'];
           ui_theme?: Database['public']['Enums']['ui_theme'];
           now_playing_visibility?: Database['public']['Enums']['now_playing_visibility'];
+          backlog_visibility?: 'public' | 'private';
           updated_at?: Timestamp;
         };
         Relationships: [];
@@ -269,6 +273,13 @@ export type Database = {
        * (user, game), separate from reviews. RLS: public read, owner write. Kept
        * equal to the score / platform on the user's review by sync triggers.
        */
+      /** Games a player wants to play next (migration 000035). */
+      game_backlog: {
+        Row: { user_id: string; game_id: number; created_at: Timestamp };
+        Insert: { user_id: string; game_id: number; created_at?: Timestamp };
+        Update: { user_id?: string; game_id?: number; created_at?: Timestamp };
+        Relationships: [];
+      };
       /** ♥ on a review (migration 000030). Private: you only read your own rows. */
       review_likes: {
         Row: { user_id: string; review_id: string; created_at: Timestamp };

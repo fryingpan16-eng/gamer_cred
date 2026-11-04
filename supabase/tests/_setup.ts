@@ -102,14 +102,14 @@ const GRANTS = `
 const migration = (name: string) => Deno.readTextFile(new URL(`../migrations/${name}`, import.meta.url));
 
 /** Fresh database. `beforeMigrations` runs between the stub schema and 000014 (e.g. cache rows for the backfill). */
-export async function freshDb(opts: { beforeMigrations?: string; through?: 14 | 15 | 16 | 17 | 19 | 20 | 21 | 22 | 23 | 25 | 26 | 27 | 28 | 29 | 30 | 31 | 32 | 33 | 34 } = {}): Promise<PGlite> {
+export async function freshDb(opts: { beforeMigrations?: string; through?: 14 | 15 | 16 | 17 | 19 | 20 | 21 | 22 | 23 | 25 | 26 | 27 | 28 | 29 | 30 | 31 | 32 | 33 | 34 | 35 } = {}): Promise<PGlite> {
   const db = new PGlite({ extensions: { pg_trgm } });
   await db.exec(BASE_SCHEMA);
   await db.exec(`insert into auth.users (id) values ('${ME}'), ('${OTHER}'), ('${THIRD}');
     insert into public.profiles (id, username) values ('${ME}', 'me'), ('${OTHER}', 'other'), ('${THIRD}', 'third');`);
   if (opts.beforeMigrations) await db.exec(opts.beforeMigrations);
   await db.exec(await migration('000014_games_and_stats.sql'));
-  const through = opts.through ?? 34;
+  const through = opts.through ?? 35;
   if (through >= 15) await db.exec(await migration('000015_quick_ratings.sql'));
   if (through >= 16) await db.exec(await migration('000016_public_ratings_and_platform.sql'));
   if (through >= 17) await db.exec(await migration('000017_user_ratings_table.sql'));
@@ -129,6 +129,7 @@ export async function freshDb(opts: { beforeMigrations?: string; through?: 14 | 
   if (through >= 32) await db.exec(await migration('000032_review_fixes.sql'));
   if (through >= 33) await db.exec(await migration('000033_bug_fixes_batch1.sql'));
   if (through >= 34) await db.exec(await migration('000034_bug_fixes_batch2.sql'));
+  if (through >= 35) await db.exec(await migration('000035_backlog.sql'));
   await db.exec(GRANTS);
   return db;
 }

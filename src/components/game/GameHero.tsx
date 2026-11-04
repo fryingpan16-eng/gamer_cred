@@ -19,6 +19,7 @@ import type { StoredRating } from '@/utils/rating';
 import { EntryTypeBadge } from './EntryTypeBadge';
 import { SCALE_DIVIDER, ScoreScales, TierScoreBox } from './ScoreScales';
 import { NowPlayingButton } from './GameActions';
+import { BacklogButton } from './BacklogButton';
 import { LikeButton } from './LikeButton';
 import { WriteReviewButton } from './WriteReviewButton';
 
@@ -114,12 +115,13 @@ export function GameHero({ game, stats }: GameHeroProps) {
       </View>
       {/* Review on the left, Now Playing bottom-right of the hero card. */}
       {isGuest ? (
-        <GuestPrompt feature="like, rate or review this game, or add it to Now Playing" compact />
+        <GuestPrompt feature="like, rate or review this game, or add it to your backlog or Now Playing" compact />
       ) : (
         <View className="flex-row flex-wrap items-center justify-between gap-2 pt-1">
           <View className="flex-row flex-wrap items-center gap-2">
             <WriteReviewButton gameId={game.id} />
             <LikeButton gameId={game.id} gameName={game.name} />
+            <BacklogButton gameId={game.id} gameName={game.name} />
           </View>
           <NowPlayingButton game={game} />
         </View>

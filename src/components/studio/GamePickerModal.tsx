@@ -4,9 +4,16 @@ import { useState } from 'react';
 import { FlatList, Pressable, Text, useWindowDimensions, View } from 'react-native';
 
 import { Thumbnail } from '@/components/search/Thumbnail';
-import { RetroGamingPCAlert, RetroGamingPCBadge, RetroGamingPCButton, RetroGamingPCInput, RetroGamingPCModal, RetroGamingPCSpinner } from '@/components/ui';
+import {
+  RetroGamingPCAlert,
+  RetroGamingPCBadge,
+  RetroGamingPCButton,
+  RetroGamingPCInput,
+  RetroGamingPCModal,
+  RetroGamingPCSpinner,
+} from '@/components/ui';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
-import { primeGameCache } from '@/hooks/useGames';
+import { primeGameCache, useGameLookup } from '@/hooks/useGames';
 import { useGameSearch } from '@/hooks/useSearch';
 import { ENTRY_TYPE_LABELS, IGDB_SEARCH_LIMITS, igdbImageUrl, normalizeSearchQuery, type IgdbGameResult } from '@/types/igdb';
 import { cn } from '@/utils/cn';
@@ -25,6 +32,8 @@ type GamePickerModalProps = {
   currentGameId?: number | null;
   /** Footer button label; "Done" for pickers that stay open to add several games. */
   closeLabel?: string;
+  /** Shown while the search box is empty (e.g. your backlog); searching replaces it. */
+  suggestions?: { title: string; gameIds: readonly number[]; emptyText: string };
 };
 
 /** Search-and-pick dialog used for Now Playing slots, favourites and reviews. */
@@ -49,7 +58,8 @@ function PickerBody({
   unavailable,
   annotations,
   currentGameId,
-}: Pick<GamePickerModalProps, 'onPick' | 'unavailable' | 'annotations' | 'currentGameId'>) {
+  suggestions,
+}: Pick<GamePickerModalProps, 'onPick' | 'unavailable' | 'annotations' | 'currentGameId' | 'suggestions'>) {
   const themeColors = useThemeColors();
   const queryClient = useQueryClient();
   // 320px on tall screens; shorter phones (and an open keyboard) get less.
@@ -59,6 +69,66 @@ function PickerBody({
   const debounced = useDebouncedValue(term, 350);
   const search = useGameSearch(debounced);
   const active = normalizeSearchQuery(debounced).length >= IGDB_SEARCH_LIMITS.minQueryLength;
+  const suggested = useGameLookup(suggestions?.gameIds ?? []);
+  const suggestedGames = (suggestions?.gameIds ?? []).flatMap((id) => {
+    const g = suggested.data?.get(id);
+    return g ? [g] : [];
+  });
+
+  const renderRow = (item: IgdbGameResult) => {
+    const blockedReason = unavailable?.get(item.id);
+    const isCurrent = currentGameId === item.id;
+    const note = annotations?.get(item.id);
+    return (
+      <Pressable
+        accessibilityRole="button"
+        accessibilityState={{ disabled: Boolean(blockedReason) }}
+        accessibilityLabel={`Choose ${item.name}`}
+        disabled={Boolean(blockedReason)}
+        onPress={() => pick(item)}
+        className={cn(
+          'flex-row items-center gap-2 border border-retrogamingpc-accent bg-retrogamingpc-card p-1.5',
+          blockedReason && 'opacity-50',
+        )}
+      >
+        {({ pressed }) => (
+          <>
+            <Thumbnail
+              uri={item.coverImageId ? igdbImageUrl(item.coverImageId, 'cover_small') : null}
+              fallback={item.name}
+              shape="cover"
+              accessibilityLabel={`${item.name} cover`}
+            />
+            <View className={cn('flex-1 gap-0.5', pressed && 'opacity-70')}>
+              <Text className="text-retrogamingpc-base font-bold text-retrogamingpc-text-bright" numberOfLines={1}>
+                {item.name}
+              </Text>
+              <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted" numberOfLines={1}>
+                {[item.releaseYear, item.platforms.slice(0, 3).join(' / ')].filter(Boolean).join(' · ')}
+              </Text>
+              <View className="flex-row gap-1">
+                {item.entryType && item.entryType !== 'game' ? (
+                  <RetroGamingPCBadge
+                    label={
+                      item.parentGame
+                        ? `${ENTRY_TYPE_LABELS[item.entryType]} · ${item.parentGame.name}`
+                        : item.entryType === 'collection' && (item.collectionGames?.length ?? 0) > 0
+                          ? `Collection · ${item.collectionGames.length} games`
+                          : ENTRY_TYPE_LABELS[item.entryType]
+                    }
+                    variant="draft"
+                  />
+                ) : null}
+                {isCurrent ? <RetroGamingPCBadge label="Current" variant="nowPlaying" /> : null}
+                {blockedReason ? <RetroGamingPCBadge label={blockedReason} variant="draft" /> : null}
+                {note && !isCurrent ? <RetroGamingPCBadge label={note} /> : null}
+              </View>
+            </View>
+          </>
+        )}
+      </Pressable>
+    );
+  };
 
   const pick = (game: IgdbGameResult) => {
     primeGameCache(queryClient, [game]); // slot renders instantly, no lookup round-trip
@@ -81,7 +151,27 @@ function PickerBody({
       />
 
       <View style={{ height: listHeight }}>
-        {!active ? (
+        {!active && suggestions ? (
+          <FlatList
+            data={suggestedGames}
+            keyExtractor={(g) => String(g.id)}
+            keyboardShouldPersistTaps="handled"
+            contentContainerClassName="gap-1"
+            ListHeaderComponent={
+              <Text className="retrogamingpc-label pb-1">
+                {suggestions.title} ({suggestions.gameIds.length})
+              </Text>
+            }
+            ListEmptyComponent={
+              suggestions.gameIds.length > 0 && suggested.isPending ? (
+                <RetroGamingPCSpinner label="Loading…" className="justify-center py-6" />
+              ) : (
+                <Text className="py-6 text-center text-retrogamingpc-sm text-retrogamingpc-text-muted">{suggestions.emptyText}</Text>
+              )
+            }
+            renderItem={({ item }) => renderRow(item)}
+          />
+        ) : !active ? (
           <Text className="py-6 text-center text-retrogamingpc-sm text-retrogamingpc-text-muted">
             Type at least {IGDB_SEARCH_LIMITS.minQueryLength} characters to search IGDB.
           </Text>
@@ -104,60 +194,7 @@ function PickerBody({
             ListEmptyComponent={
               <Text className="py-6 text-center text-retrogamingpc-sm text-retrogamingpc-text-muted">No games match “{debounced}”.</Text>
             }
-            renderItem={({ item }) => {
-              const blockedReason = unavailable?.get(item.id);
-              const isCurrent = currentGameId === item.id;
-              const note = annotations?.get(item.id);
-              return (
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityState={{ disabled: Boolean(blockedReason) }}
-                  accessibilityLabel={`Choose ${item.name}`}
-                  disabled={Boolean(blockedReason)}
-                  onPress={() => pick(item)}
-                  className={cn(
-                    'flex-row items-center gap-2 border border-retrogamingpc-accent bg-retrogamingpc-card p-1.5',
-                    blockedReason && 'opacity-50',
-                  )}
-                >
-                  {({ pressed }) => (
-                    <>
-                      <Thumbnail
-                        uri={item.coverImageId ? igdbImageUrl(item.coverImageId, 'cover_small') : null}
-                        fallback={item.name}
-                        shape="cover"
-                        accessibilityLabel={`${item.name} cover`}
-                      />
-                      <View className={cn('flex-1 gap-0.5', pressed && 'opacity-70')}>
-                        <Text className="text-retrogamingpc-base font-bold text-retrogamingpc-text-bright" numberOfLines={1}>
-                          {item.name}
-                        </Text>
-                        <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted" numberOfLines={1}>
-                          {[item.releaseYear, item.platforms.slice(0, 3).join(' / ')].filter(Boolean).join(' · ')}
-                        </Text>
-                        <View className="flex-row gap-1">
-                          {item.entryType && item.entryType !== 'game' ? (
-                            <RetroGamingPCBadge
-                              label={
-                                item.parentGame
-                                  ? `${ENTRY_TYPE_LABELS[item.entryType]} · ${item.parentGame.name}`
-                                  : item.entryType === 'collection' && (item.collectionGames?.length ?? 0) > 0
-                                    ? `Collection · ${item.collectionGames.length} games`
-                                    : ENTRY_TYPE_LABELS[item.entryType]
-                              }
-                              variant="draft"
-                            />
-                          ) : null}
-                          {isCurrent ? <RetroGamingPCBadge label="Current" variant="nowPlaying" /> : null}
-                          {blockedReason ? <RetroGamingPCBadge label={blockedReason} variant="draft" /> : null}
-                          {note && !isCurrent ? <RetroGamingPCBadge label={note} /> : null}
-                        </View>
-                      </View>
-                    </>
-                  )}
-                </Pressable>
-              );
-            }}
+            renderItem={({ item }) => renderRow(item)}
           />
         )}
       </View>
