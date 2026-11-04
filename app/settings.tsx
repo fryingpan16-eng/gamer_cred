@@ -32,7 +32,7 @@ export default function SettingsScreen() {
     >
       <Stack.Screen options={{ title: 'Settings' }} />
       <Text className="text-retrogamingpc-sm text-retrogamingpc-text">
-        Changes save automatically, except your username, which has its own Save button.
+        Changes save automatically, except your display name, which has its own Save button.
       </Text>
 
       <RetroGamingPCPanel title="Profile Picture">

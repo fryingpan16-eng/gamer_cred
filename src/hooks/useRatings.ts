@@ -67,18 +67,26 @@ function patchCachedRating(queryClient: QueryClient, userId: string, gameId: num
   });
 }
 
-/** A rating changes the user's score everywhere it shows (stats, Gamer Cred average, their review's score). */
-function invalidateAfterRating(queryClient: QueryClient) {
-  void queryClient.invalidateQueries({ queryKey: queryKeys.stats.all() });
-  void queryClient.invalidateQueries({ queryKey: queryKeys.backlog.all() }); // rating a game takes it off the backlog (000035)
-  void queryClient.invalidateQueries({ queryKey: queryKeys.games.reviewStatsAll() });
-  // The sync trigger also updates the score on the user's review of this game, if any.
-  void queryClient.invalidateQueries({ queryKey: queryKeys.reviews.all() });
-  void queryClient.invalidateQueries({ queryKey: queryKeys.games.reviewsAll() });
-  void queryClient.invalidateQueries({ queryKey: queryKeys.games.friendReviewsAll() });
-  void queryClient.invalidateQueries({ queryKey: queryKeys.feed.all() });
-  // Public ratings lists on profiles.
-  void queryClient.invalidateQueries({ queryKey: queryKeys.ratings.ofUserAll() });
+/**
+ * A rating changes the user's score everywhere it shows (stats, Gamer Cred
+ * average, their review's score). Only what this rating can change refetches
+ * now; the feeds and other review lists are marked stale and refresh when next
+ * shown or pulled.
+ */
+function invalidateAfterRating(queryClient: QueryClient, userId: string | null, gameId: number) {
+  // Marked stale only (no refetch storm): the sync trigger may change the score on the user's review in these.
+  void queryClient.invalidateQueries({ queryKey: queryKeys.reviews.all(), refetchType: 'none' });
+  void queryClient.invalidateQueries({ queryKey: queryKeys.feed.all(), refetchType: 'none' });
+  void queryClient.invalidateQueries({ queryKey: queryKeys.games.reviewStats(gameId) });
+  void queryClient.invalidateQueries({ queryKey: queryKeys.reviews.browseGame(gameId) });
+  void queryClient.invalidateQueries({ queryKey: queryKeys.reviews.byGame(gameId) });
+  if (!userId) return;
+  void queryClient.invalidateQueries({ queryKey: queryKeys.stats.byUser(userId) });
+  void queryClient.invalidateQueries({ queryKey: queryKeys.backlog.byUser(userId) }); // rating a game takes it off the backlog (000035)
+  void queryClient.invalidateQueries({ queryKey: queryKeys.reviews.mineAll(userId) });
+  void queryClient.invalidateQueries({ queryKey: queryKeys.reviews.byUser(userId) });
+  // Their public ratings list (and the full table, same prefix).
+  void queryClient.invalidateQueries({ queryKey: queryKeys.ratings.ofUser(userId) });
 }
 
 const sameRating = (a: GameRatingEntry | null, b: GameRatingEntry | null) =>
@@ -116,7 +124,7 @@ export function useApplyPendingRating() {
     save
       .then(() => {
         void queryClient.invalidateQueries({ queryKey: queryKeys.ratings.all() });
-        invalidateAfterRating(queryClient);
+        invalidateAfterRating(queryClient, viewerId, gameId);
       })
       .catch((e: unknown) => showToast(e instanceof Error ? e.message : 'Could not save your rating.', 'error'));
   }, [viewerId, pending, queryClient]);
@@ -142,7 +150,7 @@ export function useRateGame() {
           if (value) await rateGame(userId, gameId, value);
           else await clearGameRating(userId, gameId);
         },
-        onSaved: () => invalidateAfterRating(queryClient),
+        onSaved: (gameId) => invalidateAfterRating(queryClient, currentViewerId(), gameId),
         onFailed: (gameId, confirmed, error) => {
           const userId = currentViewerId();
           if (userId) patchCachedRating(queryClient, userId, gameId, confirmed);

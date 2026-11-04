@@ -62,6 +62,9 @@ export type AvatarDeps = {
   isAdmin: (userId: string) => Promise<boolean>;
   /** Append to the admin activity log. */
   logAdmin: (adminId: string, action: string, targetType: string, targetId: string, details?: Record<string, unknown>) => Promise<void>;
+  /** One token from the caller's picture-check budget; false when used up (each check is a paid Vision call). */
+  takeRateLimit: (userId: string) => Promise<boolean>;
+  /** Takes the pending upload (so a parallel submit finds nothing) and returns its bytes. */
   readPending: (userId: string) => Promise<Uint8Array | null>;
   removePending: (userId: string) => Promise<void>;
   /** Vision SafeSearch, or null when the check can't run. */
@@ -79,6 +82,14 @@ export type AvatarDeps = {
 export type AvatarResult = { status: number; body: { success: true; data: unknown } | { success: false; error: string } };
 
 export const MAX_AVATAR_BYTES = 2 * 1024 * 1024;
+
+/**
+ * The app always uploads a re-encoded JPEG. Anything else (GIF, PNG, WebP, …)
+ * is refused: animated formats can hide frames the picture check never sees.
+ */
+export function isJpeg(image: Uint8Array): boolean {
+  return image.byteLength >= 3 && image[0] === 0xff && image[1] === 0xd8 && image[2] === 0xff;
+}
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export function parseRequest(body: unknown): AvatarRequest | null {
@@ -108,11 +119,16 @@ export async function handleAvatar(req: AvatarRequest | null, deps: AvatarDeps):
   const me = deps.callerId;
 
   if (req.action === 'submit') {
+    if (!(await deps.takeRateLimit(me))) return fail(429, 'Too many pictures. Try again in an hour.');
     const image = await deps.readPending(me);
     if (!image) return fail(400, 'Upload the picture first.');
     if (image.byteLength > MAX_AVATAR_BYTES) {
       await deps.removePending(me);
       return fail(400, 'That picture is too large.');
+    }
+    if (!isJpeg(image)) {
+      await deps.removePending(me);
+      return fail(400, 'Upload a JPEG picture.');
     }
     const scores = await deps.classify(image);
     const verdict = verdictFor(scores);

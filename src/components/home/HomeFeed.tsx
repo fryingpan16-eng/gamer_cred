@@ -1,12 +1,13 @@
-import { useMemo, type ReactElement } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useEffect, useMemo, type ReactElement } from 'react';
 import { FlatList, RefreshControl, Text, View } from 'react-native';
 
 import { FeedItemCard } from '@/components/feed/FeedItemCard';
 import { RetroGamingPCAlert, RetroGamingPCButton, RetroGamingPCCard, RetroGamingPCSpinner } from '@/components/ui';
 import { useAuthStore } from '@/hooks/useAuth';
-import { useActivityFeed } from '@/hooks/useFeed';
+import { trimFeedsToFirstPage, useActivityFeed } from '@/hooks/useFeed';
 import { useGameLookup } from '@/hooks/useGames';
-import { useReviewLikes } from '@/hooks/useReviewBrowser';
+import { useReviewLikesByPage } from '@/hooks/useReviewBrowser';
 import { useThemeColors } from '@/hooks/useTheme';
 import type { FeedScope } from '@/services/feed';
 
@@ -42,10 +43,14 @@ type HomeFeedProps = {
 export function HomeFeed({ scope, header, empty, onRefreshHeader }: HomeFeedProps) {
   const themeColors = useThemeColors();
   const viewerId = useAuthStore((s) => s.user?.id ?? null);
+  const queryClient = useQueryClient();
   const feed = useActivityFeed(scope);
   const items = useMemo(() => feed.data?.pages.flatMap((p) => p.items) ?? [], [feed.data]);
   const games = useGameLookup(items.map((i) => i.game_id));
-  const likes = useReviewLikes(items.flatMap((i) => (i.review_id ? [i.review_id] : [])));
+  // One ♥ batch per page: loading a page never re-sends earlier ids, and no batch passes the 200-id limit.
+  const likes = useReviewLikesByPage((feed.data?.pages ?? []).map((p) => p.items.flatMap((i) => (i.review_id ? [i.review_id] : []))));
+  // Coming back to the feed (or pulling to refresh) reloads one page, not every page scrolled so far.
+  useEffect(() => () => trimFeedsToFirstPage(queryClient), [queryClient]);
 
   return (
     <FlatList
@@ -58,7 +63,7 @@ export function HomeFeed({ scope, header, empty, onRefreshHeader }: HomeFeedProp
           item={item}
           game={games.data?.get(item.game_id)}
           viewerId={viewerId}
-          like={item.review_id ? likes.data?.get(item.review_id) : undefined}
+          like={item.review_id ? likes.get(item.review_id) : undefined}
         />
       )}
       onEndReachedThreshold={0.5}
@@ -69,6 +74,7 @@ export function HomeFeed({ scope, header, empty, onRefreshHeader }: HomeFeedProp
         <RefreshControl
           refreshing={feed.isRefetching && !feed.isFetchingNextPage}
           onRefresh={() => {
+            trimFeedsToFirstPage(queryClient);
             void feed.refetch();
             onRefreshHeader?.();
           }}

@@ -14,9 +14,9 @@ Deno.test('users cannot point their profile at a new picture; clearing it and ot
     Error,
     'picture check',
   );
-  await asUser(db, ME, `update public.profiles set username = 'renamed' where id = '${ME}'`);
+  await asUser(db, ME, `update public.profiles set display_name = 'Renamed' where id = '${ME}'`);
   await asUser(db, ME, `update public.profiles set avatar_url = null where id = '${ME}'`);
-  assertEquals(await asOwner(db, `select username, avatar_url from public.profiles where id = '${ME}'`), [{ username: 'renamed', avatar_url: null }]);
+  assertEquals(await asOwner(db, `select display_name, avatar_url from public.profiles where id = '${ME}'`), [{ display_name: 'Renamed', avatar_url: null }]);
 });
 
 Deno.test('uploads: only <uid>/pending.jpg in the private bucket; public avatars bucket is server-only', async () => {

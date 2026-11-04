@@ -7,6 +7,40 @@ import { queryKeys } from '@/utils/queryKeys';
 /** Game records are near-static; the proxy also caches them for 7 days. */
 const GAME_STALE_MS = 6 * 60 * 60_000;
 
+/**
+ * Lookups requested in the same tick (every section of a profile, say) go to
+ * the proxy as ONE batch (chunked at 50 by lookupGames) instead of one call
+ * per section. Each caller gets the whole batch's map and reads its own ids.
+ */
+type LookupBatch = { ids: Set<number>; waiters: { resolve: (m: Map<number, IgdbGameResult>) => void; reject: (e: unknown) => void }[] };
+let pendingBatch: LookupBatch | null = null;
+
+function flushLookupBatch() {
+  const batch = pendingBatch;
+  pendingBatch = null;
+  if (!batch) return;
+  lookupGames([...batch.ids]).then(
+    ({ results }) => {
+      const byId = new Map(results.map((g) => [g.id, g] as const));
+      for (const w of batch.waiters) w.resolve(byId);
+    },
+    (error: unknown) => {
+      for (const w of batch.waiters) w.reject(error);
+    },
+  );
+}
+
+function batchedLookup(ids: readonly number[]): Promise<Map<number, IgdbGameResult>> {
+  return new Promise((resolve, reject) => {
+    if (!pendingBatch) {
+      pendingBatch = { ids: new Set(), waiters: [] };
+      setTimeout(flushLookupBatch, 0);
+    }
+    for (const id of ids) pendingBatch.ids.add(id);
+    pendingBatch.waiters.push({ resolve, reject });
+  });
+}
+
 /** Seed per-game cache entries (e.g. from a search result the user just picked). */
 export function primeGameCache(queryClient: QueryClient, games: readonly IgdbGameResult[]): void {
   for (const game of games) queryClient.setQueryData(queryKeys.games.detail(game.id), game);
@@ -26,7 +60,7 @@ export function useGameLookup(gameIds: readonly number[]) {
     staleTime: GAME_STALE_MS,
     // Keep covers on screen while a changed id set (slot swap) resolves.
     placeholderData: keepPreviousData,
-    queryFn: async ({ signal }) => {
+    queryFn: async () => {
       const byId = new Map<number, IgdbGameResult>();
       const unknown: number[] = [];
       for (const id of ids) {
@@ -35,7 +69,12 @@ export function useGameLookup(gameIds: readonly number[]) {
         else unknown.push(id);
       }
       if (unknown.length > 0) {
-        const { results } = await lookupGames(unknown, signal);
+        // Shared with other lookups this tick, so it isn't cancelled per caller (an aborted caller just ignores it).
+        const fetched = await batchedLookup(unknown);
+        const results = unknown.flatMap((id) => {
+          const game = fetched.get(id);
+          return game ? [game] : [];
+        });
         primeGameCache(queryClient, results);
         for (const game of results) byId.set(game.id, game);
       }

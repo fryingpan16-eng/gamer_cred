@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Text, View } from 'react-native';
 
 import { RetroGamingPCAlert, RetroGamingPCButton, RetroGamingPCModal } from '@/components/ui';
@@ -20,14 +20,20 @@ export function TermsGate() {
   const acceptedAtSignUp = useAuthStore((s) => s.user?.user_metadata?.accepted_terms_version === TERMS_VERSION);
 
   // Accepted on the Register screen: record it without asking again.
+  // Tried once per mount: a failed save shows the dialog instead of retrying in a loop.
   const autoAccept = terms.data === false && acceptedAtSignUp;
+  const triedAutoAccept = useRef(false);
+  const { mutate: acceptTerms } = accept;
   useEffect(() => {
-    if (autoAccept && !accept.isPending && !accept.isSuccess) accept.mutate();
-  }, [autoAccept, accept]);
+    if (autoAccept && !triedAutoAccept.current) {
+      triedAutoAccept.current = true;
+      acceptTerms();
+    }
+  }, [autoAccept, acceptTerms]);
 
   // Guests are read-only; they agree to the Terms by browsing (noted on the login screen).
   const isGuest = useAuthStore((s) => s.isGuest);
-  const show = !isGuest && terms.data === false && !acceptedAtSignUp;
+  const show = !isGuest && terms.data === false && (!acceptedAtSignUp || accept.isError);
   return (
     <RetroGamingPCModal visible={show} title="Community Guidelines" onClose={() => undefined} dismissOnBackdrop={false}>
       <View className="gap-3">

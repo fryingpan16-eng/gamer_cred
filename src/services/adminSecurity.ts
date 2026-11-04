@@ -14,21 +14,29 @@ export type AdminStatus = {
   verified: boolean;
   /** The verified authenticator, if one is set up. */
   factorId: string | null;
+  /** The project owner approved this authenticator (migration 000037); admin tools need it. */
+  approved: boolean;
 };
 
-const NOT_ADMIN: AdminStatus = { member: false, verified: false, factorId: null };
+const NOT_ADMIN: AdminStatus = { member: false, verified: false, factorId: null, approved: false };
 
 export async function fetchAdminStatus(): Promise<AdminStatus> {
   const { data: member, error } = await supabase.rpc('is_app_admin_member');
   if (error) throw new Error(error.message || 'Could not check admin status.');
   if (!member) return NOT_ADMIN;
-  const [aal, factors] = await Promise.all([supabase.auth.mfa.getAuthenticatorAssuranceLevel(), supabase.auth.mfa.listFactors()]);
+  const [aal, factors, approved] = await Promise.all([
+    supabase.auth.mfa.getAuthenticatorAssuranceLevel(),
+    supabase.auth.mfa.listFactors(),
+    supabase.rpc('admin_factor_approved'),
+  ]);
   if (aal.error) throw new Error(aal.error.message);
   if (factors.error) throw new Error(factors.error.message);
+  if (approved.error) throw new Error(approved.error.message || 'Could not check admin status.');
   return {
     member: true,
     verified: aal.data.currentLevel === 'aal2',
     factorId: factors.data.totp[0]?.id ?? null,
+    approved: approved.data === true,
   };
 }
 

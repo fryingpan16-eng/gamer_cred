@@ -43,7 +43,8 @@ export function useToggleLike(gameId: number) {
       void queryClient.invalidateQueries({ queryKey: key });
       if (viewerId) {
         void queryClient.invalidateQueries({ queryKey: queryKeys.likes.byUser(viewerId) });
-        void queryClient.invalidateQueries({ queryKey: queryKeys.stats.byUser(viewerId) });
+        // Only the Liked Games stat reads likes.
+        void queryClient.invalidateQueries({ queryKey: queryKeys.stats.stat(viewerId, 'liked') });
       }
     },
   });

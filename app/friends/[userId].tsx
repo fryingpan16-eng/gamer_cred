@@ -2,6 +2,7 @@ import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
+import { UserName } from '@/components/user/UserName';
 import { Thumbnail } from '@/components/search/Thumbnail';
 import {
   RetroGamingPCAlert,
@@ -13,6 +14,7 @@ import {
 import { useFriendsList, useFriendsPageAction } from '@/hooks/useFriends';
 import { useProfile, useViewerId } from '@/hooks/useProfile';
 import type { FriendListEntry } from '@/services/friends';
+import { shownName } from '@/utils/nameRules';
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -38,9 +40,7 @@ function PersonRow({ entry, viewerId, actions }: { entry: FriendListEntry; viewe
       >
         <Thumbnail uri={person.avatar_url} fallback={person.username} shape="square" accessibilityLabel="" />
         <View className="flex-1 gap-0.5">
-          <Text className="text-retrogamingpc-base font-bold text-retrogamingpc-text-bright" numberOfLines={1}>
-            {person.username}
-          </Text>
+          <UserName userId={person.id} username={person.username} className="text-retrogamingpc-base font-bold text-retrogamingpc-text-bright" numberOfLines={1} />
           <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted">{subtitle}</Text>
         </View>
       </Pressable>
@@ -59,14 +59,15 @@ export default function FriendsScreen() {
   const viewerId = useViewerId();
   const isOwner = validId && userId === viewerId;
   const profile = useProfile(validId ? userId : null);
-  const list = useFriendsList(validId ? userId : null);
+  // Someone else's list only loads once their profile is visible (hidden when either of you blocked the other).
+  const list = useFriendsList(validId && (isOwner || profile.data) ? userId : null);
   const action = useFriendsPageAction();
   const [unfriending, setUnfriending] = useState<FriendListEntry | null>(null);
 
-  const title = isOwner ? 'Your Friends' : profile.data ? `${profile.data.username}’s Friends` : 'Friends';
+  const title = isOwner ? 'Your Friends' : profile.data ? `${shownName(profile.data.username, profile.data.display_name)}’s Friends` : 'Friends';
   const busyId = action.isPending ? action.variables.friendshipId : null;
 
-  if (!validId) {
+  if (!validId || (!isOwner && !profile.isPending && !profile.data)) {
     return (
       <View className="flex-1 bg-retrogamingpc-dark p-3">
         <Stack.Screen options={{ title: 'Friends' }} />

@@ -5,6 +5,7 @@ import { APP_TABS } from '@/components/navigation/appTabs';
 import { RetroGamingPCHeaderBar } from '@/components/navigation/RetroGamingPCHeaderBar';
 import { RetroGamingPCTabBar } from '@/components/navigation/RetroGamingPCTabBar';
 import { useIsDesktop } from '@/hooks/useIsDesktop';
+import { ChooseNameGate } from '@/components/safety/ChooseNameGate';
 import { TermsGate } from '@/components/safety/TermsGate';
 import { useApplyPendingRating } from '@/hooks/useRatings';
 import { useThemeColors } from '@/hooks/useTheme';
@@ -54,6 +55,7 @@ export default function TabsLayout() {
       </Tabs>
       {/* One-time Terms / Community Guidelines acceptance (store requirement). */}
       <TermsGate />
+      <ChooseNameGate />
     </>
   );
 }

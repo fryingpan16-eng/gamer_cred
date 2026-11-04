@@ -22,6 +22,12 @@ export const queryKeys = {
     favorites: (userId: string) => [...queryKeys.profiles.all(), 'favorites', userId] as const,
   },
 
+  /** Display names + official badge, one entry per player (batched fetch, migration 000038). */
+  names: {
+    all: () => [...queryKeys.all, 'names'] as const,
+    one: (userId: string) => [...queryKeys.names.all(), userId] as const,
+  },
+
   nowPlaying: {
     all: () => [...queryKeys.all, 'nowPlaying'] as const,
     byUser: (userId: string) => [...queryKeys.nowPlaying.all(), userId] as const,
@@ -30,15 +36,18 @@ export const queryKeys = {
   reviews: {
     all: () => [...queryKeys.all, 'reviews'] as const,
     /** The signed-in user's own reviews (drafts included), optionally filtered by status. */
-    mine: (userId: string, status?: 'draft' | 'published') => [...queryKeys.reviews.all(), 'mine', userId, status ?? 'all'] as const,
-    mineForGame: (userId: string, gameId: number) => [...queryKeys.reviews.all(), 'mine', userId, 'game', gameId] as const,
+    mineAll: (userId: string) => [...queryKeys.reviews.all(), 'mine', userId] as const,
+    mine: (userId: string, status?: 'draft' | 'published') => [...queryKeys.reviews.mineAll(userId), status ?? 'all'] as const,
+    mineForGame: (userId: string, gameId: number) => [...queryKeys.reviews.mineAll(userId), 'game', gameId] as const,
     byGame: (gameId: number) => [...queryKeys.reviews.all(), 'game', gameId] as const,
     /** Published reviews on a profile. */
     byUser: (userId: string) => [...queryKeys.reviews.all(), 'user', userId] as const,
     detail: (reviewId: string) => [...queryKeys.reviews.all(), 'detail', reviewId] as const,
     /** The review browser: one game, Community or Friends, in a sort order (migration 000030). */
     browseAll: () => [...queryKeys.reviews.all(), 'browse'] as const,
-    browse: (gameId: number, scope: string, sort: string) => [...queryKeys.reviews.browseAll(), gameId, scope, sort] as const,
+    /** Every browser + preview of one game. */
+    browseGame: (gameId: number) => [...queryKeys.reviews.browseAll(), gameId] as const,
+    browse: (gameId: number, scope: string, sort: string) => [...queryKeys.reviews.browseGame(gameId), scope, sort] as const,
     /** The game page's first few community reviews. */
     preview: (gameId: number, sort: string, count: number) =>
       [...queryKeys.reviews.browse(gameId, 'community', sort), 'preview', count] as const,
@@ -73,7 +82,9 @@ export const queryKeys = {
     /** A smart list's live games (migration 000023). */
     smart: (listId: string) => [...queryKeys.lists.all(), 'smart', listId] as const,
     search: (term: string) => [...queryKeys.lists.all(), 'search', term] as const,
-    isAdmin: (userId: string) => [...queryKeys.lists.all(), 'isAdmin', userId] as const,
+    /** Kept outside lists.all(), so list edits don't re-check admin status. */
+    isAdminAll: () => [...queryKeys.all, 'listAdmin'] as const,
+    isAdmin: (userId: string) => [...queryKeys.lists.isAdminAll(), userId] as const,
   },
 
   /** Blocking, reports, moderation, terms (migration 000021). */
@@ -136,12 +147,12 @@ export const queryKeys = {
 
   games: {
     all: () => [...queryKeys.all, 'games'] as const,
-    detail: (gameId: number) => [...queryKeys.games.all(), 'detail', gameId] as const,
+    /** Per-game records primed by lookups and searches. */
+    detailAll: () => [...queryKeys.games.all(), 'detail'] as const,
+    detail: (gameId: number) => [...queryKeys.games.detailAll(), gameId] as const,
     /** Full game page record (IGDB detail + RAWG requirements). */
     fullDetail: (gameId: number) => [...queryKeys.games.all(), 'fullDetail', gameId] as const,
-    /** Published community reviews for a game (paginated) and their aggregate stats. */
-    reviewsAll: () => [...queryKeys.games.all(), 'reviews'] as const,
-    reviews: (gameId: number) => [...queryKeys.games.reviewsAll(), gameId] as const,
+    /** A game's aggregate review stats. */
     reviewStatsAll: () => [...queryKeys.games.all(), 'reviewStats'] as const,
     /** The viewer's friends' reviews of a game (per viewer: depends on their friend list). */
     friendReviewsAll: () => [...queryKeys.games.all(), 'friendReviews'] as const,

@@ -11,7 +11,7 @@ async function withSignupTrigger(db: PGlite) {
   await asOwner(db, `create trigger on_auth_user_created after insert on auth.users for each row execute function public.handle_new_user()`);
 }
 
-Deno.test('sign-up: email sign-ups cannot set a picture; Google sign-ins keep theirs', async () => {
+Deno.test('sign-up: no sign-up sets a picture (email metadata or provider photo, 000037)', async () => {
   const db = await freshDb();
   await withSignupTrigger(db);
   await asOwner(
@@ -25,7 +25,7 @@ Deno.test('sign-up: email sign-ups cannot set a picture; Google sign-ins keep th
       ('00000000-0000-0000-0000-0000000000e2', 'b@x.y', '{"full_name":"Goog Ler","picture":"https://lh3.googleusercontent.com/p.jpg"}', '{"provider":"google"}')`,
   );
   const pics = await asOwner<{ id: string; avatar_url: string | null }>(db, `select id, avatar_url from public.profiles where id::text like '%e_' order by id`);
-  assertEquals(pics.map((p) => p.avatar_url), [null, 'https://lh3.googleusercontent.com/p.jpg']);
+  assertEquals(pics.map((p) => p.avatar_url), [null, null]);
 });
 
 Deno.test('Register can check usernames before signing in', async () => {
@@ -39,7 +39,7 @@ Deno.test('Register can check usernames before signing in', async () => {
       await db.exec('reset role;');
     }
   };
-  assertEquals(await check('ME'), false); // taken ('me'), case-insensitive
+  assertEquals(await check('MYSELF'), false); // taken ('myself'), case-insensitive
   assertEquals(await check('fresh_name'), true);
   assertEquals(await check('x'), false); // invalid
 });

@@ -65,7 +65,7 @@ Deno.test('featuring, smart rules and report decisions are logged with the admin
   assertEquals(log[3]!.details.title, 'Couch co-op');
   assertEquals(log[3]!.details.rank, 2);
   assertEquals(log[0]!.details.reports, 1);
-  assertEquals(log.every((a) => a.admin_name === 'me'), true);
+  assertEquals(log.every((a) => a.admin_name === 'myself'), true);
 });
 
 Deno.test('the log is read-only: no one can write, edit or delete entries directly', async () => {
@@ -82,4 +82,45 @@ Deno.test('the log is read-only: no one can write, edit or delete entries direct
   assertEquals((await asUser(db, OTHER, 'select * from public.admin_actions')).length, 0);
   await asUser(db, OTHER, `select public.log_admin_action('forged', null, null)`);
   assertEquals((await activity(db)).length, 1);
+});
+
+Deno.test('000037: admin powers need the owner-approved authenticator, and only it', async () => {
+  const db = await setup(); // the harness pins ME's first factor
+  const isAdmin = async () => (await asUser<{ v: boolean }>(db, ME, 'select public.is_app_admin() as v'))[0]!.v;
+  const approved = async () => (await asUser<{ v: boolean }>(db, ME, 'select public.admin_factor_approved() as v'))[0]!.v;
+  assertEquals([await isAdmin(), await approved()], [true, true]);
+
+  // Someone with the password enrols a second authenticator: locked until the owner sorts it out.
+  await asOwner(db, `insert into auth.mfa_factors (user_id) values ('${ME}')`);
+  assertEquals([await isAdmin(), await approved()], [false, false]);
+  await asOwner(db, `delete from auth.mfa_factors where user_id = '${ME}' and id <> (select mfa_factor_id from public.app_admins where user_id = '${ME}')`);
+  assertEquals(await isAdmin(), true);
+
+  // Not pinned (e.g. a new admin who just enrolled): locked.
+  await asOwner(db, `update public.app_admins set mfa_factor_id = null where user_id = '${ME}'`);
+  assertEquals([await isAdmin(), await approved()], [false, false]);
+
+  // Members can't pin their own factor (admin_ready is revoked from app users; this
+  // harness re-grants every function afterwards, so that part is checked live).
+  await assertRejects(() =>
+    asUser(db, ME, `update public.app_admins set mfa_factor_id = (select id from auth.mfa_factors where user_id = $1 limit 1) where user_id = $1 returning 1`, [ME]).then(
+      (rows) => {
+        if (rows.length === 0) throw new Error('no rows updated');
+      },
+    ),
+  );
+});
+
+Deno.test('000037: provider sign-ups get a neutral username and no picture', async () => {
+  const db = await freshDb();
+  await asOwner(db, `create trigger on_auth_user_created after insert on auth.users for each row execute function public.handle_new_user()`);
+  const G = '00000000-0000-0000-0000-0000000000a1';
+  await asOwner(
+    db,
+    `insert into auth.users (id, email, raw_user_meta_data, raw_app_meta_data) values
+       ('${G}', 'jane.doe@example.com', '{"full_name":"Jane Doe","picture":"https://example.com/p.jpg"}', '{"provider":"google"}')`,
+  );
+  const [p] = await asOwner<{ username: string; avatar_url: string | null }>(db, `select username, avatar_url from public.profiles where id = '${G}'`);
+  assertEquals(p!.avatar_url, null);
+  assertEquals(/^player_[0-9a-f]{6}$/.test(p!.username), true, p!.username);
 });

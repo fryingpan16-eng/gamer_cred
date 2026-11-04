@@ -39,10 +39,11 @@ Deno.test('parseRequest', () => {
 
 function fakes(over: Partial<AvatarDeps> = {}) {
   const log: string[] = [];
-  const img = new Uint8Array([1, 2, 3]);
+  const img = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 1, 2, 3]); // JPEG header
   const deps: AvatarDeps = {
     callerId: ME,
     isAdmin: async (id) => id === ME,
+    takeRateLimit: async () => true,
     readPending: async () => img,
     removePending: async (id) => void log.push(`removePending:${id}`),
     classify: async () => clean,
@@ -109,4 +110,34 @@ Deno.test('admin_decide never approves a picture the admin was not shown', async
   // Nothing held any more.
   ({ deps } = fakes({ heldVersion: async () => null }));
   assertEquals((await handleAvatar({ action: 'admin_decide', user_id: OTHER, approve: true, held_at: 'v1' }, deps)).status, 404);
+});
+
+Deno.test('submit: only JPEGs are checked (animated GIF/PNG/WebP frames would skip the check)', async () => {
+  for (const header of [
+    [0x47, 0x49, 0x46, 0x38, 0x39, 0x61], // GIF89a
+    [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a], // PNG
+    [0x52, 0x49, 0x46, 0x46, 0, 0, 0, 0, 0x57, 0x45, 0x42, 0x50], // RIFF....WEBP
+  ]) {
+    let classified = false;
+    const { deps, log } = fakes({
+      readPending: async () => new Uint8Array(header),
+      classify: async () => ((classified = true), clean),
+    });
+    const res = await handleAvatar({ action: 'submit' }, deps);
+    assertEquals(res.status, 400);
+    assertEquals(classified, false);
+    assertEquals(log, [`removePending:${ME}`]);
+  }
+});
+
+Deno.test('submit: rate limited before any download or paid check', async () => {
+  let touched = false;
+  const { deps } = fakes({
+    takeRateLimit: async () => false,
+    readPending: async () => ((touched = true), null),
+    classify: async () => ((touched = true), clean),
+  });
+  const res = await handleAvatar({ action: 'submit' }, deps);
+  assertEquals(res.status, 429);
+  assertEquals(touched, false);
 });

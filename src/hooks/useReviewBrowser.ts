@@ -91,10 +91,19 @@ export function useToggleReviewLike() {
       for (const [key, data] of context?.snapshot ?? []) queryClient.setQueryData(key, data);
       showToast(error.message, 'error');
     },
-    onSettled: () => {
-      void queryClient.invalidateQueries({ queryKey: queryKeys.reviews.likesAll() });
-      // "Popular" order may change.
-      void queryClient.invalidateQueries({ queryKey: queryKeys.reviews.browseAll() });
+    onSettled: (_data, error, { reviewId }) => {
+      // On success the optimistic ♥ already matches the server; after a failure, recheck the batches that show this review.
+      if (error) {
+        void queryClient.invalidateQueries({
+          queryKey: queryKeys.reviews.likesAll(),
+          predicate: (q) => {
+            const ids = q.queryKey[q.queryKey.length - 1];
+            return Array.isArray(ids) && ids.includes(reviewId);
+          },
+        });
+      }
+      // "Popular" order may change: shown on next open or pull, not reshuffled mid-scroll.
+      void queryClient.invalidateQueries({ queryKey: queryKeys.reviews.browseAll(), refetchType: 'none' });
     },
   });
 }

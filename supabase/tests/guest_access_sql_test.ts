@@ -39,12 +39,13 @@ Deno.test('guests cannot write anything, even rows that would be "theirs"', asyn
     ),
   );
   // A member whose session is (somehow) marked anonymous is also read-only.
-  const nameOf = async () => (await asOwner<{ username: string }>(db, `select username from public.profiles where id = '${ME}'`))[0]!.username;
-  await asUser(db, ME, `update public.profiles set username = 'renamed' where id = $1`, [ME]); // filtered out: 0 rows
-  assertEquals(await nameOf(), 'me');
+  const nameOf = async () =>
+    (await asOwner<{ display_name: string | null }>(db, `select display_name from public.profiles where id = '${ME}'`))[0]!.display_name;
+  await asUser(db, ME, `update public.profiles set display_name = 'Renamed' where id = $1`, [ME]); // filtered out: 0 rows
+  assertEquals(await nameOf(), null);
   await setGuest(db, false);
-  await asUser(db, ME, `update public.profiles set username = 'renamed' where id = $1`, [ME]);
-  assertEquals(await nameOf(), 'renamed');
+  await asUser(db, ME, `update public.profiles set display_name = 'Renamed' where id = $1`, [ME]);
+  assertEquals(await nameOf(), 'Renamed');
 });
 
 Deno.test('guest sign-ins get no profile; members still do', async () => {

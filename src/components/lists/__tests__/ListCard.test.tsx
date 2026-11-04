@@ -5,6 +5,7 @@ import type { ListSummary } from '@/services/lists';
 import { ListCard } from '../ListCard';
 
 jest.mock('@/services/supabase', () => ({ supabase: {} }));
+jest.mock('@/hooks/useNames', () => ({ useProfileName: () => ({ data: undefined }) }));
 
 const list: ListSummary = {
   id: 'l1',

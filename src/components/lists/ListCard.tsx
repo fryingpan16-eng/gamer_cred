@@ -2,8 +2,8 @@ import { router } from 'expo-router';
 import { Image, Pressable, Text, View } from 'react-native';
 
 import { RetroGamingPCBadge } from '@/components/ui';
+import { useShownName } from '@/components/user/UserName';
 import { useGameLookup } from '@/hooks/useGames';
-import { useSmartListGames } from '@/hooks/useLists';
 import type { ListSummary } from '@/services/lists';
 import { igdbImageUrl, type IgdbGameResult } from '@/types/igdb';
 import { cn } from '@/utils/cn';
@@ -54,19 +54,8 @@ type ListCardProps = {
 
 /** A list preview: cover mosaic, title, owner, game count and badges. Tap to open. */
 export function ListCard(props: ListCardProps) {
-  return props.list.smartRule ? (
-    <SmartListCard {...props} />
-  ) : (
-    <ListCardBody {...props} gameCount={props.list.gameCount} previewGameIds={props.list.previewGameIds} />
-  );
-}
-
-/** Smart lists have no stored games: count and covers come from the live result. */
-function SmartListCard(props: ListCardProps) {
-  const smart = useSmartListGames(props.list.id);
-  const ids = (smart.data?.games ?? []).slice(0, 4).map((g) => g.gameId);
-  const covers = useGameLookup(ids);
-  return <ListCardBody {...props} games={covers.data} gameCount={smart.data?.games.length ?? null} previewGameIds={ids} />;
+  // Smart lists' count and covers come with the summary (smart_list_previews), like hand-picked ones.
+  return <ListCardBody {...props} gameCount={props.list.gameCount} previewGameIds={props.list.previewGameIds} />;
 }
 
 function ListCardBody({
@@ -79,7 +68,8 @@ function ListCardBody({
 }: ListCardProps & { gameCount: number | null; previewGameIds: readonly number[] }) {
   const tile = layout === 'tile';
   const countText = gameCount === null ? 'Loading…' : `${gameCount} game${gameCount === 1 ? '' : 's'}`;
-  const meta = [showOwner && list.owner ? `by ${list.owner.username}` : null, countText].filter(Boolean).join(' · ');
+  const ownerName = useShownName(list.owner?.id, list.owner?.username ?? '').name;
+  const meta = [showOwner && list.owner ? `by ${ownerName}` : null, countText].filter(Boolean).join(' · ');
   return (
     <Pressable
       accessibilityRole="link"

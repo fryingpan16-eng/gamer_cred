@@ -53,6 +53,8 @@ export function GamePickerModal({ visible, title, onClose, closeLabel = 'Cancel'
   );
 }
 
+const MAX_SUGGESTIONS = 50;
+
 function PickerBody({
   onPick,
   unavailable,
@@ -69,8 +71,10 @@ function PickerBody({
   const debounced = useDebouncedValue(term, 350);
   const search = useGameSearch(debounced);
   const active = normalizeSearchQuery(debounced).length >= IGDB_SEARCH_LIMITS.minQueryLength;
-  const suggested = useGameLookup(suggestions?.gameIds ?? []);
-  const suggestedGames = (suggestions?.gameIds ?? []).flatMap((id) => {
+  // A long backlog would mean many proxy calls just to open the picker: suggest the first few.
+  const suggestionIds = (suggestions?.gameIds ?? []).slice(0, MAX_SUGGESTIONS);
+  const suggested = useGameLookup(suggestionIds);
+  const suggestedGames = suggestionIds.flatMap((id) => {
     const g = suggested.data?.get(id);
     return g ? [g] : [];
   });

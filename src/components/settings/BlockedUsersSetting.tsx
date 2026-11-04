@@ -1,5 +1,6 @@
 import { Text, View } from 'react-native';
 
+import { UserName } from '@/components/user/UserName';
 import { Thumbnail } from '@/components/search/Thumbnail';
 import { RetroGamingPCAlert, RetroGamingPCButton, RetroGamingPCSpinner } from '@/components/ui';
 import { useBlockedUsers, useBlockUser } from '@/hooks/useSafety';
@@ -18,9 +19,7 @@ export function BlockedUsersSetting() {
       {blocked.data.map((b) => (
         <View key={b.userId} className="flex-row items-center gap-2">
           <Thumbnail uri={b.avatarUrl} fallback={b.username} shape="square" accessibilityLabel="" />
-          <Text className="flex-1 text-retrogamingpc-base font-bold text-retrogamingpc-text-bright" numberOfLines={1}>
-            {b.username}
-          </Text>
+          <UserName userId={b.userId} username={b.username} className="flex-1 text-retrogamingpc-base font-bold text-retrogamingpc-text-bright" numberOfLines={1} />
           <RetroGamingPCButton
             label="Unblock"
             loading={unblock.isPending && unblock.variables?.userId === b.userId}

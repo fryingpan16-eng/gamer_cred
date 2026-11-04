@@ -4,6 +4,7 @@ import { FlatList, Image, Text, View } from 'react-native';
 
 import { REPORT_REASONS } from '@/components/safety/ReportModal';
 import { AdminSecurityBody } from '@/components/settings/AdminSecuritySetting';
+import { UserName } from '@/components/user/UserName';
 import {
   RetroGamingPCAlert,
   RetroGamingPCBadge,
@@ -105,7 +106,12 @@ function HeldPictureCard({ picture, busy, onDecide }: { picture: HeldPicture; bu
           ) : null}
         </View>
         <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted">
-          {fmt(picture.createdAt)} · <Text className="font-bold text-retrogamingpc-text-bright">{picture.username ?? 'deleted user'}</Text>
+          {fmt(picture.createdAt)} ·{' '}
+          {picture.username ? (
+            <UserName userId={picture.userId} username={picture.username} handle="always" className="font-bold text-retrogamingpc-text-bright" />
+          ) : (
+            <Text className="font-bold text-retrogamingpc-text-bright">deleted user</Text>
+          )}
         </Text>
         {picture.scores ? (
           <Text className="font-mono text-retrogamingpc-xs text-retrogamingpc-text-muted">
@@ -181,7 +187,11 @@ function ReportCard({ report, onAction }: { report: AdminReport; onAction: (a: M
       </View>
       <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted">
         {fmt(report.created_at)} · by {report.reporter_username ?? 'deleted user'} · about{' '}
-        <Text className="font-bold text-retrogamingpc-text-bright">{report.target_username ?? 'deleted user'}</Text>
+        {report.target_username ? (
+          <UserName userId={report.target_user_id} username={report.target_username} handle="always" className="font-bold text-retrogamingpc-text-bright" />
+        ) : (
+          <Text className="font-bold text-retrogamingpc-text-bright">deleted user</Text>
+        )}
       </Text>
       {report.preview ? (
         <View className="retrogamingpc-bevel-inset bg-retrogamingpc-dark p-2">

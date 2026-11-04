@@ -29,6 +29,8 @@ const BASE_SCHEMA = `
     as $$ select jsonb_build_object(
       'aal', coalesce(nullif(current_setting('test.aal', true), ''), 'aal2'),
       'is_anonymous', coalesce(nullif(current_setting('test.guest', true), ''), 'false')::boolean) $$;
+  -- Authenticator factors (000037 reads id, user_id, status).
+  create table auth.mfa_factors (id uuid primary key default gen_random_uuid(), user_id uuid not null, status text not null default 'verified');
   -- Sign-in accounts (the columns the migrations use).
   create table auth.users (
     id uuid primary key, email text, raw_user_meta_data jsonb, raw_app_meta_data jsonb,
@@ -63,6 +65,19 @@ const BASE_SCHEMA = `
     ),
     constraint reviews_published_has_rating check (status = 'draft' or rating is not null)
   );
+  -- 000004's timestamp trigger (000036 replaces the function).
+  create function public.reviews_set_timestamps() returns trigger language plpgsql set search_path = '' as $$
+  begin
+    new.updated_at = now();
+    if new.status = 'published' and (tg_op = 'INSERT' or old.status is distinct from 'published') then
+      new.published_at = now();
+    elsif new.status = 'draft' then
+      new.published_at = null;
+    end if;
+    return new;
+  end; $$;
+  create trigger reviews_set_timestamps before insert or update on public.reviews
+    for each row execute function public.reviews_set_timestamps();
   -- Same RLS as 000001.
   alter table public.reviews enable row level security;
   create policy "reviews: read published or own" on public.reviews for select
@@ -102,14 +117,14 @@ const GRANTS = `
 const migration = (name: string) => Deno.readTextFile(new URL(`../migrations/${name}`, import.meta.url));
 
 /** Fresh database. `beforeMigrations` runs between the stub schema and 000014 (e.g. cache rows for the backfill). */
-export async function freshDb(opts: { beforeMigrations?: string; through?: 14 | 15 | 16 | 17 | 19 | 20 | 21 | 22 | 23 | 25 | 26 | 27 | 28 | 29 | 30 | 31 | 32 | 33 | 34 | 35 } = {}): Promise<PGlite> {
+export async function freshDb(opts: { beforeMigrations?: string; through?: 14 | 15 | 16 | 17 | 19 | 20 | 21 | 22 | 23 | 25 | 26 | 27 | 28 | 29 | 30 | 31 | 32 | 33 | 34 | 35 | 36 | 37 | 38 } = {}): Promise<PGlite> {
   const db = new PGlite({ extensions: { pg_trgm } });
   await db.exec(BASE_SCHEMA);
   await db.exec(`insert into auth.users (id) values ('${ME}'), ('${OTHER}'), ('${THIRD}');
-    insert into public.profiles (id, username) values ('${ME}', 'me'), ('${OTHER}', 'other'), ('${THIRD}', 'third');`);
+    insert into public.profiles (id, username) values ('${ME}', 'myself'), ('${OTHER}', 'other'), ('${THIRD}', 'third');`);
   if (opts.beforeMigrations) await db.exec(opts.beforeMigrations);
   await db.exec(await migration('000014_games_and_stats.sql'));
-  const through = opts.through ?? 35;
+  const through = opts.through ?? 38;
   if (through >= 15) await db.exec(await migration('000015_quick_ratings.sql'));
   if (through >= 16) await db.exec(await migration('000016_public_ratings_and_platform.sql'));
   if (through >= 17) await db.exec(await migration('000017_user_ratings_table.sql'));
@@ -130,6 +145,26 @@ export async function freshDb(opts: { beforeMigrations?: string; through?: 14 | 
   if (through >= 33) await db.exec(await migration('000033_bug_fixes_batch1.sql'));
   if (through >= 34) await db.exec(await migration('000034_bug_fixes_batch2.sql'));
   if (through >= 35) await db.exec(await migration('000035_backlog.sql'));
+  if (through >= 36) await db.exec(await migration('000036_security_privacy_perf.sql'));
+  if (through >= 37) {
+    await db.exec(await migration('000037_admin_factor_and_provider_signup.sql'));
+    // Test convenience: a new admin gets a verified, owner-approved authenticator
+    // (admin_security_sql_test covers the unapproved cases).
+    await db.exec(`
+      create function public.test_pin_admin_factor() returns trigger language plpgsql as $$
+      declare v_factor uuid;
+      begin
+        insert into auth.mfa_factors (user_id) values (new.user_id) returning id into v_factor;
+        update public.app_admins set mfa_factor_id = v_factor where user_id = new.user_id;
+        return null;
+      end; $$;
+      create trigger test_pin_admin_factor after insert on public.app_admins
+        for each row when (new.mfa_factor_id is null) execute function public.test_pin_admin_factor();`);
+  }
+  if (through >= 38) {
+    await db.exec(await migration('000038_permanent_and_display_names.sql'));
+    await db.exec(await migration('000039_name_rules_data.sql'));
+  }
   await db.exec(GRANTS);
   return db;
 }

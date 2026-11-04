@@ -1,0 +1,29 @@
+# Staff and official-account impersonation. "admin", "moderator", "moderation" and
+# "gamercred" are in badwords.txt (blocked anywhere in a name).
+mod
+mods
+staff
+support
+official
+system
+sysop
+developer
+developers
+devteam
+helpdesk
+help desk
+customer service
+customer support
+trust and safety
+trust safety
+safety team
+security
+security team
+community manager
+community team
+head mod
+lead mod
+owner
+founder
+ceo
+verified

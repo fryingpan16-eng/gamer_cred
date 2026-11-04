@@ -25,6 +25,8 @@ async function setup(): Promise<PGlite> {
       ('search:v3:igdb:games:20:halo', '{"results": []}'::jsonb, now());`,
   });
   // Game 5 was never cached → no metadata at all.
+  // Seed past dates: the timestamp trigger (000036) would stamp now().
+  await asOwner(db, `alter table public.reviews disable trigger reviews_set_timestamps`);
   await asOwner(db, `insert into public.reviews (user_id, game_id, rating, rating_input_scale, rating_input, platform_id, created_at) values
     ('${ME}', 1, ${numeric(95)}, 169, '2025-01-10'),   -- Halo 3: I rate higher than the community
     ('${ME}', 2, ${numeric(40)}, 169, '2025-01-20'),   -- Destiny: I rate lower; 2 devs, 2 genres

@@ -4,6 +4,7 @@ import { Pressable, Text, View } from 'react-native';
 import { Thumbnail } from '@/components/search/Thumbnail';
 import { RetroGamingPCBadge, RetroGamingPCCard, RetroGamingPCRating } from '@/components/ui';
 import { ReviewCard } from '@/components/review/ReviewCard';
+import { UserName, useShownName } from '@/components/user/UserName';
 import { LIKE_COLOR } from '@/constants/likeColor';
 import { cardFromFeedRow, type ReviewLikeInfo } from '@/services/reviewBrowser';
 import type { ActivityFeedRow } from '@/types/database.types';
@@ -44,21 +45,28 @@ export function FeedItemCard({ item, game, viewerId, like }: FeedItemCardProps) 
 /** Now Playing and ♥ like entries. */
 function ActivityCard({ item, game, viewerId }: Omit<FeedItemCardProps, 'like'>) {
   const isMe = item.actor_id === viewerId;
+  const actorName = useShownName(item.actor_id, item.actor_username).name;
   const gameName = game?.name ?? `Game #${item.game_id}`;
   const openActor = () => router.push(isMe ? '/profile' : { pathname: '/user/[id]', params: { id: item.actor_id } });
   const openGame = () => router.push({ pathname: '/game/[id]', params: { id: String(item.game_id) } });
 
   return (
     <RetroGamingPCCard className="flex-row gap-3">
-      <Pressable accessibilityRole="link" accessibilityLabel={`Open ${item.actor_username}'s profile`} onPress={openActor}>
+      <Pressable accessibilityRole="link" accessibilityLabel={`Open ${actorName}'s profile`} onPress={openActor}>
         <Thumbnail uri={item.actor_avatar_url} fallback={item.actor_username} shape="square" accessibilityLabel="" />
       </Pressable>
 
       <View className="flex-1 gap-1">
         <Text className="text-retrogamingpc-sm text-retrogamingpc-text">
-          <Text onPress={openActor} className="font-bold text-retrogamingpc-text-bright">
-            {isMe ? 'You' : item.actor_username}
-          </Text>
+          {isMe ? (
+            <Text onPress={openActor} className="font-bold text-retrogamingpc-text-bright">
+              You
+            </Text>
+          ) : (
+            <Text onPress={openActor}>
+              <UserName userId={item.actor_id} username={item.actor_username} className="font-bold text-retrogamingpc-text-bright" />
+            </Text>
+          )}
           {item.kind === 'review' ? ' reviewed ' : item.kind === 'like' ? ' liked ' : ' is playing '}
           <Text onPress={openGame} className="font-bold text-retrogamingpc-text-bright">
             {gameName}

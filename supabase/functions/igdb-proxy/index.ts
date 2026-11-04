@@ -98,6 +98,10 @@ const BUNDLE_CHECK_TTL_MS = 30 * 24 * HOUR_MS;
 /** How long an isolate reuses game_overrides before re-reading the table. */
 const OVERRIDES_TTL_MS = 5 * 60 * 1000;
 const UPSTREAM_TIMEOUT_MS = 8000;
+/** Ids / pages IGDB doesn't have (or curation drops) are remembered this long, so they aren't refetched on every request. */
+const MISSING_TTL_MS = 24 * HOUR_MS;
+/** Most IGDB calls one isolate queues before answering "busy" (each waits its 250 ms turn). */
+const IGDB_MAX_QUEUED = 32;
 const CACHE_VERSION = 'v3'; // bump when result shapes, ranking or curation change (v3: curation filter + entryType)
 
 const CORS_HEADERS = {
@@ -263,6 +267,10 @@ let igdbNextSlot = 0;
 const igdbLimiter = createConcurrencyLimiter(IGDB_MAX_CONCURRENT);
 
 function withIgdbRateLimit<T>(task: () => Promise<T>): Promise<T> {
+  // A full queue would only make every caller wait longer than its own timeout.
+  if (igdbLimiter.waiting >= IGDB_MAX_QUEUED) {
+    return Promise.reject(new HttpError(503, 'The game database is busy. Try again in a moment.'));
+  }
   return igdbLimiter.run(async () => {
     const now = Date.now();
     const start = Math.max(now, igdbNextSlot);
@@ -406,7 +414,8 @@ const PC_PLATFORM_NAMES = new Set(['PC', 'Mac', 'Linux', 'PC (Microsoft Windows)
 
 async function fetchGameDetail(
   id: number,
-  reuse?: { requirements: IgdbGameDetail['systemRequirements'] },
+  reuse: { requirements: IgdbGameDetail['systemRequirements'] } | undefined,
+  allowRawg: () => Promise<boolean>,
 ): Promise<IgdbGameDetail | null> {
   const raw = await igdbRequest<RawGameDetail[]>('games', `${DETAIL_FIELDS} where id = ${id}; limit 1;`);
   const { kept } = await curateGames(raw, curationDeps);
@@ -463,7 +472,7 @@ async function fetchGameDetail(
   const apiKey = Deno.env.get('RAWG_API_KEY');
   if (reuse) {
     detail.systemRequirements = reuse.requirements;
-  } else if (apiKey && detail.platforms.some((p) => PC_PLATFORM_NAMES.has(p))) {
+  } else if (apiKey && detail.platforms.some((p) => PC_PLATFORM_NAMES.has(p)) && (await allowRawg())) {
     try {
       detail.systemRequirements = await fetchRawgPcRequirements(detail.slug, detail.name, apiKey, {
         timeoutMs: UPSTREAM_TIMEOUT_MS,
@@ -568,13 +577,14 @@ async function fetchCompanyDetail(id: number): Promise<IgdbCompanyDetail | null>
   };
 }
 
-async function fetchUpstream(entityType: IgdbEntityType, query: string, limit: number): Promise<unknown[]> {
+async function fetchUpstream(entityType: IgdbEntityType, query: string, limit: number, caller: Caller): Promise<unknown[]> {
   switch (entityType) {
     case 'games':
       return searchGames(query, limit);
     case 'companies':
       return searchCompanies(query, limit);
     case 'creators':
+      if (!(await caller.allowRawg())) throw new HttpError(429, 'Too many people searches. Try again later.');
       try {
         return await searchRawgCreators(query, limit, requireEnv('RAWG_API_KEY'), { timeoutMs: UPSTREAM_TIMEOUT_MS });
       } catch (error) {
@@ -745,6 +755,44 @@ async function withoutExcluded<T extends { id: number }>(games: T[]): Promise<T[
   return games.filter((g) => overrides.get(g.id) !== 'exclude');
 }
 
+/** Fields only the game page needs; per-game lookup records leave them out. */
+const DETAIL_ONLY_KEYS = [
+  'summary', 'storyline', 'screenshotIds', 'artworkIds', 'themes', 'gameModes', 'perspectives', 'publishers',
+  'engines', 'franchises', 'releaseDates', 'criticRating', 'criticRatingCount', 'userRating', 'userRatingCount',
+  'systemRequirements', 'developerCompanies', 'publisherCompanies', 'remasters',
+] as const satisfies readonly Exclude<keyof IgdbGameDetail, keyof IgdbGameResult>[];
+// Compile-time check that the list above names every detail-only field.
+const _detailKeysComplete: Exclude<Exclude<keyof IgdbGameDetail, keyof IgdbGameResult>, (typeof DETAIL_ONLY_KEYS)[number]> extends never
+  ? true
+  : never = true;
+const DETAIL_ONLY = new Set<string>(DETAIL_ONLY_KEYS);
+
+function gameRecordOf(detail: IgdbGameDetail): IgdbGameResult {
+  return Object.fromEntries(Object.entries(detail).filter(([key]) => !DETAIL_ONLY.has(key))) as IgdbGameResult;
+}
+
+/** An empty cache row: "IGDB has nothing here (or curation drops it)", fresh for MISSING_TTL_MS. */
+async function writeMissing(db: ReturnType<typeof cacheClient>, keys: string[]): Promise<void> {
+  if (keys.length === 0) return;
+  const now = new Date().toISOString();
+  const rulesVersion = await getRulesVersion();
+  const { error } = await db.from('igdb_cache').upsert(
+    keys.map((key) => ({ cache_key: key, data: { results: [], fetchedAt: now, rulesVersion }, updated_at: now })),
+    { onConflict: 'cache_key' },
+  );
+  if (error) console.error('[igdb-proxy] missing-marker write failed', error.message);
+}
+
+function isFreshMissing(payload: CachedPayload | null | undefined, ageMs: number, rulesVersion: string): boolean {
+  return (
+    !!payload &&
+    Array.isArray(payload.results) &&
+    payload.results.length === 0 &&
+    ageMs < MISSING_TTL_MS &&
+    payload.rulesVersion === rulesVersion
+  );
+}
+
 function gameCacheKey(id: number): string {
   return `game:${CACHE_VERSION}:igdb:${id}`;
 }
@@ -784,7 +832,7 @@ async function cacheGameRecords(
  * Batch game lookup: serve every fresh per-game cache row, fetch only the
  * misses from IGDB in one request, and cache each game individually.
  */
-async function handleLookup(ids: number[]): Promise<Response> {
+async function handleLookup(ids: number[], caller: Caller): Promise<Response> {
   const db = cacheClient();
   const { data: rows, error } = await db
     .from('igdb_cache')
@@ -795,24 +843,32 @@ async function handleLookup(ids: number[]): Promise<Response> {
   const rulesVersion = await getRulesVersion();
   const fresh = new Map<number, IgdbGameResult>();
   const stale = new Map<number, IgdbGameResult>();
+  const knownMissing = new Set<string>();
   for (const row of rows ?? []) {
     const payload = row.data as CachedPayload | null;
+    const ageMs = Date.now() - new Date(row.updated_at as string).getTime();
+    if (isFreshMissing(payload, ageMs, rulesVersion)) knownMissing.add(row.cache_key as string);
     const game = payload?.results?.[0] as IgdbGameResult | undefined;
     if (!game) continue;
-    const ageMs = Date.now() - new Date(row.updated_at as string).getTime();
     const state = cacheFreshness({ ageMs, ttlMs: GAME_RECORD_TTL_MS, refreshAfterMs: null, rulesVersion: payload?.rulesVersion, currentRulesVersion: rulesVersion });
     // Records from older rules / past TTL are refetched, kept only as an outage fallback.
     (state === 'expired' ? stale : fresh).set(game.id, game);
   }
 
-  const toFetch = ids.filter((id) => !fresh.has(id));
+  // An admin "include" override wins over a remembered miss.
+  const overrides = await getOverrides();
+  const toFetch = ids.filter((id) => !fresh.has(id) && (!knownMissing.has(gameCacheKey(id)) || overrides.get(id) === 'include'));
   const fetched = new Map<number, IgdbGameResult>();
   if (toFetch.length > 0) {
     try {
+      await caller.chargeUpstream();
       const games = await fetchGamesByIds(toFetch);
       const fetchedAt = new Date().toISOString();
       for (const game of games) fetched.set(game.id, game);
-      await cacheGameRecords(db, games, fetchedAt);
+      await Promise.all([
+        cacheGameRecords(db, games, fetchedAt),
+        writeMissing(db, toFetch.filter((id) => !fetched.has(id)).map(gameCacheKey)),
+      ]);
     } catch (upstreamError) {
       // Fall back to stale rows; only fail if we have nothing at all to show.
       if (stale.size === 0 && fresh.size === 0) throw upstreamError;
@@ -835,7 +891,7 @@ async function handleLookup(ids: number[]): Promise<Response> {
 }
 
 /** Full game page: cached 7 days as one record (IGDB detail + RAWG requirements). */
-async function handleDetail(id: number): Promise<Response> {
+async function handleDetail(id: number, caller: Caller): Promise<Response> {
   const db = cacheClient();
   const cacheKey = `game-detail:${CACHE_VERSION}:igdb+rawg:${id}`;
   const cached = await readCache(db, cacheKey);
@@ -845,6 +901,9 @@ async function handleDetail(id: number): Promise<Response> {
     throw new HttpError(404, `Game ${id} is not in the GamerCred catalogue`);
   }
   const rulesVersion = await getRulesVersion();
+  if (cached && isFreshMissing(cached.payload, cached.ageMs, rulesVersion) && (await getOverrides()).get(id) !== 'include') {
+    throw new HttpError(404, `Game ${id} is not in the GamerCred catalogue`);
+  }
   const state = cached
     ? cacheFreshness({ ageMs: cached.ageMs, ttlMs: GAME_RECORD_TTL_MS, refreshAfterMs: null, rulesVersion: cached.payload.rulesVersion, currentRulesVersion: rulesVersion })
     : 'expired';
@@ -857,11 +916,12 @@ async function handleDetail(id: number): Promise<Response> {
     cached && cachedGame && cached.ageMs < GAME_RECORD_TTL_MS ? { requirements: cachedGame.systemRequirements } : undefined;
 
   try {
+    await caller.chargeUpstream();
     const payload = await fetchAndCacheOnce(db, cacheKey, async () => {
-      const game = await fetchGameDetail(id, reuseRequirements);
+      const game = await fetchGameDetail(id, reuseRequirements, caller.allowRawg);
       if (!game) throw new HttpError(404, `Game ${id} is not in the GamerCred catalogue`);
-      // The detail record also refreshes the lightweight per-game record used by lookups.
-      await cacheGameRecords(db, [game], new Date().toISOString());
+      // The detail record also refreshes the lightweight per-game record used by lookups (without the page-only fields).
+      await cacheGameRecords(db, [gameRecordOf(game)], new Date().toISOString());
       // Series (IGDB franchises) only come with the full page; the Stats page groups liked games by them (000029).
       const { error: seriesError } = await db.from('games').update({ series: game.franchises }).eq('igdb_id', game.id);
       if (seriesError) console.error('[igdb-proxy] series write failed', seriesError.message);
@@ -874,12 +934,13 @@ async function handleDetail(id: number): Promise<Response> {
       const data: IgdbDetailResponse = { game: cachedGame, cached: true, fetchedAt: cached.payload.fetchedAt };
       return respond(200, { success: true, data }, { 'X-Cache': 'STALE' });
     }
+    if (error instanceof HttpError && error.status === 404) await writeMissing(db, [cacheKey]);
     throw error;
   }
 }
 
 /** Studio page: cached 7 days as one record; stale copy served if IGDB is down. */
-async function handleCompany(id: number): Promise<Response> {
+async function handleCompany(id: number, caller: Caller): Promise<Response> {
   const db = cacheClient();
   const cacheKey = `company:${CACHE_VERSION}:igdb:${id}`;
   const cached = await readCache(db, cacheKey);
@@ -893,18 +954,21 @@ async function handleCompany(id: number): Promise<Response> {
     return respond(200, { success: true, data }, { 'X-Cache': xCache });
   };
 
+  const rulesVersion = await getRulesVersion();
+  if (cached && isFreshMissing(cached.payload, cached.ageMs, rulesVersion)) throw new HttpError(404, `Studio ${id} was not found`);
   const state = cached
     ? cacheFreshness({
         ageMs: cached.ageMs,
         ttlMs: GAME_RECORD_TTL_MS,
         refreshAfterMs: null,
         rulesVersion: cached.payload.rulesVersion,
-        currentRulesVersion: await getRulesVersion(),
+        currentRulesVersion: rulesVersion,
       })
     : 'expired';
   if (cached && cachedCompany && state !== 'expired') return reply(cachedCompany, true, cached.payload.fetchedAt, 'HIT');
 
   try {
+    await caller.chargeUpstream();
     const payload = await fetchAndCacheOnce(db, cacheKey, async () => {
       const company = await fetchCompanyDetail(id);
       if (!company) throw new HttpError(404, `Studio ${id} was not found`);
@@ -917,6 +981,7 @@ async function handleCompany(id: number): Promise<Response> {
     if (cached && cachedCompany && cached.ageMs < STALE_MAX_MS && !(error instanceof HttpError && error.status === 404)) {
       return reply(cachedCompany, true, cached.payload.fetchedAt, 'STALE');
     }
+    if (error instanceof HttpError && error.status === 404) await writeMissing(db, [cacheKey]);
     throw error;
   }
 }
@@ -925,12 +990,28 @@ async function handleCompany(id: number): Promise<Response> {
 const RATE_LIMIT_PER_MINUTE = 120;
 /** Guests (anonymous sign-in, migration 000027) browse with a tighter limit. */
 const GUEST_RATE_LIMIT_PER_MINUTE = 30;
+/** Requests that actually reach IGDB (cache misses), per minute: one miss can be several IGDB calls. */
+const UPSTREAM_PER_MINUTE = 40;
+const GUEST_UPSTREAM_PER_MINUTE = 10;
+/** RAWG (monthly-capped) calls per hour: people searches and PC requirements. */
+const RAWG_PER_HOUR = 30;
+const GUEST_RAWG_PER_HOUR = 5;
+
+/** The signed-in caller, with budgets for the expensive upstream calls. */
+type Caller = {
+  userId: string;
+  guest: boolean;
+  /** Throws 429 when this caller's IGDB-miss budget is used up. */
+  chargeUpstream: () => Promise<void>;
+  /** One RAWG call from this caller's hourly budget; false when used up (fails closed). */
+  allowRawg: () => Promise<boolean>;
+};
 
 /**
  * Only signed-in players may use the proxy (the public anon key alone is not enough),
  * and each is rate limited, so nobody can drain the IGDB/RAWG allowance or flood the cache.
  */
-async function requireCaller(req: Request): Promise<void> {
+async function requireCaller(req: Request): Promise<Caller> {
   const token = (req.headers.get('Authorization') ?? '').replace(/^Bearer\s+/i, '');
   if (!token) throw new HttpError(401, 'Sign in to search the game database.');
   const db = cacheClient();
@@ -939,36 +1020,57 @@ async function requireCaller(req: Request): Promise<void> {
   if (error || !userId || data.claims.role !== 'authenticated') throw new HttpError(401, 'Sign in to search the game database.');
 
   const guest = data.claims.is_anonymous === true;
-  const { data: allowed, error: limitError } = await db.rpc('take_rate_limit', {
-    p_user: userId,
-    p_bucket: guest ? 'igdb-guest' : 'igdb',
-    p_limit: guest ? GUEST_RATE_LIMIT_PER_MINUTE : RATE_LIMIT_PER_MINUTE,
-    p_window_seconds: 60,
-  });
+  const take = async (bucket: string, limit: number, windowSeconds: number) => {
+    const { data: allowed, error: limitError } = await db.rpc('take_rate_limit', {
+      p_user: userId,
+      p_bucket: bucket,
+      p_limit: limit,
+      p_window_seconds: windowSeconds,
+    });
+    if (limitError) console.error('[igdb-proxy] rate limit check failed', bucket, limitError.message);
+    return { allowed: allowed !== false, failed: !!limitError };
+  };
+
   // A counter hiccup shouldn't take search down for everyone: log it and let the call through.
-  if (limitError) console.error('[igdb-proxy] rate limit check failed', limitError.message);
-  else if (allowed === false) throw new HttpError(429, 'Too many searches at once. Wait a minute and try again.');
+  const request = await take(guest ? 'igdb-guest' : 'igdb', guest ? GUEST_RATE_LIMIT_PER_MINUTE : RATE_LIMIT_PER_MINUTE, 60);
+  if (!request.allowed) throw new HttpError(429, 'Too many searches at once. Wait a minute and try again.');
+
+  return {
+    userId,
+    guest,
+    chargeUpstream: async () => {
+      const r = await take(guest ? 'igdb-upstream-guest' : 'igdb-upstream', guest ? GUEST_UPSTREAM_PER_MINUTE : UPSTREAM_PER_MINUTE, 60);
+      if (!r.allowed) throw new HttpError(429, 'Too many new searches at once. Wait a minute and try again.');
+    },
+    // RAWG is metered monthly, so this one fails closed.
+    allowRawg: async () => {
+      const r = await take(guest ? 'rawg-guest' : 'rawg', guest ? GUEST_RAWG_PER_HOUR : RAWG_PER_HOUR, 3600);
+      return r.allowed && !r.failed;
+    },
+  };
 }
 
 async function handle(req: Request): Promise<Response> {
-  await requireCaller(req);
+  const caller = await requireCaller(req);
   const parsed = await parseRequest(req);
-  if (parsed.action === 'lookup') return handleLookup(parsed.ids);
-  if (parsed.action === 'detail') return handleDetail(parsed.id);
-  if (parsed.action === 'company') return handleCompany(parsed.id);
+  if (parsed.action === 'lookup') return handleLookup(parsed.ids, caller);
+  if (parsed.action === 'detail') return handleDetail(parsed.id, caller);
+  if (parsed.action === 'company') return handleCompany(parsed.id, caller);
   const { entityType, query, limit } = parsed;
 
   const db = cacheClient();
-  const cacheKey = `search:${CACHE_VERSION}:${SEARCH_PROVIDER[entityType]}:${entityType}:${limit}:${query}`;
+  // One cache entry per query: results are fetched at the largest limit and cut to the requested one,
+  // so a caller can't turn one query into 50 cache misses by varying `limit`.
+  const cacheKey = `search:${CACHE_VERSION}:${SEARCH_PROVIDER[entityType]}:${entityType}:${query}`;
   const cached = await readCache(db, cacheKey);
 
   const excludeIds = entityType === 'games' ? await getOverrides() : new Map<number, OverrideAction>();
   const build = (payload: CachedPayload, fromCache: boolean): IgdbSearchResponse => ({
     entity_type: entityType,
     query,
-    results: (payload.results as { id: number }[]).filter(
-      (r) => excludeIds.get(r.id) !== 'exclude',
-    ) as IgdbSearchResponse['results'],
+    results: (payload.results as { id: number }[])
+      .filter((r) => excludeIds.get(r.id) !== 'exclude')
+      .slice(0, limit) as IgdbSearchResponse['results'],
     cached: fromCache,
     fetchedAt: payload.fetchedAt,
   });
@@ -979,7 +1081,7 @@ async function handle(req: Request): Promise<Response> {
       db,
       cacheKey,
       async () => {
-        const results = await fetchUpstream(entityType, query, limit);
+        const results = await fetchUpstream(entityType, query, IGDB_SEARCH_LIMITS.maxLimit, caller);
         // Search hits double as per-game records, so later lookups (Now Playing, reviews) are free.
         if (entityType === 'games') await cacheGameRecords(db, results as IgdbGameResult[], new Date().toISOString());
         return results;
@@ -1007,6 +1109,7 @@ async function handle(req: Request): Promise<Response> {
   }
 
   try {
+    if (SEARCH_PROVIDER[entityType] === 'igdb') await caller.chargeUpstream();
     const payload = await refresh();
     return respond(200, { success: true, data: build(payload, false) }, { 'X-Cache': cached ? 'REFRESH' : 'MISS' });
   } catch (error) {

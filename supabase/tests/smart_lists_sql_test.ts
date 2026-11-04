@@ -36,7 +36,7 @@ async function setup(): Promise<PGlite> {
 async function rate(db: PGlite, gameId: number, scores: number[], platformId: number | null = null) {
   for (const score of scores) {
     const uid = `10000000-0000-0000-0000-${String(++raters).padStart(12, '0')}`;
-    await asOwner(db, `insert into public.profiles (id, username) values ('${uid}', 'p${raters}')`);
+    await asOwner(db, `insert into public.profiles (id, username) values ('${uid}', 'player${raters}')`);
     await asOwner(
       db,
       `insert into public.game_ratings (user_id, game_id, rating, rating_input_scale, rating_input, platform_id)
@@ -158,4 +158,21 @@ Deno.test('only admins make smart lists; their games cannot be added by hand; pr
   assertEquals(ids(await run(db, ME, hidden)), [1, 2, 3]);
   // A normal list isn't smart.
   assertEquals(await run(db, OTHER, own), null);
+});
+
+Deno.test('smart_list_previews: count + first 4 covers per visible smart list (000036)', async () => {
+  const db = await setup();
+  await seedGames(db);
+  const open = await smartList(db, { entryTypes: ['game'], limit: 500 });
+  const hidden = await smartList(db, { entryTypes: ['game'] }, { isPublic: false });
+  const rows = await asUser<{ list_id: string; game_count: number; preview_game_ids: number[] }>(
+    db,
+    OTHER,
+    'select * from public.smart_list_previews($1)',
+    [[open, hidden]],
+  );
+  // OTHER can't see ME's private list; the public one matches smart_list_games.
+  assertEquals(rows.map((r) => [r.list_id, r.game_count, r.preview_game_ids.map(Number)]), [[open, 3, [1, 2, 3]]]);
+  const own = await asUser<{ list_id: string }>(db, ME, 'select list_id from public.smart_list_previews($1)', [[open, hidden]]);
+  assertEquals(own.length, 2);
 });

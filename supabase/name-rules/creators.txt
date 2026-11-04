@@ -1,0 +1,231 @@
+# Streamers, YouTubers and other online creators. Handles and real names.
+# Handles that are also everyday words (Ninja, Shroud, Dream, Myth, Speed…) are left
+# out so ordinary players can still use them; their real names are listed instead.
+PewDiePie
+Felix Kjellberg
+Markiplier
+Mark Fischbach
+Jacksepticeye
+Sean McLoughlin
+MrBeast
+Jimmy Donaldson
+Tyler Blevins
+Michael Grzesiek
+xQc
+xQcOW
+Felix Lengyel
+Pokimane
+Imane Anys
+Valkyrae
+Rachell Hofstetter
+Sykkuno
+Tfue
+Turner Tenney
+TimTheTatman
+Tim Betar
+DrDisrespect
+Dr Disrespect
+Guy Beahm
+Summit1g
+Jaryd Lazar
+Sodapoppin
+Chance Morris
+Asmongold
+Zack Hoyt
+Mizkif
+Matthew Rinaudo
+Nickmercs
+Nick Kolcheff
+CouRageJD
+Jack Dunlop
+Lirik
+LIRIK
+Kai Cenat
+IShowSpeed
+Darren Watkins
+Adin Ross
+Amouranth
+Kaitlyn Siragusa
+HasanAbi
+Hasan Piker
+Ludwig Ahgren
+Disguised Toast
+Jeremy Wang
+Corpse Husband
+LilyPichu
+Lily Ki
+TommyInnit
+Tommy Simons
+Technoblade
+GeorgeNotFound
+Sapnap
+DreamWasTaken
+CallMeCarson
+Moistcr1tikal
+MoistCritikal
+penguinz0
+Charles White Jr
+Jerma985
+Jerma
+Jeremy Elbertson
+Northernlion
+Ryan Letourneau
+Vinesauce
+Vinny Vinesauce
+Joel Vinesauce
+videogamedunkey
+Dunkey
+Jason Gastrow
+MatPat
+Matthew Patrick
+Game Theorists
+GameTheory
+SomeOrdinaryGamers
+Mutahar
+Linus Sebastian
+Linus Tech Tips
+LinusTechTips
+MKBHD
+Marques Brownlee
+Unbox Therapy
+Lewis Hilsenteger
+Ali-A
+Alastair Aiken
+DanTDM
+Daniel Middleton
+Stampy
+StampyLongHead
+CaptainSparklez
+Jordan Maron
+PrestonPlayz
+Unspeakable
+SSundee
+Muselk
+Lazarbeam
+Lannan Eacott
+Typical Gamer
+KSI
+Olajide Olatunji
+Logan Paul
+Jake Paul
+Sidemen
+Miniminter
+Simon Minter
+Vikkstar123
+Vikkstar
+Behzinga
+W2S
+Zerkaa
+TBJZL
+Emiru
+Ironmouse
+CDawgVA
+Gigguk
+Trainwreckstv
+Tyler Niknam
+Nadeshot
+Matthew Haag
+Scump
+Seth Abner
+Clix
+Bugha
+Kyle Giersdorf
+Mongraal
+SypherPK
+Ali Hassan Sypher
+Nickeh30
+Daequan
+HamlinZ
+Dakotaz
+CohhCarnage
+Day9
+Day 9
+Sean Plott
+TotalBiscuit
+John Bain
+Angry Joe
+AngryJoeShow
+Joe Vargas
+SkillUp
+Ben Kuchera
+ACG Karak
+Arin Hanson
+Egoraptor
+Danny Avidan
+Game Grumps
+GameGrumps
+JonTron
+Jon Jafari
+PeanutButterGamer
+TheRadBrad
+Brad Colburn
+Philza
+Ranboo
+Tubbo
+Wilbur Soot
+Quackity
+Karl Jacobs
+BadBoyHalo
+Skeppy
+QTCinderella
+Blaire QTCinderella
+Vaush
+Steven Bonnell
+Doublelift
+Lee Sang-hyeok
+s1mple
+Oleksandr Kostyliev
+Tyler1
+Loltyler1
+Gothamchess
+Levy Rozman
+Hikaru Nakamura
+Magnus Carlsen
+TheGrefg
+Ibai
+Ibai Llanos
+AuronPlay
+elrubius
+Rubius
+Rubén Doblas
+Gaules
+Squeezie
+ZeratoR
+Fuslie
+Sweet Anita
+MoistCr1TiKaL
+Smosh
+Rhett and Link
+Ryan Kaji
+Ryans World
+Dude Perfect
+Beast Games
+CaseOh
+Jynxzi
+Agent00
+Fanum
+Duke Dennis
+Plaqueboymax
+Stableronaldo
+Shlorox
+Kkatamina
+Hafu
+Lacari
+BigEx
+Sinatraa
+Tenz
+TenZ
+Shotzzy
+Aceu
+Ali Kabbani
+Faze Rug
+FaZe Clan
+FaZe Banks
+OpTic Gaming
+100 Thieves
+Team Liquid
+Cloud9
+TSM
+Fnatic
+G2 Esports
+T1 Esports

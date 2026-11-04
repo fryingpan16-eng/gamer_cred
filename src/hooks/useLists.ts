@@ -78,9 +78,12 @@ export function useIsAdmin() {
   });
 }
 
+/** Smart list results come from ratings (smart_list_cache), so list edits never change them. */
+const notSmart = (q: { queryKey: readonly unknown[] }) => q.queryKey[2] !== 'smart';
+
 function useInvalidateLists() {
   const queryClient = useQueryClient();
-  return () => void queryClient.invalidateQueries({ queryKey: queryKeys.lists.all() });
+  return () => void queryClient.invalidateQueries({ queryKey: queryKeys.lists.all(), predicate: notSmart });
 }
 
 export function useCreateList() {
@@ -96,8 +99,16 @@ export function useCreateList() {
 }
 
 export function useUpdateList(listId: string) {
+  const queryClient = useQueryClient();
   const invalidate = useInvalidateLists();
-  return useMutation({ mutationFn: (values: ListFormValues) => updateList(listId, values), onSettled: invalidate });
+  return useMutation({
+    mutationFn: (values: ListFormValues) => updateList(listId, values),
+    onSettled: () => {
+      invalidate();
+      // A changed rule changes this smart list's games.
+      void queryClient.invalidateQueries({ queryKey: queryKeys.lists.smart(listId) });
+    },
+  });
 }
 
 export function useDeleteList() {
@@ -153,7 +164,13 @@ export function useListItems(listId: string) {
       if (context?.previous) queryClient.setQueryData(key, context.previous);
       showToast(error.message, 'error');
     },
-    onSettled: () => void queryClient.invalidateQueries({ queryKey: queryKeys.lists.all() }),
+    onSettled: () => {
+      // This list (and its owner's list of lists) refetch now; other list views refresh when next shown.
+      const ownerId = queryClient.getQueryData<ListDetail | null>(key)?.userId;
+      void queryClient.invalidateQueries({ queryKey: queryKeys.lists.all(), predicate: notSmart, refetchType: 'none' });
+      void queryClient.invalidateQueries({ queryKey: key });
+      if (ownerId) void queryClient.invalidateQueries({ queryKey: queryKeys.lists.byUser(ownerId) });
+    },
   });
 }
 

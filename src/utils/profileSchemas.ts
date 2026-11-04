@@ -2,11 +2,14 @@ import { z } from 'zod';
 
 import { containsObjectionable, OBJECTIONABLE_MESSAGE } from './contentFilter';
 
-import { usernameSchema } from './authSchemas';
+import { displayNameSchema } from './authSchemas';
 
-/** Profile pictures are uploaded from the device (src/services/avatar.ts), not typed as URLs. */
+/**
+ * Settings → Account: the display name (the permanent name never changes). Profile
+ * pictures are uploaded from the device (src/services/avatar.ts), not typed as URLs.
+ */
 export const profileSettingsSchema = z.object({
-  username: usernameSchema,
+  displayName: displayNameSchema,
 });
 
 export type ProfileSettingsInput = z.input<typeof profileSettingsSchema>;

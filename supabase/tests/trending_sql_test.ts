@@ -12,6 +12,7 @@ const rated = (uid: string, gameId: number, score: number, daysAgo: number) =>
 Deno.test('trending games: most players recently, old activity ignored', async () => {
   const db = await freshDb();
   await asOwner(db, `alter table public.game_ratings disable trigger game_ratings_touch`);
+  await asOwner(db, `alter table public.game_ratings disable trigger game_ratings_stamp_insert`);
   await asOwner(db, `insert into public.game_ratings (user_id, game_id, rating, rating_input_scale, rating_input, created_at, updated_at) values
     ${rated(ME, 1, 90, 1)}, ${rated(OTHER, 1, 70, 2)}, ${rated(THIRD, 1, 80, 3)},
     ${rated(ME, 2, 60, 1)}, ${rated(OTHER, 2, 50, 1)},

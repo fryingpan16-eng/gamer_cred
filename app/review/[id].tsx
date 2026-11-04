@@ -14,6 +14,7 @@ import {
 } from '@/components/ui';
 import { ReviewLikeControl } from '@/components/review/ReviewCard';
 import { ReportLink } from '@/components/safety/ReportLink';
+import { UserName, useShownName } from '@/components/user/UserName';
 import { useAuthStore } from '@/hooks/useAuth';
 import { useGameLookup } from '@/hooks/useGames';
 import { useReviewLikes } from '@/hooks/useReviewBrowser';
@@ -32,6 +33,7 @@ export default function ReviewScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const valid = typeof id === 'string' && UUID_PATTERN.test(id);
   const review = useReview(valid ? id : null);
+  const authorName = useShownName(review.data?.author?.id, review.data?.author?.username ?? '').name;
   const viewerId = useAuthStore((s) => s.user?.id ?? null);
   const startReview = useStudioStore((s) => s.startReview);
   const games = useGameLookup(review.data ? [review.data.game_id] : []);
@@ -66,7 +68,7 @@ export default function ReviewScreen() {
 
   return (
     <ScrollView className="flex-1 bg-retrogamingpc-dark" contentContainerClassName="w-full gap-3 self-center p-3 md:max-w-[760px]">
-      <Stack.Screen options={{ title: `${author?.username ?? 'Player'} on ${game?.name ?? 'a game'}` }} />
+      <Stack.Screen options={{ title: `${author ? authorName : 'Player'} on ${game?.name ?? 'a game'}` }} />
 
       <RetroGamingPCPanel>
         <View className="flex-row gap-3">
@@ -81,9 +83,11 @@ export default function ReviewScreen() {
               <Thumbnail uri={author?.avatar_url ?? null} fallback={author?.username ?? '?'} shape="square" accessibilityLabel="" />
               <View>
                 <View className="flex-row items-center gap-1">
-                  <Text className="text-retrogamingpc-base font-bold text-retrogamingpc-text-bright">
-                    {author?.username ?? 'Unknown player'}
-                  </Text>
+                  {author ? (
+                    <UserName userId={author.id} username={author.username} className="text-retrogamingpc-base font-bold text-retrogamingpc-text-bright" />
+                  ) : (
+                    <Text className="text-retrogamingpc-base font-bold text-retrogamingpc-text-bright">Unknown player</Text>
+                  )}
                   {isMine ? <RetroGamingPCBadge label="You" variant="nowPlaying" /> : null}
                   {data.status === 'draft' ? <RetroGamingPCBadge label="Draft" variant="draft" /> : null}
                 </View>
@@ -128,7 +132,7 @@ export default function ReviewScreen() {
               targetId: data.id,
               targetUserId: data.user_id,
               label: 'this review',
-              ownerName: author.username,
+              ownerName: authorName,
             }}
           />
         </View>

@@ -44,9 +44,10 @@ Deno.serve(async (req) => {
       // Admin powers need a two-step-verified session (migration 000025); the token was validated above.
       isAdmin: async (userId) => {
         if (!isVerifiedSession(token)) return false;
-        const { data, error } = await admin.from('app_admins').select('user_id').eq('user_id', userId).maybeSingle();
+        // In app_admins with the owner-approved authenticator as their only one (migration 000037).
+        const { data, error } = await admin.rpc('admin_ready', { p_user: userId });
         if (error) throw error;
-        return data !== null;
+        return data === true;
       },
       logAdmin: async (adminId, action, targetType, targetId, details) => {
         const { error } = await admin

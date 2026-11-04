@@ -1,0 +1,374 @@
+# Politicians, heads of state, royals by title, religious leaders and widely known
+# historical figures. Full names; very common names (e.g. "Mike Johnson") left out
+# so ordinary players with that name aren't blocked.
+Donald Trump
+Donald J Trump
+Trump
+Melania Trump
+Ivanka Trump
+Donald Trump Jr
+Eric Trump
+Barron Trump
+Joe Biden
+Biden
+Jill Biden
+Hunter Biden
+Kamala Harris
+Doug Emhoff
+JD Vance
+J D Vance
+Usha Vance
+Barack Obama
+Obama
+Michelle Obama
+Hillary Clinton
+Bill Clinton
+Chelsea Clinton
+George W Bush
+George Bush
+George H W Bush
+Laura Bush
+Jeb Bush
+Dick Cheney
+Liz Cheney
+Mike Pence
+Al Gore
+Jimmy Carter
+Ronald Reagan
+Richard Nixon
+Gerald Ford
+John F Kennedy
+JFK
+Robert F Kennedy
+Robert F Kennedy Jr
+RFK Jr
+Abraham Lincoln
+George Washington
+Thomas Jefferson
+Theodore Roosevelt
+Franklin D Roosevelt
+FDR
+Nancy Pelosi
+Chuck Schumer
+Mitch McConnell
+Hakeem Jeffries
+John Thune
+Kevin McCarthy
+Bernie Sanders
+Elizabeth Warren
+Alexandria Ocasio-Cortez
+Ocasio-Cortez
+Ilhan Omar
+Rashida Tlaib
+Ayanna Pressley
+Ted Cruz
+Marco Rubio
+Rand Paul
+Ron Paul
+Lindsey Graham
+Josh Hawley
+Tom Cotton
+Rick Scott
+Mitt Romney
+John McCain
+Joe Manchin
+Kyrsten Sinema
+Cory Booker
+Adam Schiff
+Jamie Raskin
+Jim Jordan
+Matt Gaetz
+Marjorie Taylor Greene
+Lauren Boebert
+Nancy Mace
+Byron Donalds
+Elise Stefanik
+Ron DeSantis
+Casey DeSantis
+Gavin Newsom
+Gretchen Whitmer
+Josh Shapiro
+JB Pritzker
+Andy Beshear
+Wes Moore
+Greg Abbott
+Kathy Hochul
+Andrew Cuomo
+Eric Adams
+Zohran Mamdani
+Pete Buttigieg
+Tim Walz
+Nikki Haley
+Vivek Ramaswamy
+Chris Christie
+Kristi Noem
+Sarah Huckabee Sanders
+Mike Huckabee
+Pete Hegseth
+Kash Patel
+Tulsi Gabbard
+Pam Bondi
+Karoline Leavitt
+Stephen Miller
+Steve Bannon
+Rudy Giuliani
+Susie Wiles
+Scott Bessent
+Howard Lutnick
+Doug Burgum
+Sean Duffy
+Merrick Garland
+Antony Blinken
+Lloyd Austin
+Janet Yellen
+Jerome Powell
+Anthony Fauci
+Mike Pompeo
+John Bolton
+Henry Kissinger
+Condoleezza Rice
+Colin Powell
+Madeleine Albright
+Justin Trudeau
+Pierre Trudeau
+Mark Carney
+Pierre Poilievre
+Jagmeet Singh
+Chrystia Freeland
+Stephen Harper
+Doug Ford
+Danielle Smith
+Keir Starmer
+Rishi Sunak
+Boris Johnson
+Liz Truss
+David Cameron
+Tony Blair
+Gordon Brown
+Margaret Thatcher
+Winston Churchill
+Nigel Farage
+Kemi Badenoch
+Jeremy Corbyn
+Angela Rayner
+Rachel Reeves
+Ed Miliband
+Ed Davey
+Nicola Sturgeon
+John Swinney
+Sadiq Khan
+King Charles III
+Charles III
+Queen Elizabeth II
+Elizabeth II
+Emmanuel Macron
+Brigitte Macron
+Marine Le Pen
+Jordan Bardella
+Jean-Luc Melenchon
+Francois Hollande
+Nicolas Sarkozy
+Michel Barnier
+Francois Bayrou
+Olaf Scholz
+Friedrich Merz
+Angela Merkel
+Alice Weidel
+Frank-Walter Steinmeier
+Giorgia Meloni
+Silvio Berlusconi
+Matteo Salvini
+Mario Draghi
+Sergio Mattarella
+Pedro Sanchez
+Alberto Nunez Feijoo
+Santiago Abascal
+Mark Rutte
+Geert Wilders
+Dick Schoof
+Ursula von der Leyen
+Charles Michel
+Antonio Costa
+Kaja Kallas
+Roberta Metsola
+Christine Lagarde
+Viktor Orban
+Andrzej Duda
+Donald Tusk
+Karol Nawrocki
+Robert Fico
+Alexander Lukashenko
+Vladimir Putin
+Putin
+Dmitry Medvedev
+Sergey Lavrov
+Alexei Navalny
+Yulia Navalnaya
+Volodymyr Zelensky
+Volodymyr Zelenskyy
+Zelensky
+Zelenskyy
+Yulia Svyrydenko
+Recep Tayyip Erdogan
+Erdogan
+Benjamin Netanyahu
+Netanyahu
+Isaac Herzog
+Yair Lapid
+Benny Gantz
+Itamar Ben-Gvir
+Bezalel Smotrich
+Mahmoud Abbas
+Yahya Sinwar
+Ismail Haniyeh
+Hassan Nasrallah
+Ali Khamenei
+Ayatollah Khamenei
+Ruhollah Khomeini
+Masoud Pezeshkian
+Ebrahim Raisi
+Mohammed bin Salman
+King Salman
+Mohamed bin Zayed
+Tamim bin Hamad
+Abdel Fattah el-Sisi
+Bashar al-Assad
+Ahmed al-Sharaa
+Xi Jinping
+Li Qiang
+Hu Jintao
+Mao Zedong
+Chairman Mao
+Deng Xiaoping
+Lai Ching-te
+Tsai Ing-wen
+Kim Jong Un
+Kim Jong-un
+Kim Jong Il
+Kim Il Sung
+Kim Yo Jong
+Yoon Suk Yeol
+Lee Jae-myung
+Moon Jae-in
+Shinzo Abe
+Fumio Kishida
+Shigeru Ishiba
+Sanae Takaichi
+Yoshihide Suga
+Emperor Naruhito
+Narendra Modi
+Modi
+Rahul Gandhi
+Sonia Gandhi
+Indira Gandhi
+Mahatma Gandhi
+Amit Shah
+Yogi Adityanath
+Arvind Kejriwal
+Imran Khan
+Shehbaz Sharif
+Nawaz Sharif
+Asim Munir
+Benazir Bhutto
+Sheikh Hasina
+Muhammad Yunus
+Prabowo Subianto
+Joko Widodo
+Anwar Ibrahim
+Ferdinand Marcos Jr
+Bongbong Marcos
+Rodrigo Duterte
+Sara Duterte
+Lee Hsien Loong
+Lawrence Wong
+Lee Kuan Yew
+Hun Sen
+Min Aung Hlaing
+Aung San Suu Kyi
+Anthony Albanese
+Peter Dutton
+Scott Morrison
+Malcolm Turnbull
+Kevin Rudd
+Julia Gillard
+Jacinda Ardern
+Christopher Luxon
+Chris Hipkins
+Cyril Ramaphosa
+Jacob Zuma
+Nelson Mandela
+Julius Malema
+Bola Tinubu
+Paul Kagame
+William Ruto
+Abiy Ahmed
+Yoweri Museveni
+Robert Mugabe
+Muammar Gaddafi
+Saddam Hussein
+Osama bin Laden
+Abu Bakr al-Baghdadi
+Lula da Silva
+Luiz Inacio Lula da Silva
+Jair Bolsonaro
+Javier Milei
+Cristina Kirchner
+Claudia Sheinbaum
+Andres Manuel Lopez Obrador
+AMLO
+Nayib Bukele
+Nicolas Maduro
+Hugo Chavez
+Fidel Castro
+Raul Castro
+Che Guevara
+Gustavo Petro
+Gabriel Boric
+Daniel Noboa
+Dina Boluarte
+Antonio Guterres
+Kofi Annan
+Ban Ki-moon
+Jens Stoltenberg
+Tedros Adhanom
+Pope Francis
+Pope Leo
+Pope Leo XIV
+Pope Benedict
+Pope John Paul
+Dalai Lama
+Martin Luther King
+Martin Luther King Jr
+MLK
+Malcolm X
+Rosa Parks
+Harriet Tubman
+Frederick Douglass
+Adolf Hitler
+Joseph Stalin
+Benito Mussolini
+Heinrich Himmler
+Joseph Goebbels
+Hermann Goering
+Pol Pot
+Idi Amin
+Vladimir Lenin
+Karl Marx
+Leon Trotsky
+Charles Manson
+Ted Bundy
+Jeffrey Dahmer
+Jeffrey Epstein
+Ghislaine Maxwell
+Timothy McVeigh
+Unabomber
+Ted Kaczynski
+Brenton Tarrant
+Anders Breivik
+Dylann Roof
+Kyle Rittenhouse
+Luigi Mangione
+Nick Fuentes
+Richard Spencer
+David Duke
+George Lincoln Rockwell

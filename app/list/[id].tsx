@@ -7,6 +7,7 @@ import { ReportLink } from '@/components/safety/ReportLink';
 import { Thumbnail } from '@/components/search/Thumbnail';
 import { gameMetaLine } from '@/components/search/GameResultCard';
 import { GamePickerModal } from '@/components/studio/GamePickerModal';
+import { UserName, useShownName } from '@/components/user/UserName';
 import {
   RetroGamingPCAlert,
   RetroGamingPCBadge,
@@ -225,6 +226,7 @@ export default function ListScreen() {
   const viewerId = useAuthStore((s) => s.user?.id ?? null);
   const list = useList(id ?? null);
   const data = list.data ?? null;
+  const ownerName = useShownName(data?.owner?.id, data?.owner?.username ?? '').name;
   const smartRule = data?.smartRule ?? null;
   const smart = useSmartListGames(id ?? null, smartRule !== null);
   const smartGames = smart.data?.games ?? [];
@@ -279,9 +281,8 @@ export default function ListScreen() {
               <Text
                 accessibilityRole="link"
                 onPress={() => router.push({ pathname: '/user/[id]', params: { id: data.owner!.id } })}
-                className="font-bold text-retrogamingpc-text-bright underline"
               >
-                {data.owner.username}
+                <UserName userId={data.owner.id} username={data.owner.username} className="font-bold text-retrogamingpc-text-bright underline" />
               </Text>
             ) : (
               'Unknown player'
@@ -324,7 +325,7 @@ export default function ListScreen() {
                   targetId: data.id,
                   targetUserId: data.userId,
                   label: 'this list',
-                  ownerName: data.owner.username,
+                  ownerName: ownerName,
                 }}
               />
             </View>

@@ -35,13 +35,13 @@ const visibleTo = async (db: PGlite, uid: string) => ({
 Deno.test('blocking hides both users from each other everywhere; others unaffected; unblock restores', async () => {
   const db = await setup();
   await asUser(db, THIRD, `select public.block_user('${OTHER}')`);
-  const hidden = { profiles: ['me', 'third'], reviews: 0, ratings: 0, lists: 0, nowPlaying: 0, favorites: 0, platforms: 0 };
+  const hidden = { profiles: ['myself', 'third'], reviews: 0, ratings: 0, lists: 0, nowPlaying: 0, favorites: 0, platforms: 0 };
   assertEquals(await visibleTo(db, THIRD), hidden);
   // ...and the blocked user can't see the blocker either
   const otherSees = (await asUser<{ username: string }>(db, OTHER, 'select username from public.profiles order by username')).map((r) => r.username);
-  assertEquals(otherSees, ['me', 'other']);
+  assertEquals(otherSees, ['myself', 'other']);
   // a bystander still sees everything
-  assertEquals(await visibleTo(db, ME), { profiles: ['me', 'other', 'third'], reviews: 1, ratings: 2, // the review's score is a rating too
+  assertEquals(await visibleTo(db, ME), { profiles: ['myself', 'other', 'third'], reviews: 1, ratings: 2, // the review's score is a rating too
    lists: 1, nowPlaying: 1, favorites: 1, platforms: 1 });
   // the block shows in the blocker's list (even though the profile is hidden), not the blocked user's
   assertEquals((await asUser<{ username: string }>(db, THIRD, 'select * from public.my_blocked_users()')).map((r) => r.username), ['other']);

@@ -9,6 +9,7 @@ import { RetroGamingPCAlert, RetroGamingPCButton, RetroGamingPCCheckbox, RetroGa
 import { useAuthAction } from '@/hooks/useAuthAction';
 import { useHumanCheck } from '@/hooks/useHumanCheck';
 import { signInWithGoogle, signUpWithEmail } from '@/services/auth';
+import { PERMANENT_NAME_HINT } from '@/utils/nameRules';
 import { registerSchema, validate, type FieldErrors, type RegisterInput } from '@/utils/authSchemas';
 import { useThemeColors } from '@/hooks/useTheme';
 
@@ -88,7 +89,7 @@ export default function RegisterScreen() {
             </View>
 
             <RetroGamingPCInput
-              label="Username"
+              label="Permanent name"
               value={username}
               onChangeText={setUsername}
               error={fieldErrors.username}
@@ -96,7 +97,7 @@ export default function RegisterScreen() {
               autoCapitalize="none"
               autoCorrect={false}
               autoComplete="username"
-              hint="3–24 characters: letters, numbers, underscore"
+              hint={`${PERMANENT_NAME_HINT} You can set a display name later.`}
               icon={<Feather name="user" size={12} color={themeColors.textMuted} />}
             />
             <RetroGamingPCInput

@@ -31,7 +31,7 @@ Deno.test('the hidden list covers both directions, and players cannot call it to
   assertEquals([await hidden(ME), await hidden(OTHER), await hidden(THIRD)], [[OTHER], [ME], []]);
   // And it still hides profiles both ways.
   const names = async (uid: string) => (await asUser<{ username: string }>(db, uid, 'select username from public.profiles order by 1')).map((r) => r.username);
-  assertEquals(await names(ME), ['me', 'third']);
+  assertEquals(await names(ME), ['myself', 'third']);
   assertEquals(await names(OTHER), ['other', 'third']);
-  assertEquals(await names(THIRD), ['me', 'other', 'third']);
+  assertEquals(await names(THIRD), ['myself', 'other', 'third']);
 });

@@ -39,9 +39,9 @@ export type ListSummary = {
   smartRule: SmartRule | null;
   updatedAt: string;
   owner: ListOwner | null;
-  /** Hand-picked games only; a smart list's count comes from fetchSmartListGames. */
+  /** Games in the list (a smart list's from its saved result, smart_list_previews). */
   gameCount: number;
-  /** First few games (by position), for the cover mosaic. */
+  /** First few games (by position / rank), for the cover mosaic. */
   previewGameIds: number[];
 };
 
@@ -88,18 +88,38 @@ function toSummary(row: SummaryRow): ListSummary {
   };
 }
 
+/**
+ * Smart lists have no list_items: fill their count and first covers from the
+ * saved result, one call for every smart list in the batch (migration 000036).
+ */
+async function withSmartPreviews(lists: ListSummary[]): Promise<ListSummary[]> {
+  const smartIds = lists.filter((l) => l.smartRule !== null).map((l) => l.id);
+  if (smartIds.length === 0) return lists;
+  const { data, error } = await supabase.rpc('smart_list_previews', { p_list_ids: smartIds });
+  if (error) {
+    // Cards still show; only the smart lists' covers and counts are missing.
+    console.warn('[lists] smart list previews unavailable', error.message);
+    return lists;
+  }
+  const byId = new Map((data ?? []).map((r) => [r.list_id, r] as const));
+  return lists.map((l) => {
+    const preview = byId.get(l.id);
+    return preview ? { ...l, gameCount: preview.game_count, previewGameIds: preview.preview_game_ids.map(Number) } : l;
+  });
+}
+
 /** Admin-curated lists for the Home tab, in pinned order. */
 export async function fetchPinnedLists(): Promise<ListSummary[]> {
   const { data, error } = await summaryQuery().not('pinned_rank', 'is', null).order('pinned_rank', { ascending: true });
   if (error) fail(error, 'Could not load featured lists.');
-  return data.map(toSummary);
+  return withSmartPreviews(data.map(toSummary));
 }
 
 /** A player's lists, most recently updated first (RLS hides their private ones from others). */
 export async function fetchUserLists(userId: string): Promise<ListSummary[]> {
   const { data, error } = await summaryQuery().eq('user_id', userId).order('updated_at', { ascending: false });
   if (error) fail(error, 'Could not load lists.');
-  return data.map(toSummary);
+  return withSmartPreviews(data.map(toSummary));
 }
 
 /** Recently updated public lists that have games (or fill themselves) — the list browser's default view. */
@@ -109,10 +129,12 @@ export async function fetchRecentLists(limit = 20): Promise<ListSummary[]> {
     .order('updated_at', { ascending: false })
     .limit(limit * 2);
   if (error) fail(error, 'Could not load lists.');
-  return data
-    .map(toSummary)
-    .filter((l) => l.gameCount > 0 || l.smartRule !== null)
-    .slice(0, limit);
+  return withSmartPreviews(
+    data
+      .map(toSummary)
+      .filter((l) => l.gameCount > 0 || l.smartRule !== null)
+      .slice(0, limit),
+  );
 }
 
 /** Characters that would break a PostgREST `or=(…)` filter or act as wildcards. */
@@ -134,7 +156,7 @@ export async function searchLists(term: string, limit = 30): Promise<ListSummary
     .order('updated_at', { ascending: false })
     .limit(limit);
   if (error) fail(error, 'Could not search lists.');
-  return data.map(toSummary);
+  return withSmartPreviews(data.map(toSummary));
 }
 
 /** One list with every game in order. Null when it doesn't exist or is someone else's private list. */

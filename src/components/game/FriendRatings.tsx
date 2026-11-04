@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
+import { UserName } from '@/components/user/UserName';
 import { Thumbnail } from '@/components/search/Thumbnail';
 import { RetroGamingPCAlert, RetroGamingPCButton, RetroGamingPCPanel, RetroGamingPCRating, RetroGamingPCSpinner } from '@/components/ui';
 import { platformInfo } from '@/constants/platforms';
@@ -40,9 +41,7 @@ export function FriendRatings({ gameId }: { gameId: number }) {
               className="w-[92px] items-center gap-1"
             >
               <Thumbnail uri={f.avatar_url} fallback={f.username} shape="square" accessibilityLabel="" />
-              <Text className="text-retrogamingpc-xs font-bold text-retrogamingpc-text-bright" numberOfLines={1}>
-                {f.username}
-              </Text>
+              <UserName userId={f.user_id} username={f.username} className="text-retrogamingpc-xs font-bold text-retrogamingpc-text-bright" numberOfLines={1} />
               <View pointerEvents="none">
                 <RetroGamingPCRating rating={reviewRating(f)} size="compact" expanded={false} />
               </View>

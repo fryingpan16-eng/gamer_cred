@@ -8,6 +8,7 @@ import { useAuthStore } from '@/hooks/useAuth';
 import { useGameLookup } from '@/hooks/useGames';
 import { useFriendRelation, useProfile } from '@/hooks/useProfile';
 import { useRatingsTable } from '@/hooks/useRatings';
+import { shownName } from '@/utils/nameRules';
 import { toTableRow } from '@/utils/ratingsTable';
 
 /** Profile → Ratings: every game a player has rated, as a sortable / filterable spreadsheet. */
@@ -28,8 +29,8 @@ export default function RatingsListScreen() {
     [table.data, lookup.data],
   );
 
-  const name = isOwner ? 'You' : (profile.data?.username ?? 'This player');
-  const title = isOwner ? 'Your Ratings' : profile.data ? `${profile.data.username}'s Ratings` : 'Ratings';
+  const name = isOwner ? 'You' : ((profile.data ? shownName(profile.data.username, profile.data.display_name) : 'This player'));
+  const title = isOwner ? 'Your Ratings' : profile.data ? `${shownName(profile.data.username, profile.data.display_name)}'s Ratings` : 'Ratings';
 
   return (
     <View className="flex-1 bg-retrogamingpc-dark p-3">

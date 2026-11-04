@@ -1,12 +1,23 @@
 import { z } from 'zod';
 
 import { containsObjectionable, OBJECTIONABLE_MESSAGE } from './contentFilter';
+import { DISPLAY_NAME_HINT, isDisplayNameFormatOk, isPermanentNameFormatOk, nameProblemMessage, normalizeDisplayName } from './nameRules';
 
-/** Mirrors the DB check constraint on profiles.username. */
+/**
+ * The permanent name (profiles.username, migration 000038). Mirrors the database's
+ * character rule; the database also checks look-alikes and reserved names (check_name).
+ */
 export const usernameSchema = z
   .string()
   .trim()
-  .regex(/^[A-Za-z0-9_]{3,24}$/, '3–24 characters: letters, numbers, or underscore')
+  .refine(isPermanentNameFormatOk, nameProblemMessage('format', 'permanent'))
+  .refine((v) => !containsObjectionable(v.replace(/_/g, ' ')), OBJECTIONABLE_MESSAGE);
+
+/** Display name: any alphabet, changeable once a day. Empty = show the permanent name. */
+export const displayNameSchema = z
+  .string()
+  .transform(normalizeDisplayName)
+  .refine((v) => v === '' || isDisplayNameFormatOk(v), DISPLAY_NAME_HINT.replace(' Once a day.', ''))
   .refine((v) => !containsObjectionable(v.replace(/_/g, ' ')), OBJECTIONABLE_MESSAGE);
 
 export const emailSchema = z.email('Enter a valid email address').trim().toLowerCase();

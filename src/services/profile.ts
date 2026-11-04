@@ -4,9 +4,7 @@ import type { FavoriteRank, Friendship, Profile, Review, UserFavorite, UserPlatf
 import type { RatingScale } from '@/constants/ratingRubric';
 import type { NowPlayingVisibility } from '@/constants/privacy';
 import type { ThemeName } from '@/constants/themes';
-import type { ProfileSettingsValues } from '@/utils/profileSchemas';
 
-import { isUsernameAvailable } from './auth';
 import { supabase } from './supabase';
 import { relationFor, type FriendRelation } from './users';
 
@@ -32,24 +30,6 @@ function fail(error: PostgrestError, fallback: string): never {
 export async function fetchProfile(userId: string): Promise<Profile | null> {
   const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).maybeSingle();
   if (error) fail(error, 'Could not load the profile.');
-  return data;
-}
-
-export async function updateProfile(userId: string, current: Profile, values: ProfileSettingsValues): Promise<Profile> {
-  const usernameChanged = values.username.toLowerCase() !== current.username.toLowerCase();
-  if (usernameChanged && (await isUsernameAvailable(values.username)) === false) {
-    throw new ProfileError('That username is already taken.', '23505');
-  }
-  const { data, error } = await supabase
-    .from('profiles')
-    .update({ username: values.username })
-    .eq('id', userId)
-    .select()
-    .single();
-  if (error) {
-    if (error.code === '23505') throw new ProfileError('That username is already taken.', error.code);
-    fail(error, 'Could not save your profile.');
-  }
   return data;
 }
 

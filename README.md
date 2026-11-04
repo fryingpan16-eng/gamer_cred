@@ -82,6 +82,7 @@ Charts of your own logged games, all computed in Postgres:
 Every chart shows the exact value when you tap a bar, and has a table view that screen readers use. Missing data goes into an "Unknown" bucket.
 
 ### Profile
+- **Names:** the display name in large type, with the gold official badge for staff, and the **@permanent name** under it (see [Names](#names)).
 - **Now Playing:** the four slots, with privacy options (public, friends only or private).
 - **Favourites:** four all-time favourite games; tap a cover to open the game. The owner removes one with the ✕ on its cover and picks a new game for the empty slot.
 - **Friends:** tap the friend count for the friends list (yours also shows requests).
@@ -113,8 +114,22 @@ One system, reached from everywhere:
 - Profile picture: upload and crop. Pictures are screened automatically (Google Cloud Vision SafeSearch) before anyone sees them; borderline ones wait for an admin.
 - **Colour themes:** **Mega** (blue, the default), **Chief** (olive), **Super** (red), **Pika** (yellow) and **Peach** (pink).
 - **Hardware & Platforms:** tap chips to add or remove platforms, grouped by maker; one **Main platform** button; spec and device lines under PC.
-- Rating scale (new players start on **stars**), Now Playing privacy, username and sign out.
-- Choices save automatically, with inline "Saving…" / "✓ Saved" feedback. Your username has its own Save button, and you're warned before leaving with an unsaved change.
+- Rating scale (new players start on **stars**), Now Playing privacy, display name (your permanent name is shown read-only) and sign out.
+- Choices save automatically, with inline "Saving…" / "✓ Saved" feedback. Your display name has its own Save button, and you're warned before leaving with an unsaved change.
+
+### Names
+Every player has two names (migration 000038):
+- **Permanent name** (`profiles.username`): chosen once and never changed. It's the only name search looks at.
+  - A–Z, numbers and keyboard symbols, no spaces or `@`, 3–24 characters.
+  - Email sign-ups choose it on Register. Google sign-ups start as `player_xxxxxx` and get a **Choose your permanent name** screen on first sign-in (they don't appear in search until they've picked).
+  - A name that only differs from an existing one by capitals, symbols, `I`/`l`/`1` or `O`/`0` is "too close" and refused.
+- **Display name** (`profiles.display_name`): any alphabet, numbers, spaces and keyboard symbols (no `@`, no emoji), up to 32 characters. It can change **once a day**. Empty = the permanent name shows.
+- Wherever a display name shows, the `@permanent name` shows next to it (`UserName` component), so a display name can't pass as someone else.
+- **Blocked on both names:** slurs, racism and profanity (even run together: "Chinkdude" is blocked, "Canadiandude" isn't), staff impersonation (admin, mod, official, support…), and about 1,500 reserved public figures (game industry, creators, celebrities, politicians) and companies, exactly or with "TheReal…" / "…Official" style add-ons. Fan names like "KojimaFan" are fine.
+  - The lists live in `supabase/name-rules/` (one name per line); `python3 scripts/generate-name-rules.py <new migration name>` turns them into a migration. See its README for how matching works.
+  - To release a reserved name for one account (the real person joined), run the `name_exceptions` insert in that README.
+- **Official badge:** a gold check-mark square next to staff, i.e. admins whose authenticator you've approved. Tapping it explains it. Players can't fake it (no emoji or symbols like ✓ in display names).
+- **Reset display name:** admins see it on a player's profile; it's logged in Moderation → Activity and the player can pick a new one straight away.
 
 ### Safety (app store requirements)
 - **Report:** **⚑ Report** on reviews (review page and game page), lists and player profiles.
@@ -125,7 +140,7 @@ One system, reached from everywhere:
   - It also hides both players from each other everywhere: profile, reviews, ratings, lists, Now Playing and search.
   - Unblock in **Settings → Blocked Players**.
 - **Moderation:** admins get a **Moderation queue** in Settings. They can view, dismiss, remove the content, or remove the account, review held profile pictures, and see the admin **Activity** log.
-- **Text filter:** usernames, list titles and descriptions, reviews, Now Playing notes and device names are checked with an open-source slur and profanity filter before saving. The database enforces a smaller backstop list too, so requests that skip the app are also refused, and sign-ups whose Google name fails it get a neutral username.
+- **Text filter:** names (see [Names](#names)), list titles and descriptions, reviews, Now Playing notes and device names are checked with an open-source slur and profanity filter before saving. The database enforces a smaller backstop list too, so requests that skip the app are also refused.
 - **Terms:** everyone accepts the **Terms of Use & Community Guidelines** (zero tolerance for objectionable content).
   - Email sign-ups tick a box on Register.
   - Everyone else gets a one-time prompt.
@@ -138,8 +153,15 @@ Admins can feature lists on Home, make smart lists, and moderate (reports, held 
 
 - **Two-step sign-in is required.** Every admin power needs a session verified with a 6-digit code from an authenticator app (Supabase MFA). The database (`is_app_admin()`) and the Edge Functions both check it, so a stolen password alone can't use admin tools.
   - First time: **Settings → Admin Security → Set Up Two-Step Sign-In**, scan the QR code (or type the key), enter the code.
+  - **Then the project owner approves that authenticator** (migration 000037) in the SQL Editor, after confirming with the admin that it's theirs. Until then admin tools stay locked, so an authenticator someone adds with a stolen password never unlocks anything:
+    ```sql
+    update public.app_admins a set mfa_factor_id = f.id
+      from auth.mfa_factors f
+     where f.user_id = a.user_id and f.status = 'verified'
+       and a.user_id = (select id from public.profiles where username = 'their_username');
+    ```
   - Each sign-in after that: enter a code in Admin Security, or on the Moderation page.
-  - Lost the phone: delete the old factor in Supabase → **Authentication → Users**, then set up a new one in the app.
+  - Lost the phone: delete the old factor in Supabase → **Authentication → Users**, set `mfa_factor_id = null` for them, and approve the new one once it's set up.
 - **Activity log:** every admin action (featuring, smart rules, report decisions, picture decisions, account removals) is recorded with who and when, in **Moderation → Activity**. Entries can't be edited or deleted from the app.
 
 **Adding an admin.** There's deliberately no button for this. Run it in the Supabase dashboard → **SQL Editor**, using their username:
@@ -147,7 +169,7 @@ Admins can feature lists on Home, make smart lists, and moderate (reports, held 
 insert into public.app_admins (user_id)
 select id from public.profiles where username = 'their_username';
 ```
-They then set up two-step sign-in in **Settings → Admin Security** before any admin tool works for them.
+They then set up two-step sign-in in **Settings → Admin Security**, and you approve their authenticator (above), before any admin tool works for them.
 
 **Removing an admin:**
 ```sql
@@ -156,7 +178,7 @@ where user_id = (select id from public.profiles where username = 'their_username
 ```
 
 ### Authentication
-- Email and password sign-up with email confirmation, plus Google sign-in.
+- Email and password sign-up with email confirmation, plus Google sign-in. Google sign-ups start as `player_xxxxxx` with no picture (never your real name or Google photo); change the name in Settings and add a picture there.
 - **Browse as Guest** (on Login): an anonymous, read-only session with no email.
   - Guests can read everything a member can: Home, search, game pages, profiles, reviews and lists.
   - Rating, reviews, Now Playing, lists, friends, reports and settings show "Create a free account".
@@ -338,6 +360,10 @@ Storage: a private `avatar-uploads` bucket (each user can write only their own p
 | 000033 | Review fixes: no client-supplied sign-up pictures, username check before sign-in, nobody learns who blocked them, reports name the real owner (ratings per player) |
 | 000034 | PC specs go through the database text filter |
 | 000035 | Backlog (`game_backlog`, public/private, leaves the backlog when rated) |
+| 000036 | Security, privacy and speed fixes: server-stamped timestamps, blocked players' friendships hidden, review like counts, smart-list previews |
+| 000037 | Owner-approved admin authenticators; Google sign-ups start as `player_xxxxxx` with no picture |
+| 000038 | Permanent names and display names, name rules, official badge, admin display-name reset |
+| 000039 | Name-rule data (reserved names, blocked words, allowed everyday words), generated from `supabase/name-rules/` |
 
 ### avatar Edge Function
 - `submit` screens an uploaded picture with Google Cloud Vision SafeSearch, then publishes, rejects or holds it.

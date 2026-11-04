@@ -100,6 +100,16 @@ export function AdminSecurityBody({ compact = false }: { compact?: boolean }) {
   const s = status.data;
   if (!s.member) return null;
 
+  if (s.verified && !s.approved) {
+    // Pinned by the owner (migration 000037), so an authenticator added with a stolen password never unlocks anything.
+    return (
+      <RetroGamingPCAlert
+        tone="info"
+        message="Two-step sign-in is on. Ask the project owner to approve your authenticator; admin tools unlock once they have."
+      />
+    );
+  }
+
   if (s.verified) {
     return <RetroGamingPCAlert tone="success" message="Two-step sign-in is on, and admin tools are unlocked for this sign-in." />;
   }

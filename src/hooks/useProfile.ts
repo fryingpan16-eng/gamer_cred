@@ -16,16 +16,14 @@ import {
   updatePlatformDevices,
   updateNowPlayingVisibility,
   updatePrimaryRatingScale,
-  updateProfile,
   updateUiTheme,
 } from '@/services/profile';
 import { removeAvatar, uploadAvatar, type AvatarUploadResult, type PreparedAvatar } from '@/services/avatar';
 import { removeFriendship, respondToFriendRequest, sendFriendRequest, type FriendRelation } from '@/services/users';
-import type { FavoriteRank, Profile, UserFavorite, UserPlatform } from '@/types/database.types';
+import type { FavoriteRank, UserFavorite, UserPlatform } from '@/types/database.types';
 import type { NowPlayingVisibility } from '@/constants/privacy';
 import type { RatingScale } from '@/constants/ratingRubric';
 import type { ThemeName } from '@/constants/themes';
-import type { ProfileSettingsValues } from '@/utils/profileSchemas';
 import { queryKeys } from '@/utils/queryKeys';
 
 import { useAuthStore } from './useAuth';
@@ -71,23 +69,6 @@ export function useProfile(userId: string | null | undefined) {
     queryKey: queryKeys.profiles.detail(userId ?? 'none'),
     queryFn: () => fetchProfile(userId!),
     enabled: Boolean(userId),
-  });
-}
-
-export function useUpdateProfile() {
-  const queryClient = useQueryClient();
-  const viewerId = useViewerId();
-  return useMutation({
-    mutationFn: async ({ current, values }: { current: Profile; values: ProfileSettingsValues }) => {
-      if (!viewerId) throw new Error('You must be signed in.');
-      return updateProfile(viewerId, current, values);
-    },
-    onSuccess: (profile) => {
-      queryClient.setQueryData(queryKeys.profiles.detail(profile.id), profile);
-      // Keep the auth snapshot (header, account panel) in sync without a refetch.
-      useAuthStore.setState({ profile });
-    },
-    onSettled: () => void queryClient.invalidateQueries({ queryKey: queryKeys.search.entity('users') }),
   });
 }
 
@@ -188,7 +169,7 @@ export function useAvatarMutation() {
       queryClient.setQueryData(queryKeys.profiles.detail(profile.id), profile);
       // Avatars appear in search results, reviews and the feed.
       void queryClient.invalidateQueries({ queryKey: queryKeys.search.entity('users') });
-      void queryClient.invalidateQueries({ queryKey: queryKeys.games.reviewsAll() });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.reviews.all() });
       void queryClient.invalidateQueries({ queryKey: queryKeys.feed.all() });
     },
   });

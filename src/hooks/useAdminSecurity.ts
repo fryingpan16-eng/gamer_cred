@@ -28,6 +28,7 @@ export function useVerifyAdminCode() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.safety.all() });
       void queryClient.invalidateQueries({ queryKey: queryKeys.lists.all() });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.lists.isAdminAll() });
     },
   });
 }

@@ -6,6 +6,7 @@ import { RetroGamingPCAlert } from '@/components/ui';
 import { useLikedGames } from '@/hooks/useLikes';
 import { useProfile, useViewerId } from '@/hooks/useProfile';
 import { LIKED_GAMES_MAX } from '@/services/likes';
+import { shownName } from '@/utils/nameRules';
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -17,7 +18,7 @@ export default function LikedGamesScreen() {
   const profile = useProfile(validId ? userId : null);
   const liked = useLikedGames(validId ? userId : null);
   const isOwner = validId && userId === viewerId;
-  const title = isOwner ? 'Your Liked Games' : profile.data ? `${profile.data.username}’s Liked Games` : 'Liked Games';
+  const title = isOwner ? 'Your Liked Games' : profile.data ? `${shownName(profile.data.username, profile.data.display_name)}’s Liked Games` : 'Liked Games';
 
   return (
     <View className="flex-1 bg-retrogamingpc-dark">

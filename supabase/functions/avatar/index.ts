@@ -25,6 +25,8 @@ const PUBLIC = 'avatars';
 const pendingPath = (uid: string) => `${uid}/pending.jpg`;
 const heldPath = (uid: string) => `held/${uid}.jpg`;
 const VISION_TIMEOUT_MS = 8000;
+/** Picture checks per member per hour (each is a paid Vision call). */
+const SUBMITS_PER_HOUR = 10;
 const SIGNED_URL_SECONDS = 15 * 60;
 
 function respond(status: number, body: unknown): Response {
@@ -96,9 +98,10 @@ Deno.serve(async (req) => {
       // Admin powers need a two-step-verified session (migration 000025); the token was validated above.
       isAdmin: async (userId) => {
         if (!isVerifiedSession(token)) return false;
-        const { data, error } = await admin.from('app_admins').select('user_id').eq('user_id', userId).maybeSingle();
+        // In app_admins with the owner-approved authenticator as their only one (migration 000037).
+        const { data, error } = await admin.rpc('admin_ready', { p_user: userId });
         if (error) throw error;
-        return data !== null;
+        return data === true;
       },
       logAdmin: async (adminId, action, targetType, targetId, details) => {
         const { error } = await admin
@@ -106,7 +109,28 @@ Deno.serve(async (req) => {
           .insert({ admin_id: adminId, action, target_type: targetType, target_id: targetId, details: details ?? null });
         if (error) throw error;
       },
-      readPending: (userId) => download(UPLOADS, pendingPath(userId)),
+      // Fails closed: a counter error must not open the door to unlimited paid calls.
+      takeRateLimit: async (userId) => {
+        const { data, error } = await admin.rpc('take_rate_limit', {
+          p_user: userId,
+          p_bucket: 'avatar',
+          p_limit: SUBMITS_PER_HOUR,
+          p_window_seconds: 3600,
+        });
+        if (error) console.error('[avatar] rate limit check failed', error.message);
+        return !error && data === true;
+      },
+      // Claim the upload first: a parallel submit then finds nothing to check.
+      readPending: async (userId) => {
+        const claimed = `${userId}/processing-${crypto.randomUUID()}.jpg`;
+        const { error } = await admin.storage.from(UPLOADS).move(pendingPath(userId), claimed);
+        if (error) return null;
+        try {
+          return await download(UPLOADS, claimed);
+        } finally {
+          await admin.storage.from(UPLOADS).remove([claimed]);
+        }
+      },
       removePending: async (userId) => {
         await admin.storage.from(UPLOADS).remove([pendingPath(userId)]);
       },

@@ -1,0 +1,254 @@
+# Game companies, platforms, studios, publishers, tech and media brands.
+# Brand names that are also everyday words (Epic, Rare, Steam, Target, Polygon…) are
+# listed only in a form nobody would use by accident ("Epic Games", "Steam Support").
+Nintendo
+Nintendo of America
+Nintendo Switch
+Sony
+Sony Interactive
+PlayStation
+PlayStation Studios
+PS5
+Xbox
+Xbox Game Studios
+Xbox Support
+Microsoft
+Microsoft Gaming
+Sega
+Atlus
+Valve Software
+Steam Support
+Steam Official
+Epic Games
+Epic Games Store
+Ubisoft
+Electronic Arts
+EA Games
+EA Sports
+EA Support
+Activision
+Activision Blizzard
+Blizzard
+Blizzard Entertainment
+Battle.net
+Bethesda
+Bethesda Softworks
+Bethesda Game Studios
+ZeniMax
+Rockstar Games
+Rockstar North
+Take-Two
+Take Two Interactive
+2K Games
+Square Enix
+SquareSoft
+Capcom
+Konami
+Bandai Namco
+Namco
+FromSoftware
+From Software
+CD Projekt
+CD Projekt Red
+CDPR
+Bungie
+Naughty Dog
+Insomniac Games
+Santa Monica Studio
+Guerrilla Games
+Bend Studio
+Polyphony Digital
+Media Molecule
+Housemarque
+Respawn Entertainment
+Riot Games
+Mojang
+Mojang Studios
+Minecraft Official
+Roblox
+Roblox Support
+Tencent
+NetEase
+miHoYo
+HoYoverse
+Krafton
+Nexon
+NCSoft
+Netmarble
+Pearl Abyss
+Shift Up
+Level-5
+Game Freak
+The Pokemon Company
+Pokemon Company
+HAL Laboratory
+Retro Studios
+Monolith Soft
+Intelligent Systems
+Nintendo EPD
+PlatinumGames
+Platinum Games
+Larian
+Larian Studios
+Remedy Entertainment
+Obsidian Entertainment
+inXile
+Double Fine
+Arkane
+Arkane Studios
+id Software
+MachineGames
+Rare Ltd
+343 Industries
+Halo Studios
+Ninja Theory
+Playground Games
+Turn 10
+Compulsion Games
+Treyarch
+Infinity Ward
+Raven Software
+Sledgehammer Games
+High Moon Studios
+EA DICE
+BioWare
+Criterion Games
+Maxis
+Motive Studio
+Ubisoft Montreal
+Massive Entertainment
+Annapurna Interactive
+Devolver Digital
+Team17
+Paradox Interactive
+Focus Entertainment
+Embracer
+THQ Nordic
+Deep Silver
+Koei Tecmo
+Team Ninja
+Spike Chunsoft
+Arc System Works
+SNK
+Atari
+Hello Games
+Supergiant Games
+Team Cherry
+Re-Logic
+ConcernedApe Studio
+Innersloth
+Mediatonic
+Behaviour Interactive
+Facepunch
+Bohemia Interactive
+Frontier Developments
+Creative Assembly
+Firaxis
+Gearbox Software
+Warner Bros Games
+WB Games
+NetherRealm
+Monolith Productions
+Avalanche Software
+Square Enix Support
+Twitch Support
+YouTube
+YouTube Gaming
+Discord
+Reddit
+Twitter
+Facebook
+Instagram
+TikTok
+Snapchat
+WhatsApp
+Meta Quest
+Oculus
+Google
+Google Play
+App Store
+Amazon Games
+Prime Gaming
+Netflix
+Netflix Games
+Disney
+Lucasfilm
+Pixar
+DreamWorks
+Warner Bros
+Universal Pictures
+Crunchyroll
+Spotify
+Nvidia
+GeForce
+AMD
+Radeon
+Qualcomm
+Razer
+Logitech
+SteelSeries
+HyperX
+Turtle Beach
+Alienware
+Asus
+ROG Asus
+MSI Gaming
+Samsung
+Lenovo
+HP Omen
+SpaceX
+OpenAI
+ChatGPT
+Anthropic
+Claude AI
+Microsoft Support
+Apple Support
+Google Support
+Supabase
+Cloudflare
+PayPal
+Venmo
+Cash App
+Ko-fi
+Patreon
+Mastercard
+IGN
+GameSpot
+Kotaku
+Eurogamer
+Metacritic
+OpenCritic
+Game Informer
+PC Gamer
+Rock Paper Shotgun
+Giant Bomb
+Destructoid
+Digital Foundry
+The Game Awards
+Summer Game Fest
+GameStop
+Best Buy
+Walmart
+EB Games
+Humble Bundle
+Green Man Gaming
+GOG
+GOG Galaxy
+itch.io
+Unity Technologies
+Unreal Engine
+Godot Engine
+ESL Gaming
+BLAST Premier
+EVO Championship
+FIFA
+UEFA
+NBA
+NFL
+MLB
+NHL
+UFC
+WWE
+Formula 1
+F1 Official
+Olympics

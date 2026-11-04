@@ -7,6 +7,7 @@ import { TERMS_VERSION } from '@/constants/legal';
 import type { LoginInput, RegisterInput } from '@/utils/authSchemas';
 
 import { isSupabaseConfigured, supabase } from './supabase';
+import { nameProblemMessage } from '@/utils/nameRules';
 
 export type AuthResult = { ok: true } | { ok: false; cancelled: true; error?: undefined } | { ok: false; cancelled?: false; error: string };
 
@@ -176,20 +177,17 @@ export async function signInWithEmail({ email, password }: LoginInput, captchaTo
   }
 }
 
-export async function isUsernameAvailable(username: string): Promise<boolean | null> {
-  const { data, error } = await supabase.rpc('is_username_available', { candidate: username });
-  return error ? null : data;
-}
-
 /**
- * Email sign-up. The username travels in user metadata and is claimed by the
- * `handle_new_user` trigger (migration 000002), which creates the profile row.
+ * Email sign-up. The permanent name travels in user metadata and is claimed by the
+ * `handle_new_user` trigger (migrations 000002, 000038), which creates the profile row.
  */
 export async function signUpWithEmail({ username, email, password }: RegisterInput, captchaToken?: string): Promise<SignUpResult> {
   if (!isSupabaseConfigured) return { ok: false, error: toAuthErrorMessage(null) };
   try {
-    const available = await isUsernameAvailable(username);
-    if (available === false) return { ok: false, error: 'That username is already taken.' };
+    // Every permanent-name rule (migration 000038). If the check can't run, the server
+    // still enforces it: a rejected name becomes player_xxxxxx, chosen on first sign-in.
+    const { data: problem } = await supabase.rpc('check_name', { p_kind: 'permanent', p_name: username });
+    if (problem) return { ok: false, error: nameProblemMessage(problem, 'permanent') };
 
     const { data, error } = await supabase.auth.signUp({
       email,

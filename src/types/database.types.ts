@@ -33,6 +33,12 @@ export type Database = {
           now_playing_visibility: Database['public']['Enums']['now_playing_visibility'];
           /** Who can see this player's backlog (migration 000035). */
           backlog_visibility: 'public' | 'private';
+          /** Changeable name, any alphabet; null = show `username` (migration 000038). */
+          display_name: string | null;
+          /** Server-stamped; the display name can change once a day. */
+          display_name_changed_at: Timestamp | null;
+          /** false = a player_xxxxxx account that hasn't picked its permanent name yet. */
+          username_chosen: boolean;
           updated_at: Timestamp;
         };
         Insert: {
@@ -43,6 +49,9 @@ export type Database = {
           ui_theme?: Database['public']['Enums']['ui_theme'];
           now_playing_visibility?: Database['public']['Enums']['now_playing_visibility'];
           backlog_visibility?: 'public' | 'private';
+          display_name?: string | null;
+          display_name_changed_at?: Timestamp | null;
+          username_chosen?: boolean;
           updated_at?: Timestamp;
         };
         Update: {
@@ -53,6 +62,9 @@ export type Database = {
           ui_theme?: Database['public']['Enums']['ui_theme'];
           now_playing_visibility?: Database['public']['Enums']['now_playing_visibility'];
           backlog_visibility?: 'public' | 'private';
+          display_name?: string | null;
+          display_name_changed_at?: Timestamp | null;
+          username_chosen?: boolean;
           updated_at?: Timestamp;
         };
         Relationships: [];
@@ -341,9 +353,9 @@ export type Database = {
 
       /** App admins (migration 000019): may pin lists to Home. Readable only for your own row. */
       app_admins: {
-        Row: { user_id: string; created_at: Timestamp };
-        Insert: { user_id: string; created_at?: Timestamp };
-        Update: { user_id?: string; created_at?: Timestamp };
+        Row: { user_id: string; created_at: Timestamp; mfa_factor_id: string | null };
+        Insert: { user_id: string; created_at?: Timestamp; mfa_factor_id?: string | null };
+        Update: { user_id?: string; created_at?: Timestamp; mfa_factor_id?: string | null };
         Relationships: [];
       };
 
@@ -610,6 +622,8 @@ export type Database = {
       is_app_admin: { Args: Record<string, never>; Returns: boolean };
       /** In app_admins (grants nothing; lets the app offer the code prompt). */
       is_app_admin_member: { Args: Record<string, never>; Returns: boolean };
+      /** The owner approved (pinned) your authenticator, migration 000037. */
+      admin_factor_approved: { Args: Record<string, never>; Returns: boolean };
       /** Admin activity log, newest first (verified admins only). */
       admin_activity: {
         Args: { p_limit?: number };
@@ -666,6 +680,24 @@ export type Database = {
       set_list_pin: { Args: { p_list_id: string; p_rank: number | null }; Returns: undefined };
       /** A smart list's games, live (migration 000023). Null when not smart / not visible. */
       smart_list_games: { Args: { p_list_id: string }; Returns: Json | null };
+      /** List cards: each visible smart list's game count + first 4 game ids (migration 000036). */
+      /** What's wrong with a name, or null (migration 000038). Callable before sign-in. */
+      check_name: {
+        Args: { p_kind: 'permanent' | 'display'; p_name: string };
+        Returns: 'format' | 'taken' | 'too_close' | 'language' | 'reserved' | null;
+      };
+      /** Names + official badge for up to 200 players (migration 000038). */
+      profile_names: {
+        Args: { p_ids: string[] };
+        Returns: { id: string; username: string; display_name: string | null; is_official: boolean }[];
+      };
+      official_user_ids: { Args: Record<string, never>; Returns: string[] };
+      /** Verified admins only; logged (migration 000038). */
+      admin_reset_display_name: { Args: { p_user: string }; Returns: undefined };
+      smart_list_previews: {
+        Args: { p_list_ids: string[] };
+        Returns: { list_id: string; game_count: number; preview_game_ids: number[] }[];
+      };
       /** A player's whole ratings list with game metadata (migration 000016). */
       user_ratings_table: {
         Args: { p_user_id: string };

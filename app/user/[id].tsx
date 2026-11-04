@@ -17,6 +17,7 @@ import { useAuthStore } from '@/hooks/useAuth';
 import { useIsDesktop } from '@/hooks/useIsDesktop';
 import { useProfile } from '@/hooks/useProfile';
 import { MembersOnly } from '@/components/auth/MembersOnly';
+import { shownName } from '@/utils/nameRules';
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -87,13 +88,13 @@ export default function UserProfileScreen() {
 
   return (
     <ScrollView className="flex-1 bg-retrogamingpc-dark" contentContainerClassName="gap-3 p-3">
-      <Stack.Screen options={{ title: player.username }} />
+      <Stack.Screen options={{ title: shownName(player.username, player.display_name) }} />
       <ProfileHeader
         profile={player}
         actions={
           <View className="gap-2">
             <MembersOnly feature="add friends" fallback={null}>
-              <FriendButton otherId={player.id} otherName={player.username} />
+              <FriendButton otherId={player.id} otherName={shownName(player.username, player.display_name)} />
             </MembersOnly>
             <ProfileSafetyActions userId={player.id} username={player.username} />
           </View>

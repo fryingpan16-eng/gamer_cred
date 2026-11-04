@@ -7,6 +7,7 @@ import type { ReviewFormValues } from '@/utils/reviewSchemas';
 import { queryKeys } from '@/utils/queryKeys';
 
 import { useAuthStore } from './useAuth';
+import { refreshFeeds } from './useFeed';
 import { showToast } from './useToastStore';
 
 function useViewerId(): string | null {
@@ -77,18 +78,24 @@ export function useSaveReview() {
         );
       }
     },
-    onSettled: () => {
+    onSettled: (_review, _error, vars) => {
       if (!viewerId) return;
-      void queryClient.invalidateQueries({ queryKey: queryKeys.reviews.all() });
+      const { gameId } = vars;
+      // Other review lists are marked stale (refresh when next shown); this game's and your own refetch now.
+      void queryClient.invalidateQueries({ queryKey: queryKeys.reviews.all(), refetchType: 'none' });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.reviews.mineAll(viewerId) });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.reviews.byUser(viewerId) });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.reviews.byGame(gameId) });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.reviews.browseGame(gameId) });
       void queryClient.invalidateQueries({ queryKey: queryKeys.nowPlaying.byUser(viewerId) });
-      void queryClient.invalidateQueries({ queryKey: queryKeys.feed.all() });
-      void queryClient.invalidateQueries({ queryKey: queryKeys.games.reviewsAll() });
-      void queryClient.invalidateQueries({ queryKey: queryKeys.games.reviewStatsAll() });
-      void queryClient.invalidateQueries({ queryKey: queryKeys.games.friendReviewsAll() });
-      void queryClient.invalidateQueries({ queryKey: queryKeys.stats.all() });
-      void queryClient.invalidateQueries({ queryKey: queryKeys.backlog.all() }); // rating a game takes it off the backlog (000035)
+      // Drafts never appear in feeds; a publish reloads them from the top.
+      if (vars.status === 'published') refreshFeeds(queryClient);
+      void queryClient.invalidateQueries({ queryKey: queryKeys.games.reviewStats(gameId) });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.stats.byUser(viewerId) });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.backlog.byUser(viewerId) }); // rating a game takes it off the backlog (000035)
       // A review's score is also the user's quick rating (sync trigger, migration 000015).
-      void queryClient.invalidateQueries({ queryKey: queryKeys.ratings.all() });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.ratings.byUser(viewerId) });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.ratings.ofUser(viewerId) });
     },
   });
 }
@@ -119,8 +126,7 @@ export function useDeleteReview() {
     },
     onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.reviews.all() });
-      void queryClient.invalidateQueries({ queryKey: queryKeys.feed.all() });
-      void queryClient.invalidateQueries({ queryKey: queryKeys.games.reviewsAll() });
+      refreshFeeds(queryClient);
       void queryClient.invalidateQueries({ queryKey: queryKeys.games.reviewStatsAll() });
       void queryClient.invalidateQueries({ queryKey: queryKeys.games.friendReviewsAll() });
       void queryClient.invalidateQueries({ queryKey: queryKeys.stats.all() });

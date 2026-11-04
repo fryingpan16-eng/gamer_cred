@@ -66,7 +66,9 @@ export async function searchUsers(
   let profilesQuery = supabase
     .from('profiles')
     .select('id, username, avatar_url')
+    // Permanent names only; player_xxxxxx accounts appear once they've picked theirs (000038).
     .ilike('username', `%${escapeLike(term)}%`)
+    .eq('username_chosen', true)
     .neq('id', viewerId)
     .order('username')
     .limit(USER_SEARCH_LIMIT);

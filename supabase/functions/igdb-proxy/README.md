@@ -147,11 +147,23 @@ ratings or publisher (e.g. the Game & Watch "Zelda") are dropped too — use an
 
 - **Per-game records** (`game:<v>:igdb:<id>`, 7 days) are what lookups use:
   cached games are served from the cache, only missing ones are fetched, and
-  every game search also refreshes the records of the games it returns.
+  every game search also refreshes the records of the games it returns. A game
+  page refreshes the record too, without its page-only fields (summary,
+  screenshots, PC specs…), so lookups stay small.
+- **Misses are remembered.** Ids IGDB doesn't have (or curation drops) and game
+  / studio pages that 404 get an empty row, fresh for 24 h, so they aren't
+  refetched on every request. An `include` override skips it.
+- **One search entry per query.** Searches are fetched at the largest limit and
+  cut to the requested `limit`, so the limit is not part of the cache key.
 - Collection checks are batched (one IGDB call for every unchecked bundle in a
   request) and cached as `bundle-check:<v>:igdb:<id>` for 30 days.
 - Identical concurrent cache misses share one upstream call; all IGDB calls go
-  through a limiter: ≤ 4 requests/second, ≤ 8 in flight.
+  through a limiter: ≤ 4 requests/second, ≤ 8 in flight, ≤ 32 waiting (more
+  answers 503 "busy" instead of queueing past every caller's timeout).
+- **Per-user budgets** (`take_rate_limit`): 120 requests/min (guests 30); of
+  those, 40 cache misses/min reach IGDB (guests 10); RAWG (monthly-capped) gets
+  30 calls/hour (guests 5) and fails closed, so a game page past the budget just
+  skips PC specs, and a people search past it answers 429.
 - `CACHE_VERSION` (in the keys) only needs bumping for **shape** changes the
   rules version can't detect, e.g. renaming a field in the cached JSON.
 

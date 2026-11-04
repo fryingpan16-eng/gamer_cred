@@ -40,7 +40,7 @@ const INDUSTRY_TABS: readonly RetroGamingPCTabItem<IndustryMode>[] = [
 const PLACEHOLDERS: Record<SearchEntity, string> = {
   games: 'Search games by title…',
   companies: 'Search studios, developers, publishers…',
-  users: 'Search players by username…',
+  users: 'Search players by permanent name…',
   lists: 'Search lists by title or description…',
 };
 const PEOPLE_PLACEHOLDER = 'Search directors, writers, composers…';

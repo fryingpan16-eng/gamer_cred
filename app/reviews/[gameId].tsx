@@ -1,6 +1,7 @@
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { FlatList, Pressable, Text, View } from 'react-native';
 
+import { UserName } from '@/components/user/UserName';
 import { GuestPrompt } from '@/components/auth/MembersOnly';
 import { ReviewCard } from '@/components/review/ReviewCard';
 import { Thumbnail } from '@/components/search/Thumbnail';
@@ -53,9 +54,7 @@ function AlsoRated({ gameId }: { gameId: number }) {
             className="flex-row items-center gap-2"
           >
             <Thumbnail uri={f.avatar_url} fallback={f.username} shape="square" accessibilityLabel="" />
-            <Text className="flex-1 text-retrogamingpc-sm font-bold text-retrogamingpc-text-bright" numberOfLines={1}>
-              {f.username}
-            </Text>
+            <UserName userId={f.user_id} username={f.username} className="flex-1 text-retrogamingpc-sm font-bold text-retrogamingpc-text-bright" numberOfLines={1} />
             <View pointerEvents="none">
               <RetroGamingPCRating rating={reviewRating(f)} size="compact" expanded={false} />
             </View>

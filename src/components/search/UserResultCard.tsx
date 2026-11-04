@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 
+import { UserName } from '@/components/user/UserName';
 import { RetroGamingPCBadge, RetroGamingPCButton, RetroGamingPCCard } from '@/components/ui';
 import type { UserSearchResult } from '@/services/users';
 
@@ -21,9 +22,7 @@ export function UserResultCard({ user, pending, onSendRequest, onRespond }: User
     <RetroGamingPCCard className="flex-row items-center gap-3">
       <Thumbnail uri={user.avatar_url} fallback={user.username} shape="square" accessibilityLabel={`${user.username} avatar`} />
       <View className="flex-1 gap-1">
-        <Text className="text-retrogamingpc-base font-bold text-retrogamingpc-text-bright" numberOfLines={1}>
-          {user.username}
-        </Text>
+        <UserName userId={user.id} username={user.username} className="text-retrogamingpc-base font-bold text-retrogamingpc-text-bright" numberOfLines={1} />
         {relation.state === 'friends' ? <RetroGamingPCBadge label="Friends" variant="main" /> : null}
         {relation.state === 'outgoing' || (relation.state === 'declined' && relation.direction === 'outgoing') ? (
           // A declined outgoing request is shown as still pending: declines stay private.

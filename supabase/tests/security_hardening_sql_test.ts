@@ -20,8 +20,8 @@ Deno.test('database filter: blocks the shared "blocked" samples and allows the "
 
 Deno.test('objectionable usernames, list text, reviews, notes and devices are rejected; clean edits and old rows are fine', async () => {
   const db = await freshDb();
-  await assertRejects(() => asUser(db, ME, `update public.profiles set username = 'big_fuck_99' where id = $1`, [ME]), Error, 'keep it clean');
-  await asUser(db, ME, `update public.profiles set username = 'clean_name' where id = $1`, [ME]);
+  await assertRejects(() => asUser(db, ME, `update public.profiles set display_name = 'big fuck 99' where id = $1`, [ME]), Error, 'keep it clean');
+  await asUser(db, ME, `update public.profiles set display_name = 'Clean Name' where id = $1`, [ME]);
 
   await assertRejects(() => asUser(db, ME, `insert into public.lists (user_id, title) values ($1, 'shit list')`, [ME]), Error, 'keep it clean');
   await assertRejects(() => asUser(db, ME, `insert into public.lists (user_id, title, description) values ($1, 'Fine', 'you cunt')`, [ME]));
@@ -104,7 +104,7 @@ Deno.test('sign-up names that fail the filter become neutral', async () => {
   };
   assertEquals(await signUp('00000000-0000-0000-0000-0000000000d1', { username: 'nice_player' }), 'nice_player');
   const chosen = await signUp('00000000-0000-0000-0000-0000000000d2', { username: 'fuck_off' });
-  assertEquals(/^[a-z0-9_]+_[0-9a-f]{4}$/.test(chosen) && !chosen.includes('fuck'), true);
+  assertEquals(/^player_[0-9a-f]{6}$/.test(chosen), true); // never built from the rejected name (000037)
   const google = await signUp('00000000-0000-0000-0000-0000000000d3', { full_name: 'Shit Head' });
   assertEquals(google.startsWith('player_'), true);
 });

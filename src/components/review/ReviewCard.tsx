@@ -6,6 +6,7 @@ import { PlayedOnBadge } from '@/components/game/PlayedOnBadge';
 import { ReportLink } from '@/components/safety/ReportLink';
 import { Thumbnail } from '@/components/search/Thumbnail';
 import { RetroGamingPCBadge, RetroGamingPCCard, RetroGamingPCRating } from '@/components/ui';
+import { UserName, useShownName } from '@/components/user/UserName';
 import { LIKE_COLOR } from '@/constants/likeColor';
 import { useIsGuest } from '@/hooks/useAuth';
 import { useToggleReviewLike } from '@/hooks/useReviewBrowser';
@@ -80,6 +81,7 @@ export function ReviewCard({
 }: ReviewCardProps) {
   const isMine = review.userId === viewerId;
   const author = review.author;
+  const authorName = useShownName(author?.id, author?.username ?? '').name;
   const gameName = game?.name ?? `Game #${review.gameId}`;
   const openReview = () => router.push({ pathname: '/review/[id]', params: { id: review.id } });
   const openAuthor = () => author && router.push(isMine ? '/profile' : { pathname: '/user/[id]', params: { id: author.id } });
@@ -91,20 +93,24 @@ export function ReviewCard({
       className="gap-2"
       onPress={openReview}
       accessibilityRole="link"
-      accessibilityLabel={`${showAuthor && author ? `${author.username}'s review` : 'Review'}${showGame ? ` of ${gameName}` : ''}. Open review`}
+      accessibilityLabel={`${showAuthor && author ? `${authorName}'s review` : 'Review'}${showGame ? ` of ${gameName}` : ''}. Open review`}
     >
       <View className="flex-row gap-3">
         {showAuthor && author ? (
-          <Pressable accessibilityRole="link" accessibilityLabel={`Open ${author.username}'s profile`} onPress={openAuthor} hitSlop={4}>
+          <Pressable accessibilityRole="link" accessibilityLabel={`Open ${authorName}'s profile`} onPress={openAuthor} hitSlop={4}>
             <Thumbnail uri={author.avatar_url} fallback={author.username} shape="square" accessibilityLabel="" />
           </Pressable>
         ) : null}
         <View className="flex-1 gap-0.5">
           {showAuthor ? (
             <View className="flex-row flex-wrap items-center gap-1">
-              <Text onPress={openAuthor} className="text-retrogamingpc-base font-bold text-retrogamingpc-text-bright" numberOfLines={1}>
-                {author?.username ?? 'Unknown player'}
-              </Text>
+              {author ? (
+                <Text onPress={openAuthor} numberOfLines={1}>
+                  <UserName userId={author.id} username={author.username} className="text-retrogamingpc-base font-bold text-retrogamingpc-text-bright" />
+                </Text>
+              ) : (
+                <Text className="text-retrogamingpc-base font-bold text-retrogamingpc-text-bright">Unknown player</Text>
+              )}
               {isMine ? <RetroGamingPCBadge label="You" variant="nowPlaying" /> : null}
               {showGame ? (
                 <Text className="text-retrogamingpc-sm text-retrogamingpc-text">
@@ -155,8 +161,8 @@ export function ReviewCard({
                 targetType: 'review',
                 targetId: review.id,
                 targetUserId: review.userId,
-                label: `${author.username}'s review`,
-                ownerName: author.username,
+                label: `${authorName}'s review`,
+                ownerName: authorName,
               }}
             />
           ) : null}

@@ -6,6 +6,7 @@ import { RetroGamingPCAlert } from '@/components/ui';
 import { useBacklog } from '@/hooks/useBacklog';
 import { useProfile, useViewerId } from '@/hooks/useProfile';
 import { BACKLOG_MAX } from '@/services/backlog';
+import { shownName } from '@/utils/nameRules';
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -18,7 +19,7 @@ export default function BacklogScreen() {
   const isOwner = validId && userId === viewerId;
   const hidden = !isOwner && profile.data?.backlog_visibility === 'private';
   const backlog = useBacklog(validId && !hidden ? userId : null);
-  const title = isOwner ? 'Your Backlog' : profile.data ? `${profile.data.username}’s Backlog` : 'Backlog';
+  const title = isOwner ? 'Your Backlog' : profile.data ? `${shownName(profile.data.username, profile.data.display_name)}’s Backlog` : 'Backlog';
 
   return (
     <View className="flex-1 bg-retrogamingpc-dark">
