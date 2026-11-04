@@ -28,7 +28,7 @@ export function useReviewBrowser(gameId: number | null, scope: ReviewScope, sort
 /** The first few reviews (the game page's preview). */
 export function useReviewPreview(gameId: number, sort: ReviewSort, count: number) {
   return useQuery({
-    queryKey: [...queryKeys.reviews.browse(gameId, 'community', sort), 'preview', count],
+    queryKey: queryKeys.reviews.preview(gameId, sort, count),
     queryFn: () => browseGameReviews(gameId, 'community', sort, 0, count),
     staleTime: 60_000,
   });
@@ -94,7 +94,7 @@ export function useToggleReviewLike() {
     onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.reviews.likesAll() });
       // "Popular" order may change.
-      void queryClient.invalidateQueries({ queryKey: [...queryKeys.reviews.all(), 'browse'] });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.reviews.browseAll() });
     },
   });
 }

@@ -37,7 +37,10 @@ export const queryKeys = {
     byUser: (userId: string) => [...queryKeys.reviews.all(), 'user', userId] as const,
     detail: (reviewId: string) => [...queryKeys.reviews.all(), 'detail', reviewId] as const,
     /** The review browser: one game, Community or Friends, in a sort order (migration 000030). */
-    browse: (gameId: number, scope: string, sort: string) => [...queryKeys.reviews.all(), 'browse', gameId, scope, sort] as const,
+    browseAll: () => [...queryKeys.reviews.all(), 'browse'] as const,
+    browse: (gameId: number, scope: string, sort: string) => [...queryKeys.reviews.browseAll(), gameId, scope, sort] as const,
+    /** The game page's first few community reviews. */
+    preview: (gameId: number, sort: string, count: number) => [...queryKeys.reviews.browse(gameId, 'community', sort), 'preview', count] as const,
     /** ♥ on reviews: yours, plus counts on your own reviews. Ids sorted so equal sets share an entry. */
     likesAll: () => [...queryKeys.reviews.all(), 'likes'] as const,
     likes: (viewerId: string, reviewIds: readonly string[]) =>

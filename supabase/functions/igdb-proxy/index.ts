@@ -24,6 +24,8 @@
  */
 import { createClient } from '@supabase/supabase-js';
 
+import { createConcurrencyLimiter } from './concurrency.ts';
+
 import {
   COMPANY_GAMES_MAX,
   IGDB_ENTITY_TYPES,
@@ -248,22 +250,16 @@ function getTwitchToken(forceRefresh = false): Promise<string> {
 const IGDB_MIN_INTERVAL_MS = 250;
 const IGDB_MAX_CONCURRENT = 8;
 let igdbNextSlot = 0;
-let igdbActive = 0;
-const igdbWaiters: (() => void)[] = [];
+const igdbLimiter = createConcurrencyLimiter(IGDB_MAX_CONCURRENT);
 
-async function withIgdbRateLimit<T>(task: () => Promise<T>): Promise<T> {
-  if (igdbActive >= IGDB_MAX_CONCURRENT) await new Promise<void>((resolve) => igdbWaiters.push(resolve));
-  igdbActive++;
-  try {
+function withIgdbRateLimit<T>(task: () => Promise<T>): Promise<T> {
+  return igdbLimiter.run(async () => {
     const now = Date.now();
     const start = Math.max(now, igdbNextSlot);
     igdbNextSlot = start + IGDB_MIN_INTERVAL_MS;
     if (start > now) await new Promise((r) => setTimeout(r, start - now));
     return await task();
-  } finally {
-    igdbActive--;
-    igdbWaiters.shift()?.();
-  }
+  });
 }
 
 function igdbRequest<T>(endpoint: string, body: string, retried = false): Promise<T> {
