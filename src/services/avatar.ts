@@ -79,7 +79,10 @@ export type HeldPicture = {
   imageUrl: string | null;
 };
 
-type AvatarFunctionRequest = { action: 'submit' } | { action: 'admin_list' } | { action: 'admin_decide'; user_id: string; approve: boolean };
+type AvatarFunctionRequest =
+  | { action: 'submit' }
+  | { action: 'admin_list' }
+  | { action: 'admin_decide'; user_id: string; approve: boolean; held_at: string };
 
 async function invokeAvatar<T>(body: AvatarFunctionRequest): Promise<T> {
   const { data, error } = await supabase.functions.invoke<ApiEnvelope<T>>('avatar', { body });
@@ -120,8 +123,9 @@ export async function fetchHeldAvatars(): Promise<HeldPicture[]> {
 }
 
 /** Admin: publish (approve) or discard a held picture. */
-export async function decideHeldAvatar(userId: string, approve: boolean): Promise<void> {
-  await invokeAvatar({ action: 'admin_decide', user_id: userId, approve });
+/** `heldAt` = the picture's createdAt as listed, so a newer upload is never approved unseen. */
+export async function decideHeldAvatar(userId: string, approve: boolean, heldAt: string): Promise<void> {
+  await invokeAvatar({ action: 'admin_decide', user_id: userId, approve, held_at: heldAt });
 }
 
 /** Clears the profile picture (and deletes the uploaded file, if any). */

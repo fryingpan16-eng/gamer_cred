@@ -620,7 +620,7 @@ export type Database = {
         Args: Record<string, never>;
         Returns: { user_id: string; username: string; avatar_url: string | null; blocked_at: string }[];
       };
-      block_state: { Args: { p_user: string }; Returns: 'none' | 'blocked_by_me' | 'blocked_me' };
+      block_state: { Args: { p_user: string }; Returns: 'none' | 'blocked_by_me' };
       admin_reports: {
         Args: { p_status?: 'open' | 'actioned' | 'dismissed'; p_limit?: number };
         Returns: {

@@ -47,7 +47,8 @@ Deno.test('blocking hides both users from each other everywhere; others unaffect
   assertEquals((await asUser<{ username: string }>(db, THIRD, 'select * from public.my_blocked_users()')).map((r) => r.username), ['other']);
   assertEquals((await asUser(db, OTHER, 'select * from public.user_blocks')).length, 0);
   assertEquals((await asUser<{ s: string }>(db, THIRD, `select public.block_state('${OTHER}') as s`))[0]!.s, 'blocked_by_me');
-  assertEquals((await asUser<{ s: string }>(db, OTHER, `select public.block_state('${THIRD}') as s`))[0]!.s, 'blocked_me');
+  // The blocked player can't tell they were blocked (000033).
+  assertEquals((await asUser<{ s: string }>(db, OTHER, `select public.block_state('${THIRD}') as s`))[0]!.s, 'none');
   await asUser(db, THIRD, `select public.unblock_user('${OTHER}')`);
   assertEquals((await visibleTo(db, THIRD)).reviews, 1);
 });

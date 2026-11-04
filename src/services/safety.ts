@@ -27,7 +27,7 @@ function fail(error: PostgrestError, fallback: string): never {
 
 // ---- blocking -----------------------------------------------------------------
 
-export type BlockState = 'none' | 'blocked_by_me' | 'blocked_me';
+export type BlockState = 'none' | 'blocked_by_me';
 export type BlockedUser = { userId: string; username: string; avatarUrl: string | null; blockedAt: string };
 
 export async function blockUser(userId: string): Promise<void> {

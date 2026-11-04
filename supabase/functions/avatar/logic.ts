@@ -53,7 +53,8 @@ export type HeldPicture = { userId: string; username: string | null; reason: str
 export type AvatarRequest =
   | { action: 'submit' }
   | { action: 'admin_list' }
-  | { action: 'admin_decide'; user_id: string; approve: boolean };
+  /** `held_at`: the held picture's created_at as the admin saw it; a newer upload is never approved blind. */
+  | { action: 'admin_decide'; user_id: string; approve: boolean; held_at: string };
 
 export type AvatarDeps = {
   callerId: string | null;
@@ -69,6 +70,8 @@ export type AvatarDeps = {
   publish: (userId: string, image: Uint8Array) => Promise<unknown>;
   hold: (userId: string, image: Uint8Array, reason: string, scores: SafeSearch | null) => Promise<void>;
   readHeld: (userId: string) => Promise<Uint8Array | null>;
+  /** created_at of the held picture's review row, or null when nothing is held. */
+  heldVersion: (userId: string) => Promise<string | null>;
   clearHeld: (userId: string) => Promise<void>;
   listHeld: () => Promise<HeldPicture[]>;
 };
@@ -83,8 +86,15 @@ export function parseRequest(body: unknown): AvatarRequest | null {
   const b = body as Record<string, unknown>;
   if (b.action === 'submit') return { action: 'submit' };
   if (b.action === 'admin_list') return { action: 'admin_list' };
-  if (b.action === 'admin_decide' && typeof b.user_id === 'string' && UUID.test(b.user_id) && typeof b.approve === 'boolean') {
-    return { action: 'admin_decide', user_id: b.user_id.toLowerCase(), approve: b.approve };
+  if (
+    b.action === 'admin_decide' &&
+    typeof b.user_id === 'string' &&
+    UUID.test(b.user_id) &&
+    typeof b.approve === 'boolean' &&
+    typeof b.held_at === 'string' &&
+    b.held_at.length > 0
+  ) {
+    return { action: 'admin_decide', user_id: b.user_id.toLowerCase(), approve: b.approve, held_at: b.held_at };
   }
   return null;
 }
@@ -125,9 +135,14 @@ export async function handleAvatar(req: AvatarRequest | null, deps: AvatarDeps):
 
   if (req.action === 'admin_list') return ok({ pictures: await deps.listHeld() });
 
-  // admin_decide
+  // admin_decide — only the exact picture the admin was shown (checked before and after reading it).
+  const changed = 'This player sent a newer picture since you opened the queue. Refresh to review the new one.';
+  const before = await deps.heldVersion(req.user_id);
+  if (before === null) return fail(404, 'That picture is no longer waiting for review.');
+  if (before !== req.held_at) return fail(409, changed);
   const image = await deps.readHeld(req.user_id);
   if (!image) return fail(404, 'That picture is no longer waiting for review.');
+  if ((await deps.heldVersion(req.user_id)) !== req.held_at) return fail(409, changed);
   if (req.approve) await deps.publish(req.user_id, image);
   await deps.clearHeld(req.user_id);
   await deps.logAdmin(me, req.approve ? 'avatar.approve' : 'avatar.reject', 'user', req.user_id);

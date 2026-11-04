@@ -142,7 +142,7 @@ function HeldPictures() {
         <HeldPictureCard
           picture={item}
           busy={decide.isPending && decide.variables?.userId === item.userId}
-          onDecide={(approve) => decide.mutate({ userId: item.userId, approve })}
+          onDecide={(approve) => decide.mutate({ userId: item.userId, approve, heldAt: item.createdAt })}
         />
       )}
       ListEmptyComponent={<RetroGamingPCAlert tone="success" message="No pictures waiting. All clear." />}

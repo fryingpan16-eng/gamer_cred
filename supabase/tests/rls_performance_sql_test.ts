@@ -3,7 +3,7 @@
  * Behaviour is covered by the blocking / guest / admin tests; this checks the form.
  *   cd supabase/tests && deno test -A
  */
-import { assertEquals } from '@std/assert';
+import { assertEquals, assertRejects } from '@std/assert';
 
 import { asOwner, asUser, freshDb, ME, OTHER, THIRD } from './_setup.ts';
 
@@ -21,13 +21,14 @@ Deno.test('no row rule calls a helper per row any more', async () => {
   }
 });
 
-Deno.test('the hidden list covers both directions and nothing else', async () => {
+Deno.test('the hidden list covers both directions, and players cannot call it to learn who blocked them', async () => {
   const db = await freshDb();
   await asUser(db, ME, 'select public.block_user($1)', [OTHER]);
-  const mine = (await asUser<{ ids: string[] }>(db, ME, 'select public.my_hidden_user_ids() as ids'))[0]!.ids;
-  const theirs = (await asUser<{ ids: string[] }>(db, OTHER, 'select public.my_hidden_user_ids() as ids'))[0]!.ids;
-  const third = (await asUser<{ ids: string[] }>(db, THIRD, 'select public.my_hidden_user_ids() as ids'))[0]!.ids;
-  assertEquals([mine, theirs, third], [[OTHER], [ME], []]);
+  // It's no longer in the API-exposed schema.
+  await assertRejects(() => asUser(db, OTHER, 'select public.my_hidden_user_ids()'));
+  // (Row rules call it as the signed-in user; the API only exposes the public schema.)
+  const hidden = async (uid: string) => (await asUser<{ ids: string[] }>(db, uid, 'select private.hidden_user_ids() as ids'))[0]!.ids;
+  assertEquals([await hidden(ME), await hidden(OTHER), await hidden(THIRD)], [[OTHER], [ME], []]);
   // And it still hides profiles both ways.
   const names = async (uid: string) => (await asUser<{ username: string }>(db, uid, 'select username from public.profiles order by 1')).map((r) => r.username);
   assertEquals(await names(ME), ['me', 'third']);

@@ -131,6 +131,11 @@ Deno.serve(async (req) => {
         const { data } = await admin.from('avatar_reviews').select('held_path').eq('user_id', userId).maybeSingle();
         return data ? download(UPLOADS, data.held_path as string) : null;
       },
+      heldVersion: async (userId) => {
+        const { data, error } = await admin.from('avatar_reviews').select('created_at').eq('user_id', userId).maybeSingle();
+        if (error) throw error;
+        return data ? String(data.created_at) : null;
+      },
       clearHeld: async (userId) => {
         await admin.storage.from(UPLOADS).remove([heldPath(userId)]);
         const { error } = await admin.from('avatar_reviews').delete().eq('user_id', userId);

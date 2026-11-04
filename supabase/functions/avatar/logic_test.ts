@@ -31,7 +31,8 @@ Deno.test('parseVisionResponse reads the annotation; errors and junk → null / 
 
 Deno.test('parseRequest', () => {
   assertEquals(parseRequest({ action: 'submit' }), { action: 'submit' });
-  assertEquals(parseRequest({ action: 'admin_decide', user_id: OTHER, approve: true }), { action: 'admin_decide', user_id: OTHER, approve: true });
+  assertEquals(parseRequest({ action: 'admin_decide', user_id: OTHER, approve: true, held_at: 'v1' }), { action: 'admin_decide', user_id: OTHER, approve: true, held_at: 'v1' });
+  assertEquals(parseRequest({ action: 'admin_decide', user_id: OTHER, approve: true }), null); // which picture?
   assertEquals(parseRequest({ action: 'admin_decide', user_id: 'nope', approve: true }), null);
   assertEquals(parseRequest('x'), null);
 });
@@ -48,6 +49,7 @@ function fakes(over: Partial<AvatarDeps> = {}) {
     publish: async (id) => (log.push(`publish:${id}`), { id }),
     hold: async (id, _i, reason) => void log.push(`hold:${id}:${reason}`),
     readHeld: async () => img,
+    heldVersion: async () => 'v1',
     clearHeld: async (id) => void log.push(`clearHeld:${id}`),
     listHeld: async () => [],
     logAdmin: async (admin, action, _type, target) => void log.push(`log:${admin}:${action}:${target}`),
@@ -84,10 +86,27 @@ Deno.test('submit guards: signed out, nothing uploaded, too large', async () => 
 Deno.test('admin review: only admins; approve publishes the held picture, reject just clears it', async () => {
   assertEquals((await handleAvatar({ action: 'admin_list' }, fakes({ callerId: OTHER }).deps)).status, 403);
   let { deps, log } = fakes();
-  await handleAvatar({ action: 'admin_decide', user_id: OTHER, approve: true }, deps);
+  await handleAvatar({ action: 'admin_decide', user_id: OTHER, approve: true, held_at: 'v1' }, deps);
   assertEquals(log, [`publish:${OTHER}`, `clearHeld:${OTHER}`, `log:${ME}:avatar.approve:${OTHER}`]);
   ({ deps, log } = fakes());
-  await handleAvatar({ action: 'admin_decide', user_id: OTHER, approve: false }, deps);
+  await handleAvatar({ action: 'admin_decide', user_id: OTHER, approve: false, held_at: 'v1' }, deps);
   assertEquals(log, [`clearHeld:${OTHER}`, `log:${ME}:avatar.reject:${OTHER}`]);
-  assertEquals((await handleAvatar({ action: 'admin_decide', user_id: OTHER, approve: true }, fakes({ readHeld: async () => null }).deps)).status, 404);
+  assertEquals((await handleAvatar({ action: 'admin_decide', user_id: OTHER, approve: true, held_at: 'v1' }, fakes({ readHeld: async () => null }).deps)).status, 404);
+});
+
+Deno.test('admin_decide never approves a picture the admin was not shown', async () => {
+  // A newer picture replaced the one listed.
+  let { deps, log } = fakes({ heldVersion: async () => 'v2' });
+  let res = await handleAvatar({ action: 'admin_decide', user_id: OTHER, approve: true, held_at: 'v1' }, deps);
+  assertEquals(res.status, 409);
+  assertEquals(log, []);
+  // It changed while the image was being read.
+  let calls = 0;
+  ({ deps, log } = fakes({ heldVersion: async () => (++calls === 1 ? 'v1' : 'v2') }));
+  res = await handleAvatar({ action: 'admin_decide', user_id: OTHER, approve: true, held_at: 'v1' }, deps);
+  assertEquals(res.status, 409);
+  assertEquals(log, []);
+  // Nothing held any more.
+  ({ deps } = fakes({ heldVersion: async () => null }));
+  assertEquals((await handleAvatar({ action: 'admin_decide', user_id: OTHER, approve: true, held_at: 'v1' }, deps)).status, 404);
 });

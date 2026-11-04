@@ -138,7 +138,7 @@ export function useHeldAvatars(enabled = true) {
 export function useDecideHeldAvatar() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ userId, approve }: { userId: string; approve: boolean }) => decideHeldAvatar(userId, approve),
+    mutationFn: ({ userId, approve, heldAt }: { userId: string; approve: boolean; heldAt: string }) => decideHeldAvatar(userId, approve, heldAt),
     onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.safety.heldAvatars() });
       void queryClient.invalidateQueries({ queryKey: queryKeys.profiles.all() });
