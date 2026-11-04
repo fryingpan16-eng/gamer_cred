@@ -71,6 +71,15 @@ export type SystemRequirements = {
   sourceUrl: string;
 };
 
+/** A remaster of a game. Not a catalogue entry: it shares its original's page, ratings and reviews. */
+export type GameRemaster = {
+  id: number;
+  name: string;
+  year: number | null;
+  /** Platform abbreviations, e.g. "PS4". */
+  platforms: string[];
+};
+
 export type IgdbGameDetail = IgdbGameResult & {
   summary: string | null;
   storyline: string | null;
@@ -90,6 +99,8 @@ export type IgdbGameDetail = IgdbGameResult & {
   userRating: number | null;
   userRatingCount: number;
   systemRequirements: SystemRequirements | null;
+  /** Remasters of this game, oldest first (empty for most games). */
+  remasters: GameRemaster[];
 };
 
 export type IgdbDetailResponse = {

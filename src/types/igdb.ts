@@ -16,6 +16,7 @@ export {
   COMPANY_GAMES_MAX,
   type CompanyGameRole,
   type CreatorResult,
+  type GameRemaster,
   type IgdbCompanyDetail,
   type IgdbCompanyDetailRequest,
   type IgdbCompanyDetailResponse,

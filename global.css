@@ -29,7 +29,7 @@
   }
 
   .retrogamingpc-panel-header {
-    @apply bg-retrogamingpc-panel border-b border-b-retrogamingpc-accent px-2 py-1;
+    @apply bg-retrogamingpc-panel border-b border-b-retrogamingpc-accent h-9 gap-2 px-2;
   }
 
   .retrogamingpc-button {

@@ -11,6 +11,7 @@ import { ProfileRatings } from '@/components/profile/ProfileRatings';
 import { PublishedReviews } from '@/components/profile/PublishedReviews';
 import { RetroGamingPCAlert, RetroGamingPCButton, RetroGamingPCPanel, RetroGamingPCSpinner } from '@/components/ui';
 import { useAuthStore } from '@/hooks/useAuth';
+import { useIsDesktop } from '@/hooks/useIsDesktop';
 import { useProfile } from '@/hooks/useProfile';
 import { GuestScreen } from '@/components/auth/MembersOnly';
 
@@ -23,6 +24,7 @@ export default function ProfileScreen() {
   const userId = useAuthStore((s) => s.user?.id ?? null);
   const isGuest = useAuthStore((s) => s.isGuest);
   const profile = useProfile(isGuest ? null : userId);
+  const isDesktop = useIsDesktop();
 
   if (isGuest) return <GuestScreen title="Profile" feature="get a profile with your games, ratings, reviews and friends" />;
 
@@ -62,10 +64,11 @@ export default function ProfileScreen() {
           <NowPlayingShowcase userId={userId} isOwner visibility={profile.data.now_playing_visibility} />
           <FavoritesShowcase userId={userId} editable />
           <LikedGamesShowcase userId={userId} isOwner />
-          <BacklogShowcase profile={profile.data} isOwner />
+          {isDesktop ? <BacklogShowcase profile={profile.data} isOwner /> : null}
         </View>
         <View className="gap-3 md:flex-[2]">
           <ProfileRatings userId={userId} isOwner />
+          {isDesktop ? null : <BacklogShowcase profile={profile.data} isOwner />}
           <ProfileLists userId={userId} isOwner />
           <PublishedReviews userId={userId} isOwner />
         </View>

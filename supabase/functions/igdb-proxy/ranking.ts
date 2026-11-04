@@ -31,7 +31,18 @@ export function titleRank(name: string, query: string): number {
   return words.every((w) => n.split(' ').includes(w)) ? 2 : 3;
 }
 
-type RankableGame = { name?: string; entryType?: EntryType; total_rating_count?: number };
+type RankableGame = {
+  name?: string;
+  entryType?: EntryType;
+  total_rating_count?: number;
+  /** Other titles that should find this game (its remasters' names, remasters.ts). */
+  aliases?: readonly string[];
+};
+
+/** Best title match across the game's name and its aliases. */
+export function bestTitleRank(game: RankableGame, query: string): number {
+  return Math.min(...[game.name ?? '', ...(game.aliases ?? [])].map((n) => titleRank(n, query)));
+}
 
 export function rankGames<T extends RankableGame>(raw: readonly T[], query: string, limit: number): T[] {
   return raw
@@ -39,7 +50,7 @@ export function rankGames<T extends RankableGame>(raw: readonly T[], query: stri
     .filter(({ game }) => typeof game.name === 'string')
     .sort(
       (a, b) =>
-        titleRank(a.game.name!, query) - titleRank(b.game.name!, query) ||
+        bestTitleRank(a.game, query) - bestTitleRank(b.game, query) ||
         ENTRY_PRIORITY[a.game.entryType ?? 'game'] - ENTRY_PRIORITY[b.game.entryType ?? 'game'] ||
         (b.game.total_rating_count ?? 0) - (a.game.total_rating_count ?? 0) ||
         a.index - b.index, // keep IGDB's order otherwise

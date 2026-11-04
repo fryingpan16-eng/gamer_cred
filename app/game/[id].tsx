@@ -8,6 +8,7 @@ import { CollectionContents } from '@/components/game/EntryTypeBadge';
 import { FriendRatings } from '@/components/game/FriendRatings';
 import { GameFacts } from '@/components/game/GameFacts';
 import { GameHero } from '@/components/game/GameHero';
+import { RemastersPanel } from '@/components/game/RemastersPanel';
 import { ScreenshotStrip } from '@/components/game/ScreenshotStrip';
 import { SystemRequirementsPanel } from '@/components/game/SystemRequirementsPanel';
 import { RetroGamingPCAlert, RetroGamingPCButton, RetroGamingPCPanel, RetroGamingPCSpinner } from '@/components/ui';
@@ -130,6 +131,7 @@ export default function GameDetailScreen() {
               </View>
             </RetroGamingPCPanel>
           ) : null}
+          <RemastersPanel remasters={game.remasters ?? []} />
           <About summary={game.summary} storyline={game.storyline} />
           <FriendRatings gameId={game.id} />
           <ScreenshotStrip imageIds={game.screenshotIds} gameName={game.name} />

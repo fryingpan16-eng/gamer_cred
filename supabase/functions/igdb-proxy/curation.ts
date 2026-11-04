@@ -76,9 +76,14 @@ export function searchableGameTypes(): number[] {
   return [...new Set([...Object.keys(ENTRY_TYPE_BY_GAME_TYPE).map(Number), GAME_TYPE.BUNDLE])].sort((a, b) => a - b);
 }
 
-/** Apicalypse `where` clause for search (without the leading `where` / trailing `;`). */
-export function searchWhereClause(overrides: ReadonlyMap<number, OverrideAction>): string {
-  const base = `(version_parent = null & first_release_date != null & game_type = (${searchableGameTypes().join(',')}))`;
+/**
+ * Apicalypse `where` clause for search (without the leading `where` / trailing `;`).
+ * `withRemasters`: also fetch remasters, so a remaster's name can find its
+ * original (remasters.ts); curation still drops the remasters themselves.
+ */
+export function searchWhereClause(overrides: ReadonlyMap<number, OverrideAction>, options: { withRemasters?: boolean } = {}): string {
+  const types = options.withRemasters ? [...searchableGameTypes(), GAME_TYPE.REMASTER].sort((a, b) => a - b) : searchableGameTypes();
+  const base = `(version_parent = null & first_release_date != null & game_type = (${types.join(',')}))`;
   const included = [...overrides].filter(([, action]) => action === 'include').map(([id]) => id);
   return included.length > 0 ? `${base} | id = (${included.slice(0, 500).join(',')})` : base;
 }

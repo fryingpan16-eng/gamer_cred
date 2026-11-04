@@ -67,6 +67,8 @@ import { rankCompanies, rankGames } from './ranking.ts';
 import { releasePlatformOrder } from './platform_order.ts';
 import { chunk, companyGameIds, IGDB_PAGE_MAX, tagCompanyGames } from './company_games.ts';
 import * as rankingModule from './ranking.ts';
+import * as remastersModule from './remasters.ts';
+import { mapRemasters, REMASTER_DETAIL_FIELDS, remasterOriginals, type RawRemaster } from './remasters.ts';
 import { fetchRawgPcRequirements, RawgError, searchRawgCreators } from './rawg.ts';
 
 // -----------------------------------------------------------------------------
@@ -344,17 +346,26 @@ async function searchGames(query: string, limit: number): Promise<IgdbGameResult
   // Pre-filter at IGDB and fetch a wide pool: for broad terms IGDB's own ranking
   // puts fan games first, so official titles only appear deeper in the results.
   // Curation then drops the rest and ranking.ts orders by title match + popularity.
+  // Remasters are fetched too, only so their names can find the original (remasters.ts).
   const raw = await igdbRequest<RawGame[]>(
     'games',
     [
       `search "${q}";`,
       GAME_FIELDS,
-      `where ${searchWhereClause(await getOverrides())};`,
+      `where ${searchWhereClause(await getOverrides(), { withRemasters: true })};`,
       `limit ${SEARCH_CANDIDATE_LIMIT};`,
     ].join(' '),
   );
-  const { kept } = await curateGames(raw, curationDeps);
-  return mapGames(rankGames(kept, query, limit));
+  const aliases = remasterOriginals(raw);
+  const present = new Set(raw.map((g) => g.id));
+  const missing = [...aliases.keys()].filter((id) => !present.has(id));
+  const originals =
+    missing.length > 0
+      ? await igdbRequest<RawGame[]>('games', `${GAME_FIELDS} where id = (${missing.join(',')}); limit ${missing.length};`)
+      : [];
+  const { kept } = await curateGames([...raw, ...originals], curationDeps);
+  const withAliases = kept.map((g) => ({ ...g, aliases: aliases.get(g.id) ?? [] }));
+  return mapGames(rankGames(withAliases, query, limit));
 }
 
 type RawGameDetail = Omit<RawGame, 'involved_companies'> & {
@@ -368,6 +379,7 @@ type RawGameDetail = Omit<RawGame, 'involved_companies'> & {
   game_engines?: { name?: string }[];
   franchises?: { name?: string }[];
   involved_companies?: { developer?: boolean; publisher?: boolean; company?: { id: number; name?: string } }[];
+  remasters?: (RawRemaster | number)[];
   aggregated_rating?: number;
   aggregated_rating_count?: number;
   rating?: number;
@@ -379,7 +391,7 @@ const DETAIL_FIELDS = [
   'summary,storyline,screenshots.image_id,artworks.image_id,themes.name,game_modes.name,',
   'player_perspectives.name,game_engines.name,franchises.name,',
   'release_dates.date,release_dates.human,release_dates.platform.abbreviation,release_dates.platform.name,',
-  'aggregated_rating,aggregated_rating_count,rating,rating_count;',
+  `aggregated_rating,aggregated_rating_count,rating,rating_count,${REMASTER_DETAIL_FIELDS};`,
 ].join(' ');
 
 const PC_PLATFORM_NAMES = new Set(['PC', 'Mac', 'Linux', 'PC (Microsoft Windows)']);
@@ -426,6 +438,7 @@ async function fetchGameDetail(
     userRating: round(g.rating),
     userRatingCount: g.rating_count ?? 0,
     systemRequirements: null,
+    remasters: mapRemasters(g.remasters),
   };
 
   // PC requirements are best-effort: a RAWG outage or missing key never breaks the page.
@@ -569,6 +582,7 @@ function getRulesVersion(): Promise<string> {
   rulesVersionPromise ??= computeRulesVersion([
     curationModule,
     rankingModule,
+    remastersModule,
     GAME_FIELDS,
     DETAIL_FIELDS,
     mapGames,

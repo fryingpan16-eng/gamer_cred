@@ -14,6 +14,7 @@ import { ProfileSafetyActions } from '@/components/safety/ProfileSafetyActions';
 import { useBlockedUsers, useBlockState, useBlockUser } from '@/hooks/useSafety';
 import { RetroGamingPCAlert, RetroGamingPCButton, RetroGamingPCPanel, RetroGamingPCSpinner } from '@/components/ui';
 import { useAuthStore } from '@/hooks/useAuth';
+import { useIsDesktop } from '@/hooks/useIsDesktop';
 import { useProfile } from '@/hooks/useProfile';
 import { MembersOnly } from '@/components/auth/MembersOnly';
 
@@ -25,6 +26,7 @@ export default function UserProfileScreen() {
   const viewerId = useAuthStore((s) => s.user?.id ?? null);
   const validId = typeof id === 'string' && UUID_PATTERN.test(id);
   const profile = useProfile(validId ? id : null);
+  const isDesktop = useIsDesktop();
   // Blocked players' profiles are hidden by RLS; tell the blocker why (and let them unblock).
   const blockState = useBlockState(validId ? id : null);
   const blockedUsers = useBlockedUsers();
@@ -102,10 +104,11 @@ export default function UserProfileScreen() {
           <NowPlayingShowcase userId={player.id} isOwner={false} visibility={player.now_playing_visibility} />
           <FavoritesShowcase userId={player.id} editable={false} />
           <LikedGamesShowcase userId={player.id} isOwner={false} />
-          <BacklogShowcase profile={player} isOwner={false} />
+          {isDesktop ? <BacklogShowcase profile={player} isOwner={false} /> : null}
         </View>
         <View className="gap-3 md:flex-[2]">
           <ProfileRatings userId={player.id} isOwner={false} />
+          {isDesktop ? null : <BacklogShowcase profile={player} isOwner={false} />}
           <ProfileLists userId={player.id} isOwner={false} />
           <PublishedReviews userId={player.id} isOwner={false} />
         </View>

@@ -26,6 +26,7 @@ The core app features a bottom navigation bar (migrating to a desktop sidebar on
 1. **Home (\`app/(tabs)/index.tsx\`)**: one top tab bar (\`?tab=\`): **Community** (trending games + trending posts, migration 000020, then the community feed), **Friends** (friends' activity) and **Lists** (Curated Lists pinned by app admins via \`app_admins\` + \`set_list_pin\`, Your Lists with New List, Browse Lists). Lists: \`lists\` + \`list_items\` (migration 000019), page \`app/list/[id].tsx\`, searchable in the Search tab. Admins can also make **smart lists** (migration 000023, \`smart_rule\` + \`smart_list_games\`): a rule (type, tier, years, genre, platform, size) ranked by plain Gamer Cred average, saved in \`smart_list_cache\` and refreshed nightly (migration 000028; a changed rule recalculates on next view); a game qualifies with at least the 75th-percentile rating count for its type (min 3). The SQL tier bands mirror \`ratingRubric.ts\` (test-enforced).
 2. **Search (\`app/(tabs)/search.tsx\`)**: Unified search interface with tabs/filters for:
    - **Games**: Title, genre, and platform database search (via IGDB Edge Function cache).
+     Remasters are never their own entries (one entry per game): the original's page shows a Remastered badge + card (`RemastersPanel`, detail `remasters`), and a remaster's name finds the original in search (`igdb-proxy/remasters.ts`).
    - **Creators** (sub-tabs Studios · Directors & People): Developers, publishers, and key game creators (via IGDB Edge Function cache).
      Tapping a studio opens \`app/studio/[id].tsx\`: the company plus every game it developed or published (proxy action \`company\`), each linking to its game page.
    - **Users / Friends**: Search community profiles by username to view profiles and send friend requests.
@@ -38,7 +39,7 @@ The core app features a bottom navigation bar (migrating to a desktop sidebar on
 4. **Stats (\`app/(tabs)/stats.tsx\`)**: charts of the user's own logged games, computed in Postgres (\`stats_*\` functions, migration 000014). Menu driven by \`src/components/stats/statsConfig.ts\`; see \`src/components/stats/README.md\`.
 5. **Profile (\`app/(tabs)/profile.tsx\`)**:
    - **Public & Private View**: Displays active Now Playing 4-game grid and friend status.
-   - **Top 4 Favorites**: Showcase section for top 4 favorite games of all time.
+   - **Favourites**: four all-time favourite games (no numbering or reordering; ✕ on the cover removes, an empty slot picks).
    - **Reviews are one system**: every review preview is \`ReviewCard\` (\`src/components/review/ReviewCard.tsx\`); lists of a game's reviews are the browser \`app/reviews/[gameId].tsx\` (\`?tab=community|friends&sort=popular|recent|highest|lowest\`); one review is \`app/review/[id].tsx\`. Don't build another review list or card. Review likes (migration 000030) are private: counts only for the author.
    - **♥ Liked Games**: games liked with the game page's Like button (\`game_likes\`, migration 000029; one tap, never a rating). Profile shows the latest 8 + \`app/likes/[userId].tsx\`. Friends' likes appear in the Friends feed; smart lists can rank by likes; Stats → Liked Games breaks them down by series / studio / genre / era.
    - **Hardware & Platform Roster**: Grid of owned consoles/platforms with PC spec entry and 1 highlighted "Main" platform badge.

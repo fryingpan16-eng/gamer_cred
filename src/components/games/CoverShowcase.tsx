@@ -5,7 +5,8 @@ import { Pressable, Text, View } from 'react-native';
 import { CoverTile } from '@/components/profile/CoverTile';
 import { RetroGamingPCAlert, RetroGamingPCPanel, RetroGamingPCSpinner } from '@/components/ui';
 import { useGameLookup } from '@/hooks/useGames';
-import { ACTION_COLORS } from '@/constants/actionColors';
+
+import { CoverRemoveButton } from './CoverRemoveButton';
 
 export const SHOWCASE_PREVIEW = 8;
 
@@ -52,19 +53,7 @@ export function CoverShowcase({ title, gameIds, isPending, error, empty, headerR
                   >
                     <CoverTile game={game} gameId={id} loading={games.isPending} />
                   </Pressable>
-                  {onRemove ? (
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel={`Remove ${name}`}
-                      hitSlop={8}
-                      onPress={() => onRemove(id, name)}
-                      className="retrogamingpc-bevel absolute right-1 top-1 h-6 w-6 items-center justify-center bg-retrogamingpc-button"
-                    >
-                      <Text className="text-retrogamingpc-xs font-bold" style={{ color: ACTION_COLORS.cancel.text }}>
-                        ✕
-                      </Text>
-                    </Pressable>
-                  ) : null}
+                  {onRemove ? <CoverRemoveButton name={name} onPress={() => onRemove(id, name)} /> : null}
                   {tag ? <Text className="text-center text-retrogamingpc-xs text-retrogamingpc-text-bright">{tag}</Text> : null}
                 </View>
               );

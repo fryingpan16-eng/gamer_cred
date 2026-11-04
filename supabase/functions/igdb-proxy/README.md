@@ -23,6 +23,12 @@ A game is kept only if **all** of these hold (overrides aside):
 | it shows a **legitimacy signal** (below) | drops fan games IGDB lists as main games |
 | bundles hold ≥ `COLLECTION_MIN_BASE_GAMES` base games **that share a series or a developer** | keeps real collections and developer compilations, drops "Game + Season Pass" and unrelated retail bundles |
 
+**Remasters** are dropped as entries but not lost (`remasters.ts`): the game
+detail lists the original's remasters (`remasters`: name, year, platforms) for
+the game page's "Remastered" card, and search also fetches remasters so that a
+remaster's name finds its original (it ranks by the best of its own name and
+its remasters' names). Ratings and reviews of a remaster go on the original.
+
 | IGDB `game_type` | Result | `entryType` |
 |---|---|---|
 | main game, expanded game | kept | `game` |

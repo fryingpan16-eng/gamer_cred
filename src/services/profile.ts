@@ -100,11 +100,6 @@ export async function setFavorite(rank: FavoriteRank, gameId: number): Promise<v
   if (error) fail(error, 'Could not set the favorite.');
 }
 
-export async function swapFavoriteRanks(a: FavoriteRank, b: FavoriteRank): Promise<void> {
-  const { error } = await supabase.rpc('swap_favorite_ranks', { p_rank_a: a, p_rank_b: b });
-  if (error) fail(error, 'Could not reorder favorites.');
-}
-
 export async function removeFavorite(userId: string, rank: FavoriteRank): Promise<void> {
   const { error } = await supabase.from('user_favorites').delete().eq('user_id', userId).eq('rank', rank);
   if (error) fail(error, 'Could not remove the favorite.');

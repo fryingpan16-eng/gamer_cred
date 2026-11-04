@@ -12,7 +12,6 @@ import {
   removePlatform,
   setFavorite,
   setMainPlatform,
-  swapFavoriteRanks,
   updatePcSpecs,
   updatePlatformDevices,
   updateNowPlayingVisibility,
@@ -209,7 +208,6 @@ export function useFavorites(userId: string | null | undefined) {
 
 export type FavoriteAction =
   | { action: 'set'; rank: FavoriteRank; gameId: number }
-  | { action: 'swap'; a: FavoriteRank; b: FavoriteRank }
   | { action: 'remove'; rank: FavoriteRank };
 
 function applyFavoriteAction(rows: UserFavorite[] = [], vars: FavoriteAction, userId: string): UserFavorite[] {
@@ -217,15 +215,13 @@ function applyFavoriteAction(rows: UserFavorite[] = [], vars: FavoriteAction, us
   if (vars.action === 'set') {
     next = next.filter((r) => r.rank !== vars.rank && r.game_id !== vars.gameId);
     next.push({ user_id: userId, game_id: vars.gameId, rank: vars.rank });
-  } else if (vars.action === 'swap') {
-    next = next.map((r) => (r.rank === vars.a ? { ...r, rank: vars.b } : r.rank === vars.b ? { ...r, rank: vars.a } : r));
   } else {
     next = next.filter((r) => r.rank !== vars.rank);
   }
   return next.sort((x, y) => x.rank - y.rank);
 }
 
-/** Set / move / swap / remove a Top 4 favorite — optimistic. */
+/** Set / move / remove a favourite — optimistic. */
 export function useFavoriteMutation() {
   const queryClient = useQueryClient();
   const viewerId = useViewerId();
@@ -233,7 +229,6 @@ export function useFavoriteMutation() {
     mutationFn: (vars: FavoriteAction) => {
       if (!viewerId) throw new Error('You must be signed in.');
       if (vars.action === 'set') return setFavorite(vars.rank, vars.gameId);
-      if (vars.action === 'swap') return swapFavoriteRanks(vars.a, vars.b);
       return removeFavorite(viewerId, vars.rank);
     },
     ...optimistic<UserFavorite[], FavoriteAction>(

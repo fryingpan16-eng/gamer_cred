@@ -161,6 +161,11 @@ export function GameHero({ game, stats }: GameHeroProps) {
             </Text>
           ) : null}
           <EntryTypeBadge game={game} />
+          {(game.remasters?.length ?? 0) > 0 ? (
+            <View className="flex-row">
+              <RetroGamingPCBadge label="Remastered" variant="main" />
+            </View>
+          ) : null}
           {release ? (
             <Text className="text-retrogamingpc-sm text-retrogamingpc-text">
               <Text className="text-retrogamingpc-text-muted">Release: </Text>

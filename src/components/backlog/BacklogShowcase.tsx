@@ -1,10 +1,12 @@
 import { router } from 'expo-router';
-import { Text } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { CoverShowcase } from '@/components/games/CoverShowcase';
 import { RetroGamingPCButton } from '@/components/ui';
 import { useBacklog } from '@/hooks/useBacklog';
 import type { Profile } from '@/types/database.types';
+
+import { BacklogAddButton } from './BacklogAddButton';
 
 /** Backlog on a profile. Hidden from others when the player made it private. */
 export function BacklogShowcase({ profile, isOwner }: { profile: Profile; isOwner: boolean }) {
@@ -19,17 +21,20 @@ export function BacklogShowcase({ profile, isOwner }: { profile: Profile; isOwne
       isPending={backlog.isPending}
       error={backlog.error}
       headerRight={
-        total > 0 ? (
-          <RetroGamingPCButton
-            variant="navigate"
-            label="View all"
-            onPress={() => router.push({ pathname: '/backlog/[userId]', params: { userId: profile.id } })}
-          />
-        ) : undefined
+        <View className="flex-row gap-2">
+          {isOwner ? <BacklogAddButton /> : null}
+          {total > 0 ? (
+            <RetroGamingPCButton
+              variant="navigate"
+              label="View all"
+              onPress={() => router.push({ pathname: '/backlog/[userId]', params: { userId: profile.id } })}
+            />
+          ) : null}
+        </View>
       }
       empty={
         <Text className="text-retrogamingpc-sm text-retrogamingpc-text-muted">
-          {isOwner ? 'Nothing in your backlog yet. Add games from the Now Playing tab or any game page.' : 'Nothing in their backlog yet.'}
+          {isOwner ? 'Nothing in your backlog yet. Tap + Add, or use + Backlog on any game page.' : 'Nothing in their backlog yet.'}
         </Text>
       }
     />

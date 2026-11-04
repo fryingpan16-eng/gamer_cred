@@ -62,7 +62,7 @@ Search covers three kinds of thing:
 - All IGDB and RAWG traffic goes through a Supabase Edge Function with a PostgreSQL cache. The app never calls IGDB or RAWG directly.
 - Game results show the cover, year, platforms and studios; tap anywhere on a card to open the game page. Lists of games (search, studio pages, user lists) show no scores.
 - **Studio pages:** every game a studio developed or published, filterable by role and sortable.
-- The catalogue is curated so each game appears once. Editions, mods, fan games and unrelated bundles are filtered out. DLC, expansions, remakes and real collections are kept and labelled.
+- The catalogue is curated so each game appears once. Editions, mods, fan games and unrelated bundles are filtered out. DLC, expansions, remakes and real collections are kept and labelled. Remasters share their original's page: it shows a Remastered badge and a card listing each remaster with its year and platforms, and searching a remaster's name finds the original.
 
 ### Now Playing (Post / Review Studio)
 - **Now Playing grid:** four slots for the games you're currently playing. Each slot holds running notes and a "so far" score.
@@ -83,7 +83,7 @@ Every chart shows the exact value when you tap a bar, and has a table view that 
 
 ### Profile
 - **Now Playing:** the four slots, with privacy options (public, friends only or private).
-- **Top 4 Favorites:** tap a cover to open the game. The owner can reorder (◀ ▶) or remove (✕) entries.
+- **Favourites:** four all-time favourite games; tap a cover to open the game. The owner removes one with the ✕ on its cover and picks a new game for the empty slot.
 - **Friends:** tap the friend count for the friends list (yours also shows requests).
 - **♥ Liked Games:** the latest 8 liked covers, with **View all** for the full list (newest first, with a name filter).
 - **Backlog:** the same layout; hidden from others when private.
