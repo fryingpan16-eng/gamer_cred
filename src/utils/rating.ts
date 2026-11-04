@@ -287,8 +287,9 @@ export function formatTierRange(tier: TierCode): string {
   return def.min === def.max ? String(def.min) : `${def.min}–${def.max}`;
 }
 
+/** "4.5/5" — the glyphs already show stars, so the number reads like "84/100". */
 export function formatStars(stars: number): string {
-  return `${stars}★`;
+  return `${stars}/${STARS_MAX}`;
 }
 
 export function formatRounded(rounded: RoundedValue): string {

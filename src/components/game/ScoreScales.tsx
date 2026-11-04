@@ -11,7 +11,6 @@ import {
   deriveAllScales,
   formatNumeric,
   formatRounded,
-  formatStars,
   tierDefinition,
   tierDefinitionForNumeric,
   type StoredRating,
@@ -72,7 +71,8 @@ function ScaleValue({
             showValue={false}
           />
           <Text className={valueClass} style={derived.stars >= STARS_MAX ? { color: PERFECT_TIER_GOLD } : undefined}>
-            {formatStars(derived.stars)}
+            {derived.stars}
+            <Text className={unitClass}> /{STARS_MAX}</Text>
           </Text>
         </View>
       );

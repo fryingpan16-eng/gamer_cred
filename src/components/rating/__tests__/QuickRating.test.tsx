@@ -22,9 +22,9 @@ describe('QuickRating', () => {
     const { rerender } = await render(
       <QuickRating gameId={1} value={storedFromStars(4)} onChange={jest.fn()} size="hero" showTierBadge={false} />,
     );
-    expect(screen.getByText('4★').props.style).toBeUndefined();
+    expect(screen.getByText('4 /5').props.style).toBeUndefined();
     await rerender(<QuickRating gameId={1} value={storedFromStars(5)} onChange={jest.fn()} size="hero" showTierBadge={false} />);
-    expect(screen.getByText('5★').props.style).toEqual({ color: PERFECT_TIER_GOLD });
+    expect(screen.getByText('5 /5').props.style).toEqual({ color: PERFECT_TIER_GOLD });
     await rerender(<QuickRating gameId={1} value={null} onChange={jest.fn()} size="hero" showTierBadge={false} />);
     expect(screen.getByText('--')).toBeTruthy();
   });

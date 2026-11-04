@@ -400,7 +400,14 @@ export function QuickRating({
           className={cn(HERO_SCORE.valueClass, value ? 'text-retrogamingpc-text-bright' : 'text-retrogamingpc-text-muted')}
           style={shown && Number(shown.value) >= STARS_MAX ? { color: PERFECT_TIER_GOLD } : undefined}
         >
-          {shown ? `${shown.value}★` : '--'}
+          {shown ? (
+            <>
+              {shown.value}
+              <Text className="font-mono text-retrogamingpc-lg text-retrogamingpc-text-muted"> /{STARS_MAX}</Text>
+            </>
+          ) : (
+            '--'
+          )}
         </Text>
       ) : scale === 'tier' ? (
         size !== 'compact' && value ? (

@@ -122,6 +122,12 @@ UNDER NO CIRCUMSTANCES create, modify, or output \`.js\` or \`.jsx\` source file
   - Account deletion is the \`account\` Edge Function. New user tables must cascade from \`profiles\` / \`auth.users\`.
   - Contact and terms live in \`src/constants/legal.ts\`. Bump \`TERMS_VERSION\` when the terms change.
 
+## 💰 MONETIZATION RULES (planned after alpha — see README "After alpha")
+- **Never pay-to-rank**: supporters, payments or affiliates must never affect rankings, the Popular sort, feeds order, the Gamer Cred score or smart lists. Supporter perks are cosmetic only (badge, card trim, themes, profile flair).
+- **Payment links are web-only** (\`Platform.OS === 'web'\`): no Ko-fi / external payment links inside the iOS or Android apps (store rules); phone apps use store payments if anything.
+- **Where to buy** links: store names as plain text (no logos), filtered to the game's platforms, region from the device locale with a Settings override (never location permission); show a "may earn a commission" note whenever affiliate codes are present.
+- Keep it unobtrusive: no popups, interstitials, autoplay video or nag prompts; never in the review writer, Settings or dialogs.
+
 ## 🎨 RETRO ICONOGRAPHY & MICRO-INTERACTIONS
 - **Icons**: Use \`@expo/vector-icons\` (sharp linear sets like \`MaterialCommunityIcons\` or \`Feather\`).
 

@@ -251,7 +251,7 @@ describe('display', () => {
 
   it('derives other scales from the canonical numeric', () => {
     expect(formatRatingInScale(typed, 'tier')).toBe('A');
-    expect(formatRatingInScale(typed, 'stars')).toBe('4★');
+    expect(formatRatingInScale(typed, 'stars')).toBe('4/5');
     expect(formatRatingInScale(typed, 'rounded')).toBe('8/10');
     expect(numericToRatingInput(92, 'tier')).toEqual({ scale: 'tier', value: 'A+' });
   });

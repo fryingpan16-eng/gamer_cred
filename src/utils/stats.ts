@@ -96,7 +96,7 @@ export function summarizeHistogram(rows: readonly HistogramRow[]): RatingSummary
 export type ScaleDistribution = {
   scale: RatingScale;
   title: string;
-  /** Average expressed in this scale ("78.4", "B", "3.9★", "8/10"). */
+  /** Average expressed in this scale ("78.4", "B", "3.9/5", "8/10"). */
   averageLabel: string | null;
   bars: BarDatum[];
   /**
@@ -170,7 +170,7 @@ export function distributionsByScale(rows: readonly HistogramRow[]): ScaleDistri
     {
       scale: 'stars',
       title: RATING_SCALE_LABELS.stars,
-      averageLabel: count === 0 ? null : `${(Math.round((starSum / count) * 10) / 10).toFixed(1)}★`,
+      averageLabel: count === 0 ? null : `${(Math.round((starSum / count) * 10) / 10).toFixed(1)}/5`,
       bars: starBars,
       orientation: 'vertical',
     },

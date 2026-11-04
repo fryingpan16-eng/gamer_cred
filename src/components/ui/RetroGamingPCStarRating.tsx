@@ -69,7 +69,14 @@ export function RetroGamingPCStarRating({ stars, size = 12, cell, showValue = tr
           className="font-mono text-retrogamingpc-xs font-bold text-retrogamingpc-text-bright"
           style={golden ? { color: PERFECT_TIER_GOLD } : undefined}
         >
-          {stars === null ? '--' : `${stars}★`}
+          {stars === null ? (
+            '--'
+          ) : (
+            <>
+              {stars}
+              <Text className="font-normal text-retrogamingpc-text-muted">/{STARS_MAX}</Text>
+            </>
+          )}
         </Text>
       ) : null}
     </View>

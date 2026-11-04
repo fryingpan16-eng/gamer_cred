@@ -130,7 +130,8 @@ function RootNavigator() {
           <Stack.Screen name="studio/[id]" options={{ title: 'Studio' }} />
           <Stack.Screen name="friends/[userId]" options={{ title: 'Friends' }} />
           <Stack.Screen name="likes/[userId]" options={{ title: 'Liked Games' }} />
-          <Stack.Screen name="admin/reports" options={{ title: 'Moderation' }} />
+          {/* Titled by the screen itself once access is known (non-admins see "Not found"). */}
+          <Stack.Screen name="admin/reports" options={{ title: '' }} />
         </Stack.Protected>
 
         <Stack.Protected guard={!isSignedIn} redirectTo="/">

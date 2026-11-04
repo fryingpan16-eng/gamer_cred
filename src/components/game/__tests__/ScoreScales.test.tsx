@@ -21,13 +21,13 @@ describe('game page score box scales', () => {
     expect(screen.getByText('A+')).toBeTruthy();
     expect(screen.getByText('Classic')).toBeTruthy();
     expect(screen.getByText(/^91\.6/)).toBeTruthy();
-    expect(screen.getByText('4.5★')).toBeTruthy();
+    expect(screen.getByText('4.5 /5')).toBeTruthy();
     expect(screen.queryByText('9/10')).toBeNull(); // rounded isn't the default
   });
 
   it('omitPrimary leaves the default scale to the caller (the quick-rating control)', async () => {
     await render(<ScoreScales rating={rating} primaryScale="stars" omitPrimary />);
-    expect(screen.queryByText('4.5★')).toBeNull();
+    expect(screen.queryByText('4.5 /5')).toBeNull();
     expect(screen.getByText(/^92/)).toBeTruthy();
     expect(screen.getByText('A+')).toBeTruthy();
   });
@@ -62,7 +62,7 @@ describe('game page score box scales', () => {
       (tier) => tierBoxStyle({ numeric: tier.max, inputScale: 'numeric', input: String(tier.max) }, t)!.backgroundColor,
     );
     for (const bg of [...fiveStarBoxes, t.dark, t.card, t.panel]) {
-      // The "5★" label is text (4.5:1); the star glyphs themselves need 3:1.
+      // The "5/5" label is text (4.5:1); the star glyphs themselves need 3:1.
       expect(contrast(PERFECT_TIER_GOLD, bg)).toBeGreaterThanOrEqual(4.5);
     }
   });

@@ -226,6 +226,16 @@ const CONFIRM: Record<ModerationAction['action'], { title: string; message: stri
   },
 };
 
+/** What anyone who isn't an admin sees at this address. */
+function NotFound() {
+  return (
+    <View className="flex-1 bg-retrogamingpc-dark p-3">
+      <Stack.Screen options={{ title: 'Not found' }} />
+      <RetroGamingPCAlert message="This page doesn't exist." />
+    </View>
+  );
+}
+
 /** Admin moderation queue: reports on reviews, lists, ratings and players, oldest first. */
 export default function ModerationScreen() {
   const isAdmin = useIsAdmin();
@@ -245,16 +255,10 @@ export default function ModerationScreen() {
   const moderate = useModerate();
   const [pending, setPending] = useState<ModerationAction | null>(null);
 
-  // Guests never get admin data (those checks are switched off), so don't wait on them.
-  if (isGuest) {
-    return (
-      <View className="flex-1 bg-retrogamingpc-dark p-3">
-        <Stack.Screen options={{ title: 'Moderation' }} />
-        <RetroGamingPCAlert message="Only app admins can open the moderation queue." />
-      </View>
-    );
-  }
-  if (isAdmin.isPending || adminStatus.isPending) return <RetroGamingPCSpinner label="Checking access…" />;
+  // Non-admins (and guests, whose admin checks are switched off) get a plain "not found":
+  // nothing on this page, or about it, is shown to them.
+  if (isGuest) return <NotFound />;
+  if (isAdmin.isPending || adminStatus.isPending) return <RetroGamingPCSpinner label="Loading…" />;
   // Admins whose sign-in isn't code-verified yet get the unlock / setup box instead.
   if (!isAdmin.data && adminStatus.data?.member) {
     return (
@@ -266,14 +270,7 @@ export default function ModerationScreen() {
       </View>
     );
   }
-  if (!isAdmin.data) {
-    return (
-      <View className="flex-1 bg-retrogamingpc-dark p-3">
-        <Stack.Screen options={{ title: 'Moderation' }} />
-        <RetroGamingPCAlert message="Only app admins can open the moderation queue." />
-      </View>
-    );
-  }
+  if (!isAdmin.data) return <NotFound />;
 
   const confirm = pending ? CONFIRM[pending.action] : null;
   return (

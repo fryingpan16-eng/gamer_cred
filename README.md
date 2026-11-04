@@ -498,6 +498,13 @@ Phases 1–11 are complete: setup, auth, search, Review Studio, profiles, game p
 - Host the web build on the Cloudflare subdomain, and set Supabase's Site URL and redirect URLs to it.
 - Set up admin two-step sign-in, and add the Google Vision key.
 - A privacy page, and the app name and icon in `app.json`.
+- Turn on guest browsing: allow anonymous sign-ins, then add the Cloudflare Turnstile site key, then turn on Supabase CAPTCHA (in that order).
+
+**After alpha (planned):**
+- **Where to buy** on game pages: plain-text store chips (Steam, PlayStation, Xbox, GOG, Epic, Amazon, Best Buy, Humble Bundle, Fanatical, Nintendo eShop), filtered to the game's platforms. Direct store links where IGDB knows the game, name searches otherwise. Store region guessed from the device locale (no location permission), changeable in Settings. Plain links first; affiliate codes later, with a "may earn a commission" note.
+- **Support the dev:** a "Buy the dev a tea" (Ko-fi) link, **web only** (app-store rules).
+- **Supporter tier** (cosmetic only: badge, gold-trimmed review cards, extra themes, profile banner), via Ko-fi memberships on the web; store payments once the phone apps ship.
+- Tasteful "Sponsored" feed cards only if the audience grows.
 
 Still open:
 - Decide how standalone expansions should be grouped.

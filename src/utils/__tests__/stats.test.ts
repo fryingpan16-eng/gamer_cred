@@ -54,13 +54,13 @@ describe('rating histogram', () => {
     expect(numeric!.bars.find((b) => b.label === '92')!.color).toBe(tierColor['A+']);
     expect(numeric!.bars.find((b) => b.label === '100')!.color).toBe(tierColor['S**']);
     expect(numeric!.bars.find((b) => b.label === '40')!.color).toBe(tierColor.F);
-    expect(stars!.bars.find((b) => b.label === '5★')!.color).toBe(tierColor['S**']); // 5★ = a perfect 100
-    expect(stars!.bars.find((b) => b.label === '4.5★')!.color).toBe(tierColor['A+']);
-    expect(stars!.bars.find((b) => b.label === '2★')!.color).toBe(tierColor.F);
+    expect(stars!.bars.find((b) => b.label === '5/5')!.color).toBe(tierColor['S**']); // 5★ = a perfect 100
+    expect(stars!.bars.find((b) => b.label === '4.5/5')!.color).toBe(tierColor['A+']);
+    expect(stars!.bars.find((b) => b.label === '2/5')!.color).toBe(tierColor.F);
     expect(rounded!.bars.find((b) => b.label === '8')!.color).toBe(tierColor.A);
     expect(rounded!.bars.find((b) => b.label === 'NOT GOOD')!.color).toBe(tierColor.F);
-    expect(stars!.bars.find((b) => b.label === '2★')!.value).toBe(2); // 40 → 2★
-    expect(stars!.averageLabel).toBe('3.6★'); // (2 + 2 + 4.5 + 4.5 + 5) / 5
+    expect(stars!.bars.find((b) => b.label === '2/5')!.value).toBe(2); // 40 → 2★
+    expect(stars!.averageLabel).toBe('3.6/5'); // (2 + 2 + 4.5 + 4.5 + 5) / 5
     expect(rounded!.bars.find((b) => b.label === 'NOT GOOD')!.value).toBe(2);
     expect(rounded!.averageLabel).toBe('7/10');
   });

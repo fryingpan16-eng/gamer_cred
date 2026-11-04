@@ -109,7 +109,11 @@ function EditorBody({ initial, pinned, allowSmart = false, saving, error, onSave
           disabled={saving}
         />
       ) : null}
-      {smart ? <SmartRuleFields value={rule} onChange={setRule} errors={ruleErrors} disabled={saving} /> : null}
+      {smart && allowSmart ? <SmartRuleFields value={rule} onChange={setRule} errors={ruleErrors} disabled={saving} /> : null}
+      {smart && !allowSmart && initial?.smartRule ? (
+        // Rules are admin-only; anyone else editing the list's title or description just sees what it is.
+        <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted">Fills itself: {describeSmartRule(initial.smartRule)}.</Text>
+      ) : null}
       {smart ? null : (
         <RetroGamingPCCheckbox
           checked={isRanked}
