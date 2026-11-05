@@ -50,7 +50,9 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
-    "test": "jest"
+    "test": "jest",
+    "test:sql": "bash scripts/test-sql.sh",
+    "check": "bash scripts/check.sh"
   },
   "private": true,
   "jest": {

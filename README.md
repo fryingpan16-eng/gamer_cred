@@ -462,6 +462,14 @@ npm run ios        # or: npm run android
 
 ## Testing
 
+Quiet versions (one line each when everything passes, details only on failure):
+```bash
+npm run check                    # typecheck + lint + Jest
+npm run test:sql                 # all SQL tests (uses deno, or a pinned copy via npx)
+npm run test:sql -- replays      # only SQL test files whose name contains "replays"
+```
+
+Full output:
 ```bash
 npm run typecheck   # tsc --noEmit (strict)
 npm run lint        # expo lint
@@ -530,71 +538,7 @@ Never edit a migration that has already been pushed. Add a new numbered migratio
 
 ## Status & open items
 
-Phases 1–11 are complete: setup, auth, search, Review Studio, profiles, game pages and feed, stats, quick ratings, public ratings, the ratings spreadsheet, game lists, safety and moderation, studio pages, profile picture screening, mobile navigation, smart lists and admin two-step sign-in.
-
-**Before alpha testing:**
-- Custom SMTP (e.g. Resend) so confirmation emails reach testers; Supabase's built-in email only sends to team members.
-- Host the web build on the Cloudflare subdomain, and set Supabase's Site URL and redirect URLs to it.
-- Set up admin two-step sign-in, and add the Google Vision key.
-- A privacy page, and the app name and icon in `app.json`.
-- Turn on guest browsing: allow anonymous sign-ins, then add the Cloudflare Turnstile site key, then turn on Supabase CAPTCHA (in that order).
-
-**After alpha (planned):**
-- **Where to buy** on game pages: plain-text store chips (Steam, PlayStation, Xbox, GOG, Epic, Amazon, Best Buy, Humble Bundle, Fanatical, Nintendo eShop), filtered to the game's platforms. Direct store links where IGDB knows the game, name searches otherwise. Store region guessed from the device locale (no location permission), changeable in Settings. Plain links first; affiliate codes later, with a "may earn a commission" note.
-- **Support the dev:** a "Buy the dev a tea" (Ko-fi) link, **web only** (app-store rules).
-- **Supporter tier** (cosmetic only: badge, gold-trimmed review cards, extra themes, profile banner), via Ko-fi memberships on the web; store payments once the phone apps ship.
-- Tasteful "Sponsored" feed cards only if the audience grows.
-
-**Roadmap after alpha** (draft order: reshuffle freely):
-
-*Phase A: learn and polish*
-- Act on alpha tester feedback first.
-- Crash/error reporting (e.g. Sentry) and privacy-friendly usage analytics (e.g. Plausible or PostHog).
-- "Add to list" button on game pages.
-- Ratings in the activity feed (today only reviews appear).
-- In-app notifications: friend requests, friends reviewing games you like, your list featured, private "someone liked your review".
-- "Download my data" export.
-
-*Phase B: core gaming features*
-- Game statuses beyond Now Playing: Want to play / Playing / Played / Dropped, with a backlog view.
-- Play diary: start and finish dates, optional hours played and replays; feeds new stats (games finished per year, backlog size).
-- Steam library import (owned games + playtime) for instant onboarding.
-- Recommendations ("Because you liked…", "Popular with your friends"), built from likes, ratings and friends with SQL, no AI.
-- Year in review ("Wrapped"): a shareable end-of-year summary.
-
-*Phase C: growth and sharing*
-- Shareable retro-styled image cards for reviews and profiles.
-- Public share pages on the web for a review or list, with a "Join GamerCred" prompt.
-- Release calendar, "Notify me when it's out", and a "Coming soon" row on Home.
-- Series, platform and creator pages (like studio pages).
-
-*Phase D: phone apps and store launch*
-- Native builds with EAS (Android APK first, then TestFlight).
-- Push notifications.
-- Store listings (icon, screenshots, privacy labels).
-- Store payments for tips or supporters.
-
-*Phase E: community depth (if the community is active)*
-- Follow critics (one-way, separate from friends).
-- Comments on reviews (once moderation can keep up).
-- Profile achievements (cosmetic).
-- Moderation tooling: user search, temporary suspensions, appeals, automatic spam flagging.
-
-*Ongoing*
-- Scale work: precomputed stats, keyset paging for very long lists (closes the rare "skipped review" gap in the review browser), image caching.
-- Accessibility and translations.
-- Optional weekly email digest.
-
-Still open:
-- Decide how standalone expansions should be grouped.
-- Ratings don't appear in the activity feed yet; only reviews do.
-- Trending posts are ranked by how popular their game is, because the app has no likes or comments yet.
-- **Before store submission:**
-  - publish a privacy policy;
-  - have the Terms text reviewed;
-  - host the web build, so `/delete-account` has a public URL for Google Play;
-  - make sure reports get handled within 24 hours.
-- Lists: an "Add to list" button on game pages (today games are added from the list page).
+Next steps, open items, the roadmap and the to-do list live in [`PROJECT_STATUS.md`](PROJECT_STATUS.md), the one place they're kept.
 
 ---
 

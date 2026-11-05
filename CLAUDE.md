@@ -1,145 +1,76 @@
-node -e '
-const fs = require("fs");
-const md = `# GAMER_CRED — PROJECT RULES & ARCHITECTURE
+# GAMER_CRED — PROJECT RULES
 
-## 🎯 ROLE & OBJECTIVE
-Universal cross-platform video game social review app built with Expo Router and TypeScript (\`gamer_cred\`).
+Cross-platform video game social review app (Expo Router + TypeScript, `gamer_cred`). Status, next steps and to-dos: `PROJECT_STATUS.md`. Feature detail: `README.md` and the component READMEs (`src/components/{rating,stats}/README.md`).
 
-## 🖥️ TARGET DEVICES & RESPONSIVE LAYOUT SCALING
-The app MUST target **iOS, Android, and Desktop (Web/Electron wrappers)**. 
-- **Responsive Architecture**: The UI must automatically scale and adapt layout structures based on target viewports using responsive utilities (Tailwind's \`md:\`, \`lg:\` breakpoints).
-- **Desktop/Tablet Mode**: Mimics a retro early-2000s desktop game-client window (fixed-width constrained centered shells, multi-column master-detail views, and permanent sidebar navigation).
-- **Mobile Mode**: Collapses into single-column flows with standard bottom navigation bars.
-- **Phone rules** (keep these when adding UI):
-  - Touch targets ≥ ~40px: use \`TOUCH_SLOP\` / \`hitSlop\` on compact controls; \`RetroGamingPCButton\` and tabs already have it.
-  - Text ≥ 10px (\`text-retrogamingpc-xs\`). Below \`md\` (phones) the whole \`text-retrogamingpc-*\` scale is 10% larger, set once in \`tailwind.config.js\` (\`FONT_SIZES\`, \`MOBILE_FONT_SCALE\`). Use those classes, not fixed px sizes.
-  - Every \`TextInput\` gets \`noZoomInputStyle\` (\`src/utils/platform.ts\`), so phone browsers don't zoom on focus.
-  - Dialogs go through \`RetroGamingPCModal\`, which avoids the keyboard and scrolls when taller than the screen. Pass \`scrollable={false}\` only for bodies with their own list.
-  - Long-text writers (the Review Studio editor) use \`RetroGamingPCSheet\`: a full-height overlay pinned to the top that shrinks by exactly the part the keyboard covers. Dialogs opened from it go inside it as children.
-  - Scrolling screens with inputs set \`automaticallyAdjustKeyboardInsets\` + \`keyboardShouldPersistTaps="handled"\`.
-  - Anything wider than ~300px either wraps (\`flex-wrap\`) or scrolls sideways.
-  - Full-screen pages keep the bottom safe-area inset (set in \`app/_layout.tsx\`).
-  - Never toggle Tailwind classes that set CSS variables or animations (\`translate-*\`, \`rotate-*\`, \`scale-*\`, \`shadow-*\`, \`transition-*\`, \`animate-*\`) after the first render, e.g. on press. NativeWind crashes on native ("Could not find a LinkingContext"). Use a \`style\` transform instead.
+## Devices & layout
+Targets iOS, Android and desktop web. Layouts adapt with Tailwind `md:` / `lg:`. Desktop: a retro early-2000s game-client window (centred fixed-width shell, multi-column, sidebar nav). Phones: single column with bottom tabs.
+Phone rules (keep when adding UI):
+- Touch targets ≥ ~40px: `TOUCH_SLOP` / `hitSlop` on compact controls (`RetroGamingPCButton` and tabs already have it).
+- Text ≥ 10px via the `text-retrogamingpc-*` scale (10% larger below `md`, set in `tailwind.config.js`). No fixed px sizes.
+- Every `TextInput` gets `noZoomInputStyle` (`src/utils/platform.ts`).
+- Dialogs use `RetroGamingPCModal` (`scrollable={false}` only for bodies with their own list). Long-text writers use `RetroGamingPCSheet`; dialogs opened from it go inside it.
+- Scrolling screens with inputs: `automaticallyAdjustKeyboardInsets` + `keyboardShouldPersistTaps="handled"`.
+- Anything wider than ~300px wraps (`flex-wrap`) or scrolls sideways. Full-screen pages keep the bottom safe-area inset.
+- Never toggle classes that set CSS variables or animations (`translate-*`, `rotate-*`, `scale-*`, `shadow-*`, `transition-*`, `animate-*`) after first render; NativeWind crashes on native. Use a `style` transform.
 
-## 📱 BOTTOM NAVIGATION & CORE WORKFLOWS
-The core app features a bottom navigation bar (migrating to a desktop sidebar on wider viewports) with five tabs (Stats sits between Post and Profile):
-1. **Home (\`app/(tabs)/index.tsx\`)**: one top tab bar (\`?tab=\`): **Community** (trending games + trending posts, migration 000020, then the community feed), **Friends** (friends' activity) and **Lists** (Curated Lists pinned by app admins via \`app_admins\` + \`set_list_pin\`, Your Lists with New List, Browse Lists). Lists: \`lists\` + \`list_items\` (migration 000019), page \`app/list/[id].tsx\`, searchable in the Search tab. Admins can also make **smart lists** (migration 000023, \`smart_rule\` + \`smart_list_games\`): a rule (type, tier, years, genre, platform, size) ranked by plain Gamer Cred average, saved in \`smart_list_cache\` and refreshed nightly (migration 000028; a changed rule recalculates on next view); a game qualifies with at least the 75th-percentile rating count for its type (min 3). The SQL tier bands mirror \`ratingRubric.ts\` (test-enforced).
-2. **Search (\`app/(tabs)/search.tsx\`)**: Unified search interface with tabs/filters for:
-   - **Games**: Title, genre, and platform database search (via IGDB Edge Function cache).
-     Remasters are never their own entries (one entry per game): the original's page shows an "Also remastered" line in the hero + a Remastered Versions card (`RemastersPanel` / `RemasterNote`, detail `remasters`), and a remaster's name finds the original in search (`igdb-proxy/remasters.ts`).
-   - **Creators** (sub-tabs Studios · Directors & People): Developers, publishers, and key game creators (via IGDB Edge Function cache).
-     Tapping a studio opens \`app/studio/[id].tsx\`: the company plus every game it developed or published (proxy action \`company\`), each linking to its game page.
-   - **Users / Friends**: Search community profiles by username to view profiles and send friend requests.
-3. **Now Playing tab — Post / Review Studio (\`app/(tabs)/post.tsx\`)**: 
-   - **Backlog** (migration 000035, \`src/components/backlog/\`): want-to-play list between Now Playing and Review Studio; public/private (\`profiles.backlog_visibility\`); shown first in the Now Playing picker (\`GamePickerModal\` \`suggestions\`); leaves the backlog when the game is rated (trigger on \`game_ratings\`), never just by starting it.
-   - **Now Playing Grid**: 4 active slots. Empty slots allow adding a game. Filled slots allow removal (with confirmation modal), running notes, and preliminary scoring.
-   - **Publishing**: Convert a Now Playing draft into a published community review.
-   - **Standalone Review**: Review any game directly without occupying a Now Playing slot.
-   - **Reviews are created ONLY here** (and via the game page's "Write a review" button, which opens the Studio). Quick ratings (\`game_ratings\`: score + played-on platform, public to read; game page only; game lists such as search, studio pages and user lists show no scores and the whole card opens the game page) are a separate action and must never create or open a review — see \`src/components/rating/README.md\`.
-   - **Replays** (migration 000040): several reviews per game (one draft); a review after an earlier one is a replay (server-set, with \`finished_on\`). Your score = the score of your current review (newest, not counting an unpublished replay draft); older reviews keep theirs. Never assume one review per game: pick the newest (\`created_at desc\`) in SQL, and \`useMyReviewsForGame\` + \`resolveStudioTarget\` (\`src/utils/studioTarget.ts\`) in the app. Game-page **Mark as Replayed** is \`game_replays\` (date + platform, no score). Replay count = \`game_replays\` + published replay reviews; plays = replays + 1.
-4. **Stats (\`app/(tabs)/stats.tsx\`)**: charts of the user's own logged games, computed in Postgres (\`stats_*\` functions, migration 000014). Menu driven by \`src/components/stats/statsConfig.ts\`; see \`src/components/stats/README.md\`.
-5. **Profile (\`app/(tabs)/profile.tsx\`)**:
-   - **Public & Private View**: Displays active Now Playing 4-game grid and friend status.
-   - **Favourites**: four all-time favourite games (no numbering or reordering; ✕ on the cover removes, an empty slot picks).
-   - **Reviews are one system**: every review preview is \`ReviewCard\` (\`src/components/review/ReviewCard.tsx\`); lists of a game's reviews are the browser \`app/reviews/[gameId].tsx\` (\`?tab=community|friends&sort=popular|recent|highest|lowest\`); one review is \`app/review/[id].tsx\`. Don't build another review list or card. Review likes (migration 000030) are private: counts only for the author.
-   - **♥ Liked Games**: games liked with the game page's Like button (\`game_likes\`, migration 000029; one tap, never a rating). Profile shows the latest 8 + \`app/likes/[userId].tsx\`. Friends' likes appear in the Friends feed; smart lists can rank by likes; Stats → Liked Games breaks them down by series / studio / genre / era.
-   - **Hardware & Platform Roster**: Grid of owned consoles/platforms with PC spec entry and 1 highlighted "Main" platform badge.
+## App invariants
+- Tabs: Home `app/(tabs)/index.tsx` (`?tab=` Community / Friends / Lists), Search, Post (Now Playing, Backlog, Review Studio), Stats, Profile.
+- **Reviews are created only in the Review Studio** (also opened by the game page's Write a review button). Quick ratings (`game_ratings`, game page only) never create or open a review. Game lists (search, studio pages, user lists) show no scores; the whole card opens the game page. See `src/components/rating/README.md`.
+- **One review system:** every preview is `ReviewCard`; a game's reviews are `app/reviews/[gameId].tsx`; one review is `app/review/[id].tsx`. Never build another review list or card. Review likes are private (counts only for the author).
+- **Replays** (000040): several reviews per game, one draft; a later review is a replay (server-set, `finished_on`). Your score is the score of your current review (newest, not counting an unpublished replay draft); older reviews keep theirs. Never assume one review per game: pick the newest (`created_at desc`) in SQL, and use `useMyReviewsForGame` + `resolveStudioTarget` (`src/utils/studioTarget.ts`) in the app. Mark as Replayed is `game_replays` (date + platform, no score). Replay count = `game_replays` + published replay reviews; plays = replays + 1.
+- Backlog leaves when the game is rated or replayed, never just by starting it.
+- Remasters are never their own entries: one entry per game (`igdb-proxy/remasters.ts`).
+- Smart lists: the SQL tier bands mirror `ratingRubric.ts` (test-enforced).
+- Stats run in Postgres (`stats_*`); add stats as described in `src/components/stats/README.md`.
 
-## 🎨 VISUAL THEME & UX SPECIFICATION (RETROGAMINGPC AESTHETIC)
-The application MUST strictly adhere to the **RetroGamingPC** aesthetic: an original early-2000s desktop game-client look (olive palette, beveled chrome, compact type). Never use third-party brand names, logos, icons, fonts or artwork in UI or code identifiers; product names may appear only when referring to that real product (e.g. a "Steam Deck" device entry).
-- **Color Palette (high-contrast dark mode)**: user-selectable themes, shown in Settings as Mega (id \`blue\`, default), Chief (\`olive\`, the base the others are generated from), Super (\`red\`), Pika (\`yellow\`) and Peach (\`pink\`). Source of truth: \`src/constants/themePalettes.json\`, generated by \`scripts/generate-theme-palettes.py\` (edit the script, not the JSON).
-  - Surfaces (\`retrogamingpc-dark\`, \`-card\`, \`-panel\`, \`-button\`, \`-accent\`, \`-button-border\`, \`-bevel-light\`, \`-bevel-dark\`) are near-black and tinted by the theme hue; \`-highlight\` and \`-active\` carry the theme colour for borders, meters, stars and primary buttons. Exception: a full 5/5 stars (and the perfect S) is gold (\`PERFECT_TIER_GOLD\`) in every theme.
-  - Text (\`retrogamingpc-text-bright\`, \`-text\`, \`-text-muted\`, \`-ink\`) is NEUTRAL grey, identical in every theme. Never colour text with a theme token; links are \`text-bright\` + underline.
-  - Contrast minimums (enforced by \`src/utils/__tests__/themes.test.ts\`): body/heading text ≥ 7:1, muted text ≥ 4.5:1 on every surface.
-- **Action colours (fixed in every theme)**: \`src/constants/actionColors.ts\` (values in \`actionColors.json\`, contrast enforced by \`src/utils/__tests__/actionColors.test.ts\`). Use the matching \`RetroGamingPCButton\` variant:
-  - \`save\` bright green: save, publish, update, confirm, accept, log in / register.
-  - \`cancel\` red: cancel, close, exit, decline, sign out (also dialog title-bar ✕ and small ✕ remove/clear controls).
-  - \`danger\` deep red + ⚠: delete, remove, discard (can't be undone).
-  - \`create\` bright green (same as save): start or add something (write a review, assign to Now Playing, add friend, add device, choose picture).
-  - \`navigate\` blue: go somewhere (view details/profile, open in Review Studio, resume a draft, search for).
-  - \`default\` / \`primary\` stay themed for everything else (Retry, Notes, Edit Specs, Set as Main, Prev/Next).
-  - Status colours follow the same hues: alerts/toasts error red · info blue · success green; badges Published solid green · Draft green outline · Now Playing blue; "✓ Saved" green.
-- **UI & Bevel Guidelines**:
-  - **Skeuomorphic Borders**: Sharp, tactile bevel borders (\`border-t\`, \`border-l\` lighter highlights, \`border-b\`, \`border-r\` darker inset shadows).
-  - **Typography**: Compact, high-density retro layout (sans-serif, tight line heights, crisp monospace numbers/ratings).
+## Visual theme (RetroGamingPC)
+An original early-2000s desktop game-client look: olive palette, beveled chrome, compact type. Never use third-party brand names, logos, icons, fonts or artwork in UI or code identifiers. Product names may appear only when referring to that real product (e.g. a "Steam Deck" device entry).
+- Themes: Mega (`blue`, default), Chief (`olive`, the base), Super (`red`), Pika (`yellow`), Peach (`pink`). Source of truth: `src/constants/themePalettes.json`, generated by `scripts/generate-theme-palettes.py` (edit the script, not the JSON).
+- Surfaces (`retrogamingpc-dark`, `-card`, `-panel`, `-button`, `-accent`, `-button-border`, `-bevel-light`, `-bevel-dark`) are near-black, tinted by the theme. `-highlight` / `-active` carry the theme colour. A full 5/5 stars and the perfect S are gold (`PERFECT_TIER_GOLD`) in every theme.
+- Text tokens (`-text-bright`, `-text`, `-text-muted`, `-ink`) are neutral grey, the same in every theme. Never colour text with a theme token; links are `text-bright` + underline.
+- Contrast (enforced by `src/utils/__tests__/themes.test.ts`): text ≥ 7:1, muted ≥ 4.5:1 on every surface.
+- Action colours, fixed in every theme (`src/constants/actionColors.ts`, contrast-tested). Use the matching `RetroGamingPCButton` variant:
+  - `save` (green): save, publish, update, confirm, accept, log in / register.
+  - `cancel` (red): cancel, close, exit, decline, sign out; also title-bar ✕ and small ✕ controls.
+  - `danger` (deep red + ⚠): delete, remove, discard.
+  - `create` (green): start or add something.
+  - `navigate` (blue): go somewhere.
+  - `default` / `primary` (themed): everything else.
+  - Status colours use the same hues: errors red, info blue, success green; badges Published solid green, Draft green outline, Now Playing blue.
+- Bevels: lighter `border-t` / `border-l`, darker `border-b` / `border-r`. Type is compact with tight line heights and monospace numbers.
+- Icons: `@expo/vector-icons` (`MaterialCommunityIcons`, `Feather`).
 
-## 🚫 CRITICAL RESTRICTION: THE NO-JS LAW
-UNDER NO CIRCUMSTANCES create, modify, or output \`.js\` or \`.jsx\` source files (excluding config files like \`babel.config.js\`, \`tailwind.config.js\`, \`metro.config.js\`).
-- All React UI components and screens MUST use \`.tsx\`.
-- All non-UI logic, services, types, and constants MUST use \`.ts\`.
-- Maintain strict TypeScript mode with no unhandled \`any\` types.
+## Code rules
+- **No `.js` / `.jsx` source files** (config files excepted). UI in `.tsx`, everything else in `.ts`. Strict TypeScript, no unhandled `any`.
+- Stack: Expo managed + Expo Router, TanStack Query v5, Zustand, Supabase JS, NativeWind v4, Zod.
+- Folders: `app/` routes only · `src/components` · `src/services` (Supabase + Edge Function wrappers) · `src/hooks` (TanStack Query) · `src/types` (incl. `database.types.ts`, hand-maintained) · `src/utils` · `supabase/functions` · `supabase/migrations`.
+- Every query key comes from `src/utils/queryKeys.ts`.
+- NativeWind: `global.css` at the root (imported in `app/_layout.tsx`), plus `nativewind-env.d.ts`.
+- Checks: `npm run check` (typecheck + lint + Jest) and `npm run test:sql [-- <file filter>]`.
 
-## 🛠️ TECHNOLOGY STACK
-- **Framework**: React Native + Expo (Managed Workflow, Expo Router v3+)
-- **Language**: TypeScript (Strict mode enabled)
-- **State & Data**: TanStack Query (React Query) v5, Zustand
-- **Backend & Types**: Supabase client (\`@supabase/supabase-js\`)
-- **UI & Styling**: NativeWind v4 (TailwindCSS for React Native)
-- **Validation**: Zod (for runtime type safety and form validation)
+## Backend rules
+- The client never calls IGDB or Twitch directly; game, company and creator search goes through the `igdb-proxy` Edge Function, cached in `igdb_cache` (`cache_key`, `data` JSONB, `updated_at`).
+- Edge Functions return `{ success: boolean, data?: T, error?: string }`; env types live in `src/types/env.d.ts`.
+- Migrations include indexes for `reviews`, `favorites`, `igdb_cache`, `now_playing`, `user_platforms`, `user_favorites`, and `friendships(user_id, friend_id, status)`. Never edit a migration that has been pushed.
 
-## 📁 STRICT FOLDER STRUCTURE
-- \`app/\` (Expo Router file-based routes ONLY)
-  - \`app/(auth)/\`: Login, Register
-  - \`app/(tabs)/\`: Index (Home), Search, Post, Profile
-  - \`app/game/[id].tsx\`: Dynamic game detail view
-  - \`app/user/[id].tsx\`: Dynamic public user profile view
-  - \`app/+error.tsx\`: Global error boundary
-- \`src/components/\`: Reusable UI components
-- \`src/services/\`: Supabase client & Edge Function wrappers
-- \`src/hooks/\`: Custom React hooks wrapping TanStack Query
-- \`src/types/\`: TypeScript interfaces & database.types.ts
-- \`src/utils/\`: Helper functions
-- \`supabase/functions/\`: Supabase Edge Functions
-- \`supabase/migrations/\`: PostgreSQL initial migrations
+## Security rules
+- Session storage: `expo-secure-store`. Root error boundary: `app/+error.tsx`. Typed routes are on in `app.json`.
+- Every new table enables RLS with explicit policies. SELECT policies are `to authenticated` (never `public` / anon).
+- New security-definer functions: `revoke execute … from public, anon`, then grant to `authenticated` (or to nobody, for service-role helpers).
+- Policy speed (000031): never call a helper per row. Hide blocked players with `not (col = any ((select private.hidden_user_ids())::uuid[]))`; never expose that helper in `public`. Wrap `is_guest()` / `is_app_admin()` / `auth.uid()` as `(select …)`.
+- Zod for all user input. Text other players can read must pass `containsObjectionable`, and every new public text column gets the `reject_objectionable` trigger. Keep `supabase/tests/fixtures/objectionable_samples.json` passing in both filters; the database must never block what the app allows.
+- `created_at` / `updated_at` / `published_at` are stamped by triggers (000036); new tables whose times order feeds need the same.
+- Guests (000027) are read-only. Wrap new write actions in `MembersOnly`, and give new user-writable tables the restrictive `members insert/update/delete` policies. Sign-in, sign-up and guest sessions pass a Turnstile token (`HumanCheck`).
+- Public content needs a ⚑ Report entry point (`ReportLink`, a `content_reports` target) and a restrictive `<table>: hide blocked` select policy.
+- Profile pictures are screened by the `avatar` Edge Function (Vision SafeSearch, JPEG only, 10 per hour). Only that function writes `avatars` or `profiles.avatar_url`.
+- `igdb-proxy` needs a signed-in user and is rate limited (`take_rate_limit`).
+- Admin powers need `is_app_admin()`: an aal2 session plus an owner-approved authenticator (000025, 000037; `_shared/admin-auth.ts` in Edge Functions). Log each admin action with `log_admin_action`.
+- Names (000038): `username` is the PERMANENT name (locked, the only thing search matches); `display_name` changes once a day. Show any player's name with `UserName` / `useShownName`, never `username` alone. Name lists live in `supabase/name-rules/*.txt`; regenerate them with `scripts/generate-name-rules.py <new migration>`. The app asks `check_name`; the lists never ship in the app.
+- Account deletion is the `account` Edge Function; new user tables cascade from `profiles` / `auth.users`.
+- Contact and terms live in `src/constants/legal.ts`. Bump `TERMS_VERSION` when the terms change.
 
-## 🗄️ BACKEND & CACHING RULES
-- **No Direct IGDB Client Calls**: Client NEVER directly calls IGDB/Twitch APIs.
-- **Supabase Edge Functions**: IGDB search (games, companies, creators) routes through Supabase Edge Functions.
-- **PostgreSQL Caching**: IGDB responses cached in an \`igdb_cache\` table (\`cache_key\` primary key, \`data\` JSONB, \`updated_at\`).
-
-## ⚡ QUERY CACHING & QUERY KEYS
-- **Centralized Query Keys**: All TanStack Query calls MUST use a single query key factory defined in \`src/utils/queryKeys.ts\`.
-
-## 🗄️ DATABASE INDEXING RULES
-- **Indexes**: Migrations MUST include indexes for: \`reviews\`, \`favorites\`, \`igdb_cache\`, \`now_playing\`, \`user_platforms\`, \`user_favorites\`, and \`friendships(user_id, friend_id, status)\`.
-
-## 🌐 EDGE FUNCTION CONTRACT & ENVIRONMENT TYPING
-- **Standard API Envelope**: Edge Functions return responses formatted as \`{ success: boolean, data?: T, error?: string }\`.
-- **Strict Environment Types**: Require \`src/types/env.d.ts\` declaring types for Supabase environment keys.
-
-## 🔒 SECURITY & STABILITY HARDENING
-- **Secure Auth Storage**: Supabase client MUST use \`expo-secure-store\` for session persistence.
-- **Database RLS**: Every table created in migrations MUST enable Row Level Security with explicit read/write policies.
-- **Global Error Boundary**: Implement \`app/+error.tsx\` at the root.
-- **Typed Routes**: Enable Expo Router's typed routes in \`app.json\`.
-- **Input Validation**: Use Zod schemas for all user-submitted data. Text other users can read must also pass \`containsObjectionable\` (\`src/utils/contentFilter.ts\`). The database backs this up (migration 000026, \`reject_objectionable\` trigger): add the trigger to any new public text column, and keep \`supabase/tests/fixtures/objectionable_samples.json\` passing in both filters (the database list must never block what the app allows).
-- **Row-rule speed (migration 000031)**: never call a helper per row in a policy. Hide blocked players with \`not (col = any ((select private.hidden_user_ids())::uuid[]))\` (it lives in the API-hidden \`private\` schema because it reveals who blocked you; never expose it in \`public\`), and wrap \`is_guest()\` / \`is_app_admin()\` / \`auth.uid()\` as \`(select …)\` so Postgres runs them once per request.
-- **Reads need a session**: SELECT policies are \`to authenticated\` (migration 000026), never \`public\`/anon. New security-definer functions: \`revoke execute … from public, anon\` and grant to \`authenticated\` (or nobody, for service-role helpers).
-- **igdb-proxy** requires a signed-in user and is rate limited per user (\`take_rate_limit\`, 120/min; guests 30/min), plus tighter budgets for IGDB cache misses and RAWG (see its README). The \`avatar\` function allows 10 picture checks per member per hour (paid Vision calls) and accepts JPEGs only.
-- **Server-owned timestamps** (migration 000036): \`created_at\` / \`updated_at\` / \`published_at\` are stamped by triggers; any new table whose times order feeds or trending needs the same (\`stamp_created\` / \`stamp_updated\` / \`stamp_created_updated\`).
-- **Guests** (migration 000027, Supabase anonymous sign-in): read-only, no profile. \`useIsGuest()\` in the app; \`is_guest()\` in SQL. Any new write action: wrap it in \`MembersOnly\` (\`src/components/auth/MembersOnly.tsx\`), and give any new user-writable table the restrictive \`members insert/update/delete\` policies. Sign-in, sign-up and guest sessions pass a Cloudflare Turnstile token (\`HumanCheck\` + \`useHumanCheck\`).
-- **User-content safety (store requirements)**:
-  - Every new kind of public content needs a ⚑ Report entry point (\`ReportLink\`, a \`content_reports\` target).
-  - It also needs a restrictive \`<table>: hide blocked\` select policy, so blocking hides it: \`using (not (user_id = any ((select private.hidden_user_ids())::uuid[])))\` (migrations 000031–000032). Never the per-row \`is_hidden_user(col)\` form.
-  - Profile pictures are screened before anyone sees them (migration 000022 + \`avatar\` Edge Function, Google Cloud Vision SafeSearch). The app uploads to the private \`avatar-uploads/<uid>/pending.jpg\`. Only the function publishes to \`avatars\` or sets \`profiles.avatar_url\` (a trigger blocks clients). Borderline pictures, or pictures sent while the check is unavailable, are held for admins in Moderation → Pictures.
-  - Admin powers need two-step sign-in (migration 000025): \`is_app_admin()\` is true only for \`app_admins\` with an aal2 (authenticator-code) session AND their owner-approved authenticator (\`app_admins.mfa_factor_id\`, migration 000037) as their only verified one; the Edge Functions check the same via \`_shared/admin-auth.ts\` + the service-role \`admin_ready\` RPC. Gate every new admin power with it, and log it with \`log_admin_action\` (or an \`admin_actions\` insert from an Edge Function). Setup and unlock live in Settings → Admin Security; the log is Moderation → Activity.
-  - **Names** (migration 000038): \`username\` is the PERMANENT name (set once, locked by \`profiles_names_guard\`, the only thing search matches); \`display_name\` changes once a day. Show any player's name with \`UserName\` / \`useShownName\` (\`src/components/user/UserName.tsx\`): display name + gold official badge + \`@permanent\`. Never render \`username\` alone where a display name could be set. Name rules (slurs, staff, reserved people/companies) live in \`supabase/name-rules/*.txt\` → \`scripts/generate-name-rules.py\`; the app asks \`check_name\`, the lists never ship in the app.
-  - Account deletion is the \`account\` Edge Function. New user tables must cascade from \`profiles\` / \`auth.users\`.
-  - Contact and terms live in \`src/constants/legal.ts\`. Bump \`TERMS_VERSION\` when the terms change.
-
-## 💰 MONETIZATION RULES (planned after alpha — see README "After alpha")
-- **Never pay-to-rank**: supporters, payments or affiliates must never affect rankings, the Popular sort, feeds order, the Gamer Cred score or smart lists. Supporter perks are cosmetic only (badge, card trim, themes, profile flair).
-- **Payment links are web-only** (\`Platform.OS === 'web'\`): no Ko-fi / external payment links inside the iOS or Android apps (store rules); phone apps use store payments if anything.
-- **Where to buy** links: store names as plain text (no logos), filtered to the game's platforms, region from the device locale with a Settings override (never location permission); show a "may earn a commission" note whenever affiliate codes are present.
-- Keep it unobtrusive: no popups, interstitials, autoplay video or nag prompts; never in the review writer, Settings or dialogs.
-
-## 🎨 RETRO ICONOGRAPHY & MICRO-INTERACTIONS
-- **Icons**: Use \`@expo/vector-icons\` (sharp linear sets like \`MaterialCommunityIcons\` or \`Feather\`).
-
-## 🎨 NATIVEWIND V4 RULES
-- Require \`global.css\` at project root defining the RetroGamingPC colors and bevel utility classes.
-- Require import of \`../global.css\` in \`app/_layout.tsx\`.
-- Require \`nativewind-env.d.ts\` at root with content: \`/// <reference types="nativewind/types" />\`.
-`;
-fs.writeFileSync("CLAUDE.md", md);
-'
+## Monetization rules (after alpha)
+- Never pay-to-rank: payments, supporters or affiliates never affect rankings, Popular, feed order, the Gamer Cred score or smart lists. Supporter perks are cosmetic only.
+- Payment links are web-only (`Platform.OS === 'web'`); no external payment links in the iOS or Android apps.
+- Where to buy: store names as plain text (no logos), filtered to the game's platforms, region from the device locale with a Settings override (never location permission). Show a "may earn a commission" note when affiliate codes are present.
+- No popups, interstitials, autoplay or nags, and never in the review writer, Settings or dialogs.
