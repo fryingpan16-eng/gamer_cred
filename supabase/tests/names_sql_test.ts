@@ -2,7 +2,7 @@
  * Migrations 000038–000039: permanent names, display names, name rules, official badge.
  *   cd supabase/tests && deno test -A
  */
-import { assertEquals, assertRejects } from '@std/assert';
+import { assert, assertEquals, assertRejects } from '@std/assert';
 import type { PGlite } from '@electric-sql/pglite';
 
 import { asOwner, asUser, freshDb, ME, OTHER, THIRD } from './_setup.ts';
@@ -173,4 +173,13 @@ Deno.test('a reserved name can be released for one account', async () => {
 Deno.test('the rule tables are not readable by players', async () => {
   const db = await freshDb();
   await assertRejects(() => asUser(db, ME, 'select * from private.name_blocklist limit 1'), Error, 'permission denied');
+});
+
+Deno.test('000041 replaces the rule lists: additions and removals both apply', async () => {
+  const db = await freshDb();
+  const problem = async (kind: string, name: string) =>
+    (await asUser<{ p: string | null }>(db, OTHER, 'select public.check_name($1, $2) p', [kind, name]))[0]!.p;
+  assert((await problem('display', 'Unity Engine')) !== null); // added to companies.txt
+  assert((await problem('permanent', 'sniggering')) !== null); // dropped from allowed_words.txt
+  assertEquals(await problem('permanent', 'Canadiandude'), null);
 });
