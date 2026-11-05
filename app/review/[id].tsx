@@ -2,6 +2,7 @@ import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { PlayedOnBadge } from '@/components/game/PlayedOnBadge';
+import { formatFinishedOn } from '@/components/game/ReplayButton';
 import { CoverTile } from '@/components/profile/CoverTile';
 import { Thumbnail } from '@/components/search/Thumbnail';
 import {
@@ -18,7 +19,7 @@ import { UserName, useShownName } from '@/components/user/UserName';
 import { useAuthStore } from '@/hooks/useAuth';
 import { useGameLookup } from '@/hooks/useGames';
 import { useReviewLikes } from '@/hooks/useReviewBrowser';
-import { useReview } from '@/hooks/useReviews';
+import { usePlaythroughs, useReview } from '@/hooks/useReviews';
 import { useStudioStore } from '@/hooks/useStudioStore';
 import { reviewRating } from '@/utils/ratingColumns';
 
@@ -38,6 +39,7 @@ export default function ReviewScreen() {
   const startReview = useStudioStore((s) => s.startReview);
   const games = useGameLookup(review.data ? [review.data.game_id] : []);
   const likes = useReviewLikes(valid && review.data?.status === 'published' ? [id] : []);
+  const playthroughs = usePlaythroughs(valid && review.data?.status === 'published' ? id : null);
 
   if (valid && review.isPending) {
     return (
@@ -90,6 +92,7 @@ export default function ReviewScreen() {
                   )}
                   {isMine ? <RetroGamingPCBadge label="You" variant="nowPlaying" /> : null}
                   {data.status === 'draft' ? <RetroGamingPCBadge label="Draft" variant="draft" /> : null}
+                  {data.is_replay ? <RetroGamingPCBadge label="↻ Replay" /> : null}
                 </View>
                 <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted">
                   {formatDate(data.published_at ?? data.updated_at)}
@@ -98,9 +101,37 @@ export default function ReviewScreen() {
             </Pressable>
             <RetroGamingPCRating rating={reviewRating(data)} expanded />
             <PlayedOnBadge platformId={data.platform_id} />
+            {data.is_replay && data.finished_on ? (
+              <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted">Finished {formatFinishedOn(data.finished_on)}</Text>
+            ) : null}
           </View>
         </View>
       </RetroGamingPCPanel>
+
+      {playthroughs.data && playthroughs.data.length > 1 ? (
+        <RetroGamingPCPanel>
+          <View className="gap-1.5">
+            <Text className="retrogamingpc-label">
+              Review {playthroughs.data.find((p) => p.id === data.id)?.n ?? '?'} of {playthroughs.data.length} for this game
+            </Text>
+            <View className="flex-row flex-wrap gap-2">
+              {playthroughs.data.map((p) =>
+                p.id === data.id ? (
+                  <RetroGamingPCBadge key={p.id} label={`#${p.n} · ${formatDate(p.published_at)}`} variant="main" />
+                ) : (
+                  <RetroGamingPCButton
+                    key={p.id}
+                    variant="navigate"
+                    label={`#${p.n} · ${formatDate(p.published_at)}`}
+                    accessibilityLabel={`Open review ${p.n} of ${p.total}`}
+                    onPress={() => router.replace({ pathname: '/review/[id]', params: { id: p.id } })}
+                  />
+                ),
+              )}
+            </View>
+          </View>
+        </RetroGamingPCPanel>
+      ) : null}
 
       <RetroGamingPCPanel title="Review">
         {data.content ? (
@@ -144,7 +175,7 @@ export default function ReviewScreen() {
             variant="navigate"
             label="Edit in Review Studio"
             onPress={() => {
-              startReview({ gameId: data.game_id });
+              startReview({ gameId: data.game_id, reviewId: data.id });
               router.push('/post');
             }}
           />

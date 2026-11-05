@@ -101,3 +101,22 @@ export async function fetchLikedStats(dimension: LikedDimension, limit: number |
     total: data[0] ? Number(data[0].total_labels) : 0,
   };
 }
+
+// ---- Replays (migration 000040) -------------------------------------------------
+const replayStatsSchema = z.object({
+  total: z.coerce.number(),
+  games: z.coerce.number(),
+  top: z.array(z.object({ gameId: z.coerce.number(), replays: z.coerce.number(), lastFinished: z.string().nullable() })),
+  byYear: z.array(z.object({ year: z.coerce.number(), replays: z.coerce.number() })),
+  /** First vs newest score (1–100) for games you've reviewed more than once. */
+  scoreChanges: z.array(z.object({ gameId: z.coerce.number(), reviews: z.coerce.number(), first: z.coerce.number(), latest: z.coerce.number() })),
+});
+export type ReplayStats = z.infer<typeof replayStatsSchema>;
+
+export async function fetchReplayStats(limit = 10): Promise<ReplayStats> {
+  const { data, error } = await supabase.rpc('stats_replays', { p_limit: limit });
+  if (error) fail(error);
+  const parsed = replayStatsSchema.safeParse(data);
+  if (!parsed.success) throw new StatsError('Unexpected response for replays.');
+  return parsed.data;
+}

@@ -2,7 +2,7 @@
 
 The Stats tab (`app/(tabs)/stats.tsx`) renders `StatsPage`. It shows a sidebar on desktop and tabs on mobile. The menu is built from the `STATS` array in `statsConfig.ts`. Only the selected stat is mounted, so only that stat fetches data. The selection is kept in the `?stat=` route param.
 
-Every aggregate runs in Postgres as a `stats_*` function in `supabase/migrations/000014_games_and_stats.sql`. These functions are `SECURITY INVOKER` and filter on `user_id = auth.uid()`, so users only ever aggregate their own data. Migration 000015 routes them through `my_logged_games()`. A game counts as "logged" when it has a quick rating or a review (draft or published). Now Playing slots do not count. Score-based stats use the user's one score per game. Platforms come from reviews, so quick-rated-only games land in Unknown.
+Every aggregate runs in Postgres as a `stats_*` function in `supabase/migrations/000014_games_and_stats.sql`. These functions are `SECURITY INVOKER` and filter on `user_id = auth.uid()`, so users only ever aggregate their own data. Migration 000015 routes them through `my_logged_games()`. A game counts as "logged" when it has a quick rating, a review (draft or published) or a game-page replay (migration 000040); it still counts once however many times it was replayed. Stats → Replays (`stats_replays`) is the one stat that counts each replay. Now Playing slots do not count. Score-based stats use the user's one score per game. Platforms come from reviews, so quick-rated-only games land in Unknown.
 
 ## Adding a stat
 

@@ -68,7 +68,7 @@ export async function fetchMyRatings(userId: string, gameIds: readonly number[])
   return out;
 }
 
-export type UserRating = GameRatingEntry & { gameId: number; ratedAt: string };
+export type UserRating = GameRatingEntry & { gameId: number; ratedAt: string; /** Replays of the game (migration 000040). */ replays: number };
 export type UserRatingsPage = { ratings: UserRating[]; total: number };
 
 /** A player's ratings, newest first (public; shown on profiles). */
@@ -80,10 +80,16 @@ export async function fetchUserRatings(userId: string, limit = 24): Promise<User
     .order('updated_at', { ascending: false })
     .limit(limit);
   if (error) fail(error, 'Could not load ratings.');
+  const replays = new Map<number, number>();
+  if (data.length > 0) {
+    const counts = await supabase.rpc('replay_counts', { p_user_id: userId, p_game_ids: data.map((r) => r.game_id) });
+    if (counts.error) fail(counts.error, 'Could not load ratings.');
+    for (const c of counts.data) replays.set(Number(c.game_id), c.replays);
+  }
   const ratings: UserRating[] = [];
   for (const row of data) {
     const entry = entryFromRow(row);
-    if (entry) ratings.push({ ...entry, gameId: row.game_id, ratedAt: row.updated_at });
+    if (entry) ratings.push({ ...entry, gameId: row.game_id, ratedAt: row.updated_at, replays: replays.get(Number(row.game_id)) ?? 0 });
   }
   return { ratings, total: count ?? ratings.length };
 }

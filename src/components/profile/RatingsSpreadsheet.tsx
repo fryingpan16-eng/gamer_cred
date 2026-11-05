@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { useMemo, useState, type ReactNode } from 'react';
 import { FlatList, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
+import { PlaysTag } from '@/components/replays/PlaysTag';
 import { RetroGamingPCButton, RetroGamingPCTabs, type RetroGamingPCTabItem } from '@/components/ui';
 import { RATING_TIERS, type TierCode } from '@/constants/ratingRubric';
 import { useThemeColors } from '@/hooks/useTheme';
@@ -211,7 +212,7 @@ function Row({ row, index }: { row: RatingsTableRow; index: number }) {
   return (
     <Pressable
       accessibilityRole="link"
-      accessibilityLabel={`${row.name}: ${row.score} out of 100, tier ${tierSpokenName(row.tier)}, played on ${row.platform}. Open game page`}
+      accessibilityLabel={`${row.name}: ${row.score} out of 100, tier ${tierSpokenName(row.tier)}, played on ${row.platform}${row.replays > 0 ? `, played ${row.replays + 1} times` : ''}. Open game page`}
       onPress={() => router.push({ pathname: '/game/[id]', params: { id: String(row.gameId) } })}
       style={{ height: ROW_HEIGHT, borderBottomColor: DIVIDER }}
       className={cn('flex-row border-b', index % 2 === 1 ? 'bg-retrogamingpc-card' : 'bg-retrogamingpc-dark')}
@@ -219,6 +220,7 @@ function Row({ row, index }: { row: RatingsTableRow; index: number }) {
       <Cell width={COLUMNS[0]!.width}>
         <Text className="text-retrogamingpc-xs font-bold text-retrogamingpc-text-bright" numberOfLines={1}>
           {row.name}
+          <PlaysTag replays={row.replays} />
         </Text>
       </Cell>
       <Cell width={COLUMNS[1]!.width} align="right">

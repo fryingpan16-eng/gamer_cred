@@ -25,6 +25,8 @@ export type ReviewCardData = {
   content: string | null;
   /** When it was published (falls back to the last edit). */
   date: string | null;
+  /** A later playthrough (migration 000040). */
+  isReplay: boolean;
 };
 
 export function cardFromFeedRow(row: ActivityFeedRow): ReviewCardData {
@@ -37,6 +39,7 @@ export function cardFromFeedRow(row: ActivityFeedRow): ReviewCardData {
     platformId: null,
     content: row.excerpt,
     date: row.occurred_at,
+    isReplay: row.is_replay === true,
   };
 }
 
@@ -54,6 +57,7 @@ export function cardFromReview(
     | 'content'
     | 'published_at'
     | 'updated_at'
+    | 'is_replay'
   >,
 ): ReviewCardData {
   return {
@@ -65,6 +69,7 @@ export function cardFromReview(
     platformId: r.platform_id,
     content: r.content,
     date: r.published_at ?? r.updated_at,
+    isReplay: r.is_replay,
   };
 }
 
@@ -97,6 +102,7 @@ export async function browseGameReviews(
       platformId: r.platform_id === null ? null : Number(r.platform_id),
       content: r.content,
       date: r.published_at ?? r.updated_at,
+      isReplay: r.is_replay === true,
     })),
     nextPage: data.length === pageSize ? page + 1 : null,
   };

@@ -18,7 +18,7 @@ import { useGameLookup } from '@/hooks/useGames';
 import { useAuthStore, usePrimaryRatingScale } from '@/hooks/useAuth';
 import { usePlatforms } from '@/hooks/useProfile';
 import { useMyGameRating } from '@/hooks/useRatings';
-import { useDeleteReview, useMyReviewForGame, useSaveReview } from '@/hooks/useReviews';
+import { useDeleteReview, useMyReviewsForGame, useSaveReview } from '@/hooks/useReviews';
 import { useStudioStore, type StudioTarget } from '@/hooks/useStudioStore';
 import type { GameRatingEntry } from '@/services/ratings';
 import type { Review, ReviewStatus } from '@/types/database.types';
@@ -26,7 +26,10 @@ import { igdbImageUrl } from '@/types/igdb';
 import { cn } from '@/utils/cn';
 import type { StoredRating } from '@/utils/rating';
 import { reviewRating } from '@/utils/ratingColumns';
-import { REVIEW_MAX_LENGTH, reviewFormSchema, type ReviewFormValues } from '@/utils/reviewSchemas';
+import { resolveStudioTarget } from '@/utils/studioTarget';
+import { localToday, REVIEW_MAX_LENGTH, reviewFormSchema, type ReviewFormValues } from '@/utils/reviewSchemas';
+import { FinishedOnField } from '@/components/replays/FinishedOnField';
+import { formatFinishedOn } from '@/components/game/ReplayButton';
 
 import { GamePickerModal } from './GamePickerModal';
 import { PlatformPicker } from './PlatformPicker';
@@ -36,6 +39,8 @@ type FieldErrors = Partial<Record<keyof ReviewFormValues, string>>;
 type EditorProps = {
   target: StudioTarget;
   existing: Review | null;
+  /** Your reviews of this game written before this one: any, and this one is a replay (server rule, migration 000040). */
+  priorReviews: number;
   /** The viewer's quick rating for this game — the starting score and platform for a new review. */
   quickRating: GameRatingEntry | null;
   /** Close / Delete done: asks the parent to close (it confirms if there are unsaved changes). */
@@ -45,8 +50,12 @@ type EditorProps = {
 };
 
 /** Keyed by game + existing review version, so initial values never need effect-syncing. */
-function ReviewEditor({ target, existing, quickRating, onRequestClose, onDirtyChange }: EditorProps) {
+function ReviewEditor({ target, existing, priorReviews, quickRating, onRequestClose, onDirtyChange }: EditorProps) {
   const clearTarget = useStudioStore((s) => s.clearTarget);
+  const pinReview = useStudioStore((s) => s.pinReview);
+  // A new review becomes this editor's review on its first save, so later saves update it.
+  const [saved, setSaved] = useState<Review | null>(null);
+  const current = saved ?? existing;
   const save = useSaveReview();
   const remove = useDeleteReview();
 
@@ -57,6 +66,11 @@ function ReviewEditor({ target, existing, quickRating, onRequestClose, onDirtyCh
     (existing ? reviewRating(existing) : null) ?? quickRating ?? target.seed?.rating ?? null,
   );
   const [content, setContent] = useState(existing?.content ?? target.seed?.content ?? '');
+  // Replays: forced for a review after an earlier one; a first review can be ticked (played before GamerCred).
+  const forcedReplay = priorReviews > 0;
+  const [replayTicked, setReplayTicked] = useState(existing?.is_replay ?? false);
+  const isReplay = forcedReplay || replayTicked;
+  const [finishedOn, setFinishedOn] = useState(existing?.finished_on ?? localToday());
   // undefined = untouched: an existing review keeps its platform; a new one uses your quick rating's
   // platform, else your Main platform.
   const [platformChoice, setPlatformChoice] = useState<number | null | undefined>(existing ? existing.platform_id : undefined);
@@ -71,19 +85,27 @@ function ReviewEditor({ target, existing, quickRating, onRequestClose, onDirtyCh
   const [confirmUnpublish, setConfirmUnpublish] = useState(false);
 
   // Unsaved changes = the form differs from what it opened with, or from the last save.
-  const snapshot = JSON.stringify([rating, content, platformId]);
+  const snapshot = JSON.stringify([rating, content, platformId, isReplay, isReplay ? finishedOn : null]);
   const [savedSnapshot, setSavedSnapshot] = useState(snapshot);
   const dirty = snapshot !== savedSnapshot;
   useEffect(() => onDirtyChange(dirty), [dirty, onDirtyChange]);
 
-  const isPublished = existing?.status === 'published';
+  const isPublished = current?.status === 'published';
   // Which button's save is running (for its spinner).
   const savingAs = save.isPending ? save.variables.status : null;
 
   const submit = (status: ReviewStatus) => {
     setConfirmUnpublish(false);
     setSavedAs(null);
-    const parsed = reviewFormSchema.safeParse({ gameId: target.gameId, rating, content, status, platformId });
+    const parsed = reviewFormSchema.safeParse({
+      gameId: target.gameId,
+      rating,
+      content,
+      status,
+      platformId,
+      isReplay,
+      finishedOn: isReplay ? finishedOn : null,
+    });
     if (!parsed.success) {
       const next: FieldErrors = {};
       for (const issue of parsed.error.issues) {
@@ -97,10 +119,14 @@ function ReviewEditor({ target, existing, quickRating, onRequestClose, onDirtyCh
     save.mutate(
       {
         ...parsed.data,
+        reviewId: current?.id,
         clearSlot: parsed.data.status === 'published' && target.fromSlot && freeSlot ? target.fromSlot : undefined,
       },
       {
         onSuccess: (review) => {
+          setSaved(review);
+          // Keep this review open after the save (a published draft would otherwise send the Studio back to its choice).
+          pinReview(review.id);
           setSavedAs(review.status);
           setSavedSnapshot(snapshot);
         },
@@ -115,7 +141,13 @@ function ReviewEditor({ target, existing, quickRating, onRequestClose, onDirtyCh
       {savedAs ? (
         <RetroGamingPCAlert
           tone="success"
-          message={savedAs === 'published' ? 'Review published to the community feed.' : 'Draft saved to your backlog notes.'}
+          message={
+            savedAs === 'published'
+              ? isReplay
+                ? 'Replay review published. It’s now your score for the game.'
+                : 'Review published to the community feed.'
+              : 'Draft saved to your backlog notes.'
+          }
         />
       ) : null}
 
@@ -130,7 +162,9 @@ function ReviewEditor({ target, existing, quickRating, onRequestClose, onDirtyCh
         error={fieldErrors.rating}
       />
       <Text className="-mt-2 text-retrogamingpc-xs text-retrogamingpc-text-muted">
-        This is your one score for the game: it is also your quick rating, and changing either changes both.
+        {isReplay && !isPublished
+          ? 'Publishing makes this your score for the game. Your earlier reviews keep their scores.'
+          : 'This is your one score for the game: it is also your quick rating, and changing either changes both.'}
       </Text>
 
       <RetroGamingPCInput
@@ -150,6 +184,25 @@ function ReviewEditor({ target, existing, quickRating, onRequestClose, onDirtyCh
 
       <PlatformPicker value={platformId} onChange={setPlatformChoice} error={fieldErrors.platformId} />
 
+      {forcedReplay ? null : quickRating || replayTicked ? (
+        <RetroGamingPCCheckbox
+          checked={replayTicked}
+          onToggle={() => setReplayTicked((v) => !v)}
+          label="This is a replay (I’d played it before)"
+        />
+      ) : null}
+      {isReplay ? (
+        <FinishedOnField
+          value={finishedOn}
+          onChange={(v) => {
+            setFinishedOn(v);
+            setFieldErrors((e) => ({ ...e, finishedOn: undefined }));
+          }}
+          error={fieldErrors.finishedOn}
+          disabled={save.isPending}
+        />
+      ) : null}
+
       {!isPublished && target.fromSlot ? (
         <RetroGamingPCCheckbox
           checked={freeSlot}
@@ -162,7 +215,7 @@ function ReviewEditor({ target, existing, quickRating, onRequestClose, onDirtyCh
       <View className="flex-row flex-wrap items-center justify-between gap-2 border-t border-t-retrogamingpc-accent pt-3">
         <View className="flex-row gap-2">
           <RetroGamingPCButton variant="cancel" label="Close" onPress={onRequestClose} disabled={save.isPending} />
-          {existing ? (
+          {current ? (
             <RetroGamingPCButton label="Delete" variant="danger" onPress={() => setConfirmDelete(true)} disabled={save.isPending} />
           ) : null}
         </View>
@@ -211,8 +264,8 @@ function ReviewEditor({ target, existing, quickRating, onRequestClose, onDirtyCh
         busy={remove.isPending}
         onCancel={() => setConfirmDelete(false)}
         onConfirm={() =>
-          existing &&
-          remove.mutate(existing.id, {
+          current &&
+          remove.mutate(current.id, {
             onSuccess: () => {
               setConfirmDelete(false);
               clearTarget();
@@ -221,6 +274,30 @@ function ReviewEditor({ target, existing, quickRating, onRequestClose, onDirtyCh
           })
         }
       />
+    </View>
+  );
+}
+
+function ReviewChoice({ latest, count, onClose }: { latest: Review; count: number; onClose: () => void }) {
+  const chooseReview = useStudioStore((s) => s.chooseReview);
+  const when = latest.finished_on ?? (latest.published_at ?? latest.created_at).slice(0, 10);
+  return (
+    <View className="gap-3">
+      <Text className="text-retrogamingpc-sm leading-[19px] text-retrogamingpc-text">
+        You’ve reviewed this game {count === 1 ? 'once' : `${count} times`}. Your newest review is from{' '}
+        <Text className="font-bold text-retrogamingpc-text-bright">{formatFinishedOn(when)}</Text>.
+      </Text>
+      <Text className="text-retrogamingpc-xs leading-[16px] text-retrogamingpc-text-muted">
+        Played it again? A replay review gets its own score, text and finish date. Its score becomes your score for the game;
+        your earlier reviews stay as they are.
+      </Text>
+      <View className="flex-row flex-wrap items-center justify-between gap-2 border-t border-t-retrogamingpc-accent pt-3">
+        <RetroGamingPCButton variant="cancel" label="Close" onPress={onClose} />
+        <View className="flex-row flex-wrap justify-end gap-2">
+          <RetroGamingPCButton variant="navigate" label="Edit Your Review" onPress={() => chooseReview({ reviewId: latest.id })} />
+          <RetroGamingPCButton variant="create" label="Write a Replay Review" onPress={() => chooseReview({ newReview: true })} />
+        </View>
+      </View>
     </View>
   );
 }
@@ -235,7 +312,9 @@ export function ReviewStudio() {
   const { target, modal, openModal, closeModal, startStandaloneReview, clearTarget } = useStudioStore();
   const gameId = target?.gameId ?? null;
   const games = useGameLookup(gameId ? [gameId] : []);
-  const existing = useMyReviewForGame(gameId);
+  const mine = useMyReviewsForGame(gameId);
+  const resolved = target && mine.data ? resolveStudioTarget(target, mine.data) : null;
+  const editing = resolved?.kind === 'edit' ? resolved.review : null;
   const quick = useMyGameRating(gameId);
   const game = gameId ? games.data?.get(gameId) : undefined;
   const dirtyRef = useRef(false);
@@ -286,11 +365,16 @@ export function ReviewStudio() {
         title="Review Studio"
         onClose={requestClose}
         headerRight={
-          existing.data ? (
-            <RetroGamingPCBadge
-              label={existing.data.status === 'published' ? 'Published' : 'Draft'}
-              variant={existing.data.status === 'published' ? 'published' : 'draft'}
-            />
+          resolved && resolved.kind !== 'choose' ? (
+            <View className="flex-row gap-1">
+              {resolved.prior > 0 || editing?.is_replay ? <RetroGamingPCBadge label="↻ Replay" /> : null}
+              {editing ? (
+                <RetroGamingPCBadge
+                  label={editing.status === 'published' ? 'Published' : 'Draft'}
+                  variant={editing.status === 'published' ? 'published' : 'draft'}
+                />
+              ) : null}
+            </View>
           ) : undefined
         }
       >
@@ -315,16 +399,21 @@ export function ReviewStudio() {
               <RetroGamingPCButton label="Change" onPress={pickGame} />
             </View>
 
-            {existing.isPending || quick.isPending ? (
-              <RetroGamingPCSpinner label="Checking for an existing review…" />
-            ) : existing.isError ? (
-              <RetroGamingPCAlert message={existing.error.message} />
+            {mine.isPending || quick.isPending || !resolved ? (
+              mine.isError ? (
+                <RetroGamingPCAlert message={mine.error.message} />
+              ) : (
+                <RetroGamingPCSpinner label="Checking for an existing review…" />
+              )
+            ) : resolved.kind === 'choose' ? (
+              <ReviewChoice latest={resolved.latest} count={resolved.count} onClose={requestClose} />
             ) : (
               <ReviewEditor
                 // Remount only when the subject changes — not after a save, so success feedback survives.
-                key={`${target.gameId}:${target.fromSlot ?? 'quick'}`}
+                key={`${target.gameId}:${target.fromSlot ?? 'quick'}:${target.nonce}`}
                 target={target}
-                existing={existing.data}
+                existing={editing}
+                priorReviews={resolved.prior}
                 quickRating={quick.rating}
                 onRequestClose={requestClose}
                 onDirtyChange={setDirty}

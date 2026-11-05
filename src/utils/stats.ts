@@ -302,6 +302,8 @@ export type SummaryInputs = {
   genreAverages: readonly BarDatum[];
   decades: readonly BarDatum[];
   studios: readonly BarDatum[];
+  /** Your most replayed game (migration 000040), if you've replayed anything. */
+  mostReplayed?: { name: string; plays: number } | null;
 };
 
 const known = (bars: readonly BarDatum[]) => bars.filter((b) => b.label !== UNKNOWN_LABEL && b.value > 0);
@@ -320,6 +322,8 @@ export function gamerProfileSummary(input: SummaryInputs): string[] {
   if (topGenre) lines.push(`You gravitate toward ${topGenre.label} games.`);
   if (topEra) lines.push(`Your favorite era is the ${topEra.label}.`);
   if (topStudio) lines.push(`The studio you play most is ${topStudio.label}.`);
+  if (input.mostReplayed && input.mostReplayed.plays > 1)
+    lines.push(`You keep coming back to ${input.mostReplayed.name} (${input.mostReplayed.plays} plays).`);
 
   if (count > 0 && averageNumeric !== null) {
     const tendency = ratingTendency(averageNumeric);
@@ -342,4 +346,11 @@ export function gamerProfileSummary(input: SummaryInputs): string[] {
     }
   }
   return lines;
+}
+
+/** Replays per year (migration 000040), oldest year first. */
+export function replayYearBars(rows: readonly { year: number; replays: number }[]): BarDatum[] {
+  return [...rows]
+    .sort((a, b) => a.year - b.year)
+    .map((r) => ({ key: String(r.year), label: String(r.year), value: r.replays, detail: `${r.replays} replay${r.replays === 1 ? '' : 's'}` }));
 }

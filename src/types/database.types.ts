@@ -131,6 +131,10 @@ export type Database = {
           updated_at: Timestamp;
           /** Set by trigger when status first becomes 'published'; null for drafts. */
           published_at: Timestamp | null;
+          /** A later playthrough (migration 000040): server-set when an earlier review of the game exists. */
+          is_replay: boolean;
+          /** When this playthrough was finished (replays; today unless backdated). */
+          finished_on: string | null;
         };
         Insert: {
           id?: string;
@@ -146,6 +150,8 @@ export type Database = {
           created_at?: Timestamp;
           updated_at?: Timestamp;
           published_at?: Timestamp | null;
+          is_replay?: boolean;
+          finished_on?: string | null;
         };
         Update: {
           id?: string;
@@ -161,6 +167,8 @@ export type Database = {
           created_at?: Timestamp;
           updated_at?: Timestamp;
           published_at?: Timestamp | null;
+          is_replay?: boolean;
+          finished_on?: string | null;
         };
         Relationships: [
           {
@@ -290,6 +298,13 @@ export type Database = {
         Row: { user_id: string; game_id: number; created_at: Timestamp };
         Insert: { user_id: string; game_id: number; created_at?: Timestamp };
         Update: { user_id?: string; game_id?: number; created_at?: Timestamp };
+        Relationships: [];
+      };
+      /** "Mark as Replayed" on the game page (migration 000040): no score or text. Add or delete only. */
+      game_replays: {
+        Row: { id: string; user_id: string; game_id: number; platform_id: number | null; finished_on: string; created_at: Timestamp };
+        Insert: { id?: string; user_id: string; game_id: number; platform_id?: number | null; finished_on?: string; created_at?: Timestamp };
+        Update: { id?: string; user_id?: string; game_id?: number; platform_id?: number | null; finished_on?: string; created_at?: Timestamp };
         Relationships: [];
       };
       /** ♥ on a review (migration 000030). Private: you only read your own rows. */
@@ -595,8 +610,31 @@ export type Database = {
           updated_at: string;
           author_username: string;
           author_avatar_url: string | null;
+          /** Migration 000040: each player's newest review only. */
+          is_replay: boolean;
         }[];
       };
+      /** The author's published reviews of the review's game, oldest first (migration 000040). */
+      review_playthroughs: {
+        Args: { p_review_id: string };
+        Returns: {
+          id: string;
+          n: number;
+          total: number;
+          rating: number | null;
+          rating_input_scale: Database['public']['Enums']['rating_scale'] | null;
+          rating_input: string | null;
+          is_replay: boolean;
+          finished_on: string | null;
+          published_at: string | null;
+        }[];
+      };
+      /** A player's most replayed game, if any (migration 000040). */
+      most_replayed_game: { Args: { p_user_id: string }; Returns: { game_id: number; replays: number }[] };
+      /** Replay counts for some of a player's games (migration 000040). Games with none are left out. */
+      replay_counts: { Args: { p_user_id: string; p_game_ids: number[] }; Returns: { game_id: number; replays: number }[] };
+      /** Your replays (migration 000040): parsed with Zod in services/stats.ts. */
+      stats_replays: { Args: { p_limit?: number }; Returns: Json };
       /** Your liked games by series / studios / genres / era (migration 000029). */
       stats_liked: {
         Args: { p_dimension: 'series' | 'studios' | 'genres' | 'era'; p_limit?: number | null };
@@ -714,6 +752,8 @@ export type Database = {
           developers: string[];
           community_rating: number | null;
           review_id: string | null;
+          /** Replays of the game (migration 000040). */
+          replays: number;
         }[];
       };
       /** Friends' ratings of a game — quick or reviewed (migration 000016). */
@@ -754,9 +794,11 @@ export type FriendRatingRow = {
   rating_input_scale: Database['public']['Enums']['rating_scale'];
   rating_input: string;
   platform_id: number | null;
-  /** Set when the friend has a PUBLISHED review of this game. */
+  /** The friend's newest PUBLISHED review of this game, if any. */
   review_id: string | null;
   rated_at: string;
+  /** Replays of the game (migration 000040). */
+  replays: number;
 };
 
 export type FriendReviewRow = {
@@ -774,7 +816,7 @@ export type FriendReviewRow = {
 /** Row returned by the activity_feed RPC (migration 000006). */
 export type ActivityFeedRow = {
   item_key: string;
-  kind: 'review' | 'now_playing' | 'like';
+  kind: 'review' | 'now_playing' | 'like' | 'replay';
   occurred_at: Timestamp;
   actor_id: string;
   actor_username: string;
@@ -789,6 +831,8 @@ export type ActivityFeedRow = {
   preliminary_score: number | null;
   preliminary_input_scale: RatingScaleValue | null;
   preliminary_input: string | null;
+  /** A replay review, or a 'replay' item (migration 000040). */
+  is_replay: boolean;
 };
 
 type RatingScaleValue = 'numeric' | 'tier' | 'stars' | 'rounded';

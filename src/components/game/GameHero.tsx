@@ -11,7 +11,7 @@ import { useIsGuest, usePrimaryRatingScale } from '@/hooks/useAuth';
 import { useIsDesktop } from '@/hooks/useIsDesktop';
 import { PlayedOnControl } from '@/components/rating/PlayedOnControl';
 import { useGameRatingControl, useMyGameRating } from '@/hooks/useRatings';
-import { useMyReviewForGame } from '@/hooks/useReviews';
+import { useMyReviewsForGame } from '@/hooks/useReviews';
 import type { GameReviewStats } from '@/services/games';
 import { igdbImageUrl, type IgdbGameDetail } from '@/types/igdb';
 import type { StoredRating } from '@/utils/rating';
@@ -23,6 +23,7 @@ import { SCALE_DIVIDER, ScoreScales, TierScoreBox } from './ScoreScales';
 import { NowPlayingButton } from './GameActions';
 import { BacklogButton } from './BacklogButton';
 import { LikeButton } from './LikeButton';
+import { ReplayButton } from './ReplayButton';
 import { WriteReviewButton } from './WriteReviewButton';
 
 type GameHeroProps = { game: IgdbGameDetail; stats: GameReviewStats | undefined };
@@ -41,7 +42,7 @@ function firstRelease(game: IgdbGameDetail): string | null {
 export function GameHero({ game, stats }: GameHeroProps) {
   const backdrop = game.artworkIds[0] ?? game.screenshotIds[0] ?? null;
   const release = firstRelease(game);
-  const mine = useMyReviewForGame(game.id);
+  const mine = useMyReviewsForGame(game.id);
   const myRating = useMyGameRating(game.id);
   const control = useGameRatingControl(game, myRating.rating);
   const primaryScale = usePrimaryRatingScale();
@@ -105,8 +106,8 @@ export function GameHero({ game, stats }: GameHeroProps) {
             <ScoreScales rating={myRating.rating} primaryScale={primaryScale} omitPrimary dividerBeforeFirst className="mt-1" />
             <Text className="border-t pt-1 text-retrogamingpc-xs text-retrogamingpc-text-muted" style={{ borderTopColor: SCALE_DIVIDER }}>
               {myRating.rating
-                ? mine.data
-                  ? 'Also the score on your review.'
+                ? mine.data?.latestPublished || mine.data?.draft
+                  ? (mine.data.published.length > 1 ? 'Also the score on your newest review.' : 'Also the score on your review.')
                   : 'Public on your profile — counts toward your stats and the Gamer Cred score.'
                 : primaryScale === 'numeric'
                   ? 'Type a score and press Enter, or use − / +.'
@@ -124,6 +125,12 @@ export function GameHero({ game, stats }: GameHeroProps) {
             <WriteReviewButton gameId={game.id} />
             <LikeButton gameId={game.id} gameName={game.name} />
             <BacklogButton gameId={game.id} gameName={game.name} />
+            <ReplayButton
+              gameId={game.id}
+              gameName={game.name}
+              hasRating={myRating.rating !== null}
+              defaultPlatformId={control.platformId}
+            />
           </View>
           <NowPlayingButton game={game} />
         </View>

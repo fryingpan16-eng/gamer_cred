@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
 
 import { PlayedOnBadge } from '@/components/game/PlayedOnBadge';
+import { PlaysTag } from '@/components/replays/PlaysTag';
 import { Thumbnail } from '@/components/search/Thumbnail';
 import { RetroGamingPCAlert, RetroGamingPCButton, RetroGamingPCPanel, RetroGamingPCRating, RetroGamingPCSpinner } from '@/components/ui';
 import { useGameLookup } from '@/hooks/useGames';
@@ -57,6 +58,7 @@ export function ProfileRatings({ userId, isOwner }: { userId: string; isOwner: b
                   <View className="flex-1 gap-0.5">
                     <Text className="text-retrogamingpc-xs font-bold text-retrogamingpc-text-bright" numberOfLines={2}>
                       {game?.name ?? `Game #${r.gameId}`}
+                      <PlaysTag replays={r.replays} />
                     </Text>
                     <View pointerEvents="none">
                       <RetroGamingPCRating rating={r} size="compact" expanded={false} />

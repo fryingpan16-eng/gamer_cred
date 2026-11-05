@@ -43,6 +43,8 @@ export const queryKeys = {
     /** Published reviews on a profile. */
     byUser: (userId: string) => [...queryKeys.reviews.all(), 'user', userId] as const,
     detail: (reviewId: string) => [...queryKeys.reviews.all(), 'detail', reviewId] as const,
+    /** "Review 2 of 3" on a review page (migration 000040). */
+    playthroughs: (reviewId: string) => [...queryKeys.reviews.all(), 'playthroughs', reviewId] as const,
     /** The review browser: one game, Community or Friends, in a sort order (migration 000030). */
     browseAll: () => [...queryKeys.reviews.all(), 'browse'] as const,
     /** Every browser + preview of one game. */
@@ -127,6 +129,14 @@ export const queryKeys = {
   backlog: {
     all: () => [...queryKeys.all, 'backlog'] as const,
     byUser: (userId: string) => [...queryKeys.backlog.all(), userId] as const,
+  },
+
+  /** Replays (migration 000040): game-page replays, counts, a player's most replayed game. */
+  replays: {
+    all: () => [...queryKeys.all, 'replays'] as const,
+    /** Your plain replays of one game, newest first. */
+    mineForGame: (userId: string, gameId: number) => [...queryKeys.replays.all(), 'mine', userId, gameId] as const,
+    mostReplayed: (userId: string) => [...queryKeys.replays.all(), 'most', userId] as const,
   },
 
   /** ♥ likes (migration 000029). */

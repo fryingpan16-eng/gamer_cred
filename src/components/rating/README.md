@@ -13,12 +13,15 @@ GamerCred has two separate actions with separate code paths:
 
 ## One score per game
 
-A user's quick rating and the score on their review of the same game are always the same number, and since 000016 the same "played on" platform too. Two triggers keep them in sync (a "not specified" platform on either side keeps the other's):
-- Saving a review with a score sets the quick rating.
-- Changing the stars updates the score on the review.
+A user's quick rating and the score on their **current review** of that game are always the same number, and since 000016 the same "played on" platform too. Since migration 000040 a player can have several reviews of one game (replays). The current review is the newest one, not counting an unpublished replay draft. Triggers keep the two in sync (a "not specified" platform on either side keeps the other's):
+- Saving the current review with a score sets the quick rating. Older reviews keep their own scores.
+- Changing the stars updates the score on the current review only.
 - A new review starts from the quick rating.
-- Clearing the stars is refused while a **published** review exists, because published reviews need a score. A draft's score is cleared along with the stars.
-- Deleting a review keeps the quick rating.
+- Publishing a replay review makes its score the quick rating. Unpublishing or deleting it puts back the score of the review before it.
+- Clearing the stars is refused while any **published** review exists, because published reviews need a score. A draft's score is cleared along with the stars.
+- Deleting your only review keeps the quick rating.
+
+Replays from the game page (**Mark as Replayed**, `game_replays`) never change the score.
 
 Both controls use the viewer's primary scale (`usePrimaryRatingScale`, Settings → Rating scale):
 - **Stars:** tap a half or full star.
@@ -34,7 +37,7 @@ The value is stored as entered (canonical 1–100 + input scale + raw input), so
   - "Review a Game…",
   - a Now Playing slot's **Review** button,
   - **Resume** on a draft.
-- **Game page**: the **Write a review** button in the hero (`components/game/WriteReviewButton.tsx`). It opens the Review Studio for that game.
+- **Game page**: the **Write a review** button in the hero (`components/game/WriteReviewButton.tsx`). It opens the Review Studio for that game. Once you've published a review, it reads **Edit or review again** and the Studio asks whether to edit it or write a replay review (`utils/studioTarget.ts`).
 
 The quick-rating controls never open, embed or suggest the review form, and there are no prompts after rating.
 

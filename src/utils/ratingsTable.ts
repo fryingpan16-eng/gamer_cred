@@ -23,6 +23,8 @@ export type RatingsTableRow = {
   developers: string[];
   ratedAt: string;
   reviewId: string | null;
+  /** Replays of the game (migration 000040): shown as ×(plays) after the title. */
+  replays: number;
 };
 
 export type SortKey = 'name' | 'score' | 'platform' | 'year' | 'genre' | 'developer' | 'rated' | 'review';
@@ -77,6 +79,8 @@ export type RatingsTableSource = {
   developers: string[];
   community_rating: number | null;
   review_id: string | null;
+  /** Replays (migration 000040); older callers may omit it. */
+  replays?: number;
 };
 
 export function toTableRow(src: RatingsTableSource, fallbackName?: string): RatingsTableRow {
@@ -95,6 +99,7 @@ export function toTableRow(src: RatingsTableSource, fallbackName?: string): Rati
     developers: src.developers.length > 0 ? src.developers : [UNKNOWN_LABEL],
     ratedAt: src.rated_at,
     reviewId: src.review_id,
+    replays: src.replays ?? 0,
   };
 }
 

@@ -7,6 +7,7 @@ import { PlatformsStat } from './PlatformsStat';
 import { RatingDistributionStat } from './RatingDistributionStat';
 import { NumericRatingsStat, RoundedRatingsStat, StarRatingsStat, TierRatingsStat } from './RatingScaleStat';
 import { ReleaseEraStat } from './ReleaseEraStat';
+import { ReplaysStat } from './ReplaysStat';
 import { StudiosStat } from './StudiosStat';
 import { SummaryStat } from './SummaryStat';
 import { VsCommunityStat } from './VsCommunityStat';
@@ -62,6 +63,12 @@ export const STATS: readonly StatDefinition[] = [
     component: VsCommunityStat,
   },
   { id: 'era', title: 'Release Era', description: 'Which era of games you play.', component: ReleaseEraStat },
+  {
+    id: 'replays',
+    title: 'Replays',
+    description: 'The games you keep coming back to, and how your scores changed.',
+    component: ReplaysStat,
+  },
   { id: 'liked', title: 'Liked Games', description: 'What you ♥ most: series, studios, genres and decades.', component: LikedStat },
   { id: 'timeline', title: 'Logged Over Time', description: 'When you logged your games.', component: LoggedOverTimeStat },
 ];

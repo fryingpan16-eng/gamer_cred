@@ -22,7 +22,8 @@ type FeedItemCardProps = {
 
 /**
  * One activity entry: avatar (→ profile) · "who did what" line · rating · excerpt · cover (→ game).
- * Reviews show stars; Now Playing entries show the preliminary score badge; likes show a ♥.
+ * Reviews show stars; Now Playing entries show the preliminary score badge; likes show a ♥;
+ * game-page replays (migration 000040) show a Replay badge.
  */
 export function FeedItemCard({ item, game, viewerId, like }: FeedItemCardProps) {
   // Reviews use the app's one review card (tap opens the full review).
@@ -42,7 +43,7 @@ export function FeedItemCard({ item, game, viewerId, like }: FeedItemCardProps) 
   return <ActivityCard item={item} game={game} viewerId={viewerId} />;
 }
 
-/** Now Playing and ♥ like entries. */
+/** Now Playing, ♥ like and replay entries. */
 function ActivityCard({ item, game, viewerId }: Omit<FeedItemCardProps, 'like'>) {
   const isMe = item.actor_id === viewerId;
   const actorName = useShownName(item.actor_id, item.actor_username).name;
@@ -67,7 +68,13 @@ function ActivityCard({ item, game, viewerId }: Omit<FeedItemCardProps, 'like'>)
               <UserName userId={item.actor_id} username={item.actor_username} className="font-bold text-retrogamingpc-text-bright" />
             </Text>
           )}
-          {item.kind === 'review' ? ' reviewed ' : item.kind === 'like' ? ' liked ' : ' is playing '}
+          {item.kind === 'review'
+            ? ' reviewed '
+            : item.kind === 'like'
+              ? ' liked '
+              : item.kind === 'replay'
+                ? ' replayed '
+                : ' is playing '}
           <Text onPress={openGame} className="font-bold text-retrogamingpc-text-bright">
             {gameName}
           </Text>
@@ -79,6 +86,10 @@ function ActivityCard({ item, game, viewerId }: Omit<FeedItemCardProps, 'like'>)
           <Text className="text-retrogamingpc-sm font-bold" style={{ color: LIKE_COLOR }} accessibilityLabel="Liked">
             ♥
           </Text>
+        ) : item.kind === 'replay' ? (
+          <View className="flex-row">
+            <RetroGamingPCBadge label="↻ Replay" />
+          </View>
         ) : (
           <View className="flex-row flex-wrap gap-1">
             <RetroGamingPCBadge label={`Now Playing · Slot ${item.slot_index ?? '?'}`} variant="nowPlaying" />

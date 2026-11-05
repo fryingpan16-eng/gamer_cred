@@ -1,8 +1,4 @@
 # Everyday words containing an "anywhere" word from badwords.txt.
-snigger
-sniggers
-sniggering
-sniggered
 montenegro
 montenegrin
 negroni

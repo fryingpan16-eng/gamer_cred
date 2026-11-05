@@ -26,7 +26,15 @@ export type StudioTarget = {
   fromSlot?: NowPlayingSlot;
   /** Prefill values (from the slot's notes / preliminary score). */
   seed?: { rating: StoredRating | null; content: string };
+  /** Edit this review. Without it (and without newReview), the Studio resumes your draft, or asks when you've published one. */
+  reviewId?: string;
+  /** Write a new review: a replay review when you've reviewed the game before (migration 000040). */
+  newReview?: boolean;
+  /** Bumped on every start/choice: the editor remounts only when this changes. */
+  nonce: number;
 };
+
+export type StudioStart = Omit<StudioTarget, 'nonce'>;
 
 type StudioState = {
   selectedSlot: NowPlayingSlot | null;
@@ -35,11 +43,17 @@ type StudioState = {
   selectSlot: (slot: NowPlayingSlot | null) => void;
   openModal: (modal: Exclude<StudioModal, { kind: 'none' }>) => void;
   closeModal: () => void;
-  startReview: (target: StudioTarget) => void;
+  startReview: (target: StudioStart) => void;
+  /** Edit or new-review choice for a game you've reviewed before. */
+  chooseReview: (choice: { reviewId: string } | { newReview: true }) => void;
+  /** After the first save of a new review: keep editing that review (same editor, no remount). */
+  pinReview: (reviewId: string) => void;
   /** Standalone review (not from a Now Playing slot) picked from the selector. */
   startStandaloneReview: (game: IgdbGameResult) => void;
   clearTarget: () => void;
 };
+
+let nonce = 0;
 
 export const useStudioStore = create<StudioState>()((set) => ({
   selectedSlot: null,
@@ -48,7 +62,21 @@ export const useStudioStore = create<StudioState>()((set) => ({
   selectSlot: (slot) => set({ selectedSlot: slot }),
   openModal: (modal) => set({ modal, selectedSlot: 'slot' in modal ? modal.slot : null }),
   closeModal: () => set({ modal: { kind: 'none' } }),
-  startReview: (target) => set({ target, modal: { kind: 'none' } }),
-  startStandaloneReview: (game) => set({ target: { gameId: game.id }, modal: { kind: 'none' } }),
+  startReview: (target) => set({ target: { ...target, nonce: ++nonce }, modal: { kind: 'none' } }),
+  chooseReview: (choice) =>
+    set((s) =>
+      s.target
+        ? {
+            target: {
+              ...s.target,
+              reviewId: 'reviewId' in choice ? choice.reviewId : undefined,
+              newReview: 'newReview' in choice,
+              nonce: ++nonce,
+            },
+          }
+        : {},
+    ),
+  pinReview: (reviewId) => set((s) => (s.target ? { target: { ...s.target, reviewId, newReview: false } } : {})),
+  startStandaloneReview: (game) => set({ target: { gameId: game.id, nonce: ++nonce }, modal: { kind: 'none' } }),
   clearTarget: () => set({ target: null }),
 }));

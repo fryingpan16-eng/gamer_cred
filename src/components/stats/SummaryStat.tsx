@@ -1,6 +1,7 @@
 import { Text, View } from 'react-native';
 
-import { useDeveloperStats, useGenreStats, usePlatformStats, useRatingHistogram, useReleaseYearStats } from '@/hooks/useStats';
+import { useGameLookup } from '@/hooks/useGames';
+import { useDeveloperStats, useGenreStats, usePlatformStats, useRatingHistogram, useReleaseYearStats, useReplayStats } from '@/hooks/useStats';
 import { eraBars, gamerProfileSummary, genreAverageBars, nameCountBars, platformBars } from '@/utils/stats';
 
 import { StatFrame } from './StatFrame';
@@ -12,7 +13,10 @@ export function SummaryStat() {
   const genres = useGenreStats();
   const years = useReleaseYearStats();
   const studios = useDeveloperStats(1);
-  const queries = [histogram, platforms, genres, years, studios];
+  const replays = useReplayStats(10);
+  const topReplay = replays.data?.top[0] ?? null;
+  const replayGame = useGameLookup(topReplay ? [topReplay.gameId] : []);
+  const queries = [histogram, platforms, genres, years, studios, replays];
 
   const lines = gamerProfileSummary({
     histogram: histogram.data ?? [],
@@ -21,6 +25,9 @@ export function SummaryStat() {
     genreAverages: genreAverageBars(genres.data ?? []),
     decades: eraBars(years.data ?? [], 'decade'),
     studios: nameCountBars(studios.data?.rows ?? [], 'd'),
+    mostReplayed: topReplay
+      ? { name: replayGame.data?.get(topReplay.gameId)?.name ?? `Game #${topReplay.gameId}`, plays: topReplay.replays + 1 }
+      : null,
   });
 
   return (

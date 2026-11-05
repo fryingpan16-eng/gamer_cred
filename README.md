@@ -69,6 +69,7 @@ Search covers three kinds of thing:
 - **Review Studio:** the only place full reviews are written, either from a Now Playing slot or for any game.
   - The writer opens as an overlay pinned to the top of the screen that shrinks above the keyboard, so you can always see what you type.
   - One action bar: Save Draft and Publish (or Unpublish and Update Review once published). Closing with unsaved changes asks first.
+  - **Replay reviews** (migration 000040): a game you've already reviewed asks **Edit Your Review** or **Write a Replay Review**. A replay review has its own score, text, platform and **date finished**; publishing it makes its score your score for the game, and your earlier reviews keep theirs. A first review of a game you'd only quick-rated can be ticked **This is a replay**. One draft per game at a time.
 - **Backlog:** games you want to play next, between Now Playing and Review Studio. Add with **+ Add** here or **+ Backlog** on any game page; remove with ✕; **🔓 Public / 🔒 Private** toggle (also in Settings → Privacy). The Now Playing game picker shows your backlog before you search. A game leaves the backlog once you rate it (a quick rating or a published review); starting it in Now Playing keeps it there, tagged "Now Playing".
 - **Drafts:** your unpublished reviews, ready to resume.
 
@@ -77,6 +78,7 @@ Charts of your own logged games, all computed in Postgres:
 - **Gamer Profile:** a short written summary of your tastes. It's generated in the app from your stats, with no AI involved.
 - **Ratings:** one tab per scale (1–100, Tier, Stars, Rounded), always in the tier colours.
 - **Liked Games:** your likes by series, studio, genre and decade.
+- **Replays:** total replays, your most replayed games, replays per year finished, and **Changed your mind** (first vs newest review score). The Gamer Profile mentions your most replayed game.
 - **Breakdowns:** Platforms, Studios (top 10 with "Show all"), Genres (count or average), Rating Habits (harsh vs. generous), You vs Community (with "hot takes"), Release Era and Logged Over Time.
 
 Every chart shows the exact value when you tap a bar, and has a table view that screen readers use. Missing data goes into an "Unknown" bucket.
@@ -86,9 +88,10 @@ Every chart shows the exact value when you tap a bar, and has a table view that 
 - **Now Playing:** the four slots, with privacy options (public, friends only or private).
 - **Favourites:** four all-time favourite games; tap a cover to open the game. The owner removes one with the ✕ on its cover and picks a new game for the empty slot.
 - **Friends:** tap the friend count for the friends list (yours also shows requests).
+- **↻ Most replayed:** the game you've played the most times, once you've replayed anything.
 - **♥ Liked Games:** the latest 8 liked covers, with **View all** for the full list (newest first, with a name filter).
 - **Backlog:** the same layout; hidden from others when private.
-- **Ratings:** your most recent ratings. Tap **Ratings ▸** for a spreadsheet of every game you've rated.
+- **Ratings:** your most recent ratings, with **↻×N** on games played more than once. Tap **Ratings ▸** for a spreadsheet of every game you've rated.
   - It has sortable columns, search, and filters for tier, score range, platform, genre and whether you've reviewed the game.
   - Only you and your friends can sort and filter it.
 - **Lists:** your game lists. Others see only your public ones.
@@ -100,6 +103,7 @@ Every chart shows the exact value when you tap a bar, and has a table view that 
 - **Gamer Cred score:** the community average, shown large in your default scale, then in 1–100, stars and tier.
 - **Your rating:** the same layout as an interactive control, plus your "played on" platform, a **Write a review** button and **Add to Now Playing**.
 - **♥ Like:** one tap to show interest without rating or reviewing; the Gamer Cred box shows how many players like the game. Liking never creates a rating.
+- **↻ Mark as Replayed** (migration 000040): log another playthrough with a date finished (today, or backdated) and platform; no score or text, and your score doesn't change. The button shows **↻ Played ×N** once you've replayed it, and its dialog lists your replays (delete game-page ones with ✕). Replaying takes the game off your backlog. Unlimited in principle (capped at 1,000 per game). Public like ratings: Friends' Ratings shows ↻×N and friends see "replayed" in their feed.
 - Both score boxes are coloured by the tier of their score.
 - **Friends' Ratings** (above the screenshots), About, Screenshots, Community Reviews, game facts, and PC system requirements (from RAWG).
 
@@ -107,7 +111,8 @@ Every chart shows the exact value when you tap a bar, and has a table view that 
 One system, reached from everywhere:
 - **Review card:** the same preview in Home feeds, Trending Posts, the game page, the review browser and profiles. Avatar or name → profile; game → game page; anywhere else → the full review.
 - **Review browser** (`app/reviews/[gameId].tsx`): one game's reviews, **Community** or **Friends** tab, sorted **Popular / Recent / Highest / Lowest**. Opens from the game page's Community Reviews (View all) and Friends' Ratings (Friends tab). The Friends tab ends with friends who rated without writing a review.
-- **Full review** (`app/review/[id].tsx`): the ♥ like, Report, and "All reviews of this game".
+- **Full review** (`app/review/[id].tsx`): the ♥ like, Report, and "All reviews of this game". A player with several reviews of one game gets **Review N of M** links, and replay reviews carry a **↻ Replay** badge and their finish date.
+- **Several reviews per game** (migration 000040): game pages and the review browser show each player's **newest** review, so one player never fills the list; the profile shows them all.
 - **♥ on reviews:** any published review but your own. Counts are private: only the author sees how many likes their review got. Popular sorts by likes, then newest.
 
 ### Settings
@@ -226,10 +231,11 @@ These are two separate actions with separate code paths:
 | **Visibility** | Public: your profile's Ratings, Friends' Ratings and the Gamer Cred average | Published reviews are public; drafts are visible only to you |
 | **Code** | `services/ratings.ts` (`rateGame`, `clearGameRating`) | `services/reviews.ts` (`saveReview`) |
 
-- **One score and one platform per game.** If you rate a game and also review it, the two always match; database triggers keep them in sync.
+- **One score and one platform per game.** Your rating always matches your **current review** (your newest one, not counting an unpublished replay draft); database triggers keep them in sync.
   - A new review starts from your rating.
-  - Changing the rating updates the review's score.
-  - Deleting a review keeps your rating.
+  - Changing the rating updates the current review's score; older reviews keep theirs.
+  - Publishing a replay review sets your rating to its score; unpublishing or deleting it puts back the score of the review before it.
+  - Deleting your only review keeps your rating.
   - You can't clear your rating while a published review exists, because a published review needs a score.
 - **"Played on"** defaults to the game's earliest release platform that's in the app's platform catalogue. You can change it inline.
 - **Saving:** taps save in the background straight away. Rapid taps collapse into one save, and a failed save rolls back with an error message.
@@ -297,7 +303,7 @@ Every table has row-level security with explicit read and write policies.
 |---|---|
 | `profiles` | Username, avatar, primary rating scale, colour theme, Now Playing privacy |
 | `friendships` | Friend requests and friendships (pending, accepted, declined) |
-| `reviews` | One review per user per game: draft or published, score, text, platform |
+| `reviews` | Reviews: draft or published, score, text, platform. Several per game (one draft at a time); later ones are replays with a finish date (000040). |
 | `game_ratings` | Quick ratings: one per user per game, with score and platform. Public to read, owner-only to write. |
 | `now_playing` | The four Now Playing slots, with notes and "so far" scores |
 | `user_favorites` | Top 4 favourites |
@@ -313,6 +319,7 @@ Every table has row-level security with explicit read and write policies.
 | `api_rate_limits` | Per-user request counters for the game-database proxy (service role only) |
 | `games` | A durable copy of IGDB metadata used by Stats and the ratings list (incl. series) |
 | `game_likes` | ♥ likes: one per player per game. Public to signed-in players, owner-only writes, members only. |
+| `game_replays` | Game-page replays: date finished + platform, no score or text. Public to signed-in players, hidden when blocked, owner add/delete only, members only. |
 | `game_backlog` | Want-to-play backlog, newest first. Readable when public (or yours); owner-only writes, members only. |
 | `review_likes` | ♥ on reviews. Private: you read only your own; authors see their own counts via `review_like_info`. |
 | `igdb_cache` | The proxy's response cache (`cache_key`, `data` JSONB, `updated_at`) |
@@ -322,7 +329,8 @@ Storage: a private `avatar-uploads` bucket (each user can write only their own p
 
 ### Server-side functions (RPCs)
 - **Feed and game stats:** the activity feed, `game_review_stats` (the Gamer Cred average, one score per user) and `friend_ratings_for_game`.
-- **Stats:** `stats_*` aggregates, built on `my_logged_games()`. A game counts as "logged" if you've rated or reviewed it.
+- **Stats:** `stats_*` aggregates, built on `my_logged_games()`. A game counts as "logged" if you've rated, reviewed or replayed it. `stats_replays` powers Stats → Replays.
+- **Replays:** `most_replayed_game`, `replay_counts` (profile Ratings panel) and `review_playthroughs` ("Review N of M"). Replay count = game-page replays + published replay reviews; plays = replays + 1.
 - **Ratings list:** `user_ratings_table` returns a player's full ratings list with game details in one call.
 - **Lists:** `add_list_item`, `move_list_item` (renumbers 1..n), `set_list_pin` (admins only) and `smart_list_games` (a smart list's games, live).
 - **Admins:** `is_app_admin` (admin with a two-step-verified session), `is_app_admin_member`, `admin_activity` and `log_admin_action`.
@@ -364,6 +372,7 @@ Storage: a private `avatar-uploads` bucket (each user can write only their own p
 | 000037 | Owner-approved admin authenticators; Google sign-ups start as `player_xxxxxx` with no picture |
 | 000038 | Permanent names and display names, name rules, official badge, admin display-name reset |
 | 000039 | Name-rule data (reserved names, blocked words, allowed everyday words), generated from `supabase/name-rules/` |
+| 000040 | Replays: several reviews per game (one draft), replay reviews, `game_replays`, replay counts in Friends' Ratings / ratings list / feed, Stats → Replays |
 
 ### avatar Edge Function
 - `submit` screens an uploaded picture with Google Cloud Vision SafeSearch, then publishes, rejects or holds it.

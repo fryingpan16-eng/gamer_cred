@@ -1,14 +1,24 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { clearSlot } from '@/services/nowPlaying';
-import { deleteReview, fetchMyReviewForGame, fetchMyReviews, fetchReviewById, saveReview } from '@/services/reviews';
+import {
+  deleteReview,
+  fetchMyReviews,
+  fetchMyReviewsForGame,
+  fetchPlaythroughs,
+  fetchReviewById,
+  saveReview,
+  type SaveReviewInput,
+} from '@/services/reviews';
 import type { NowPlaying, NowPlayingSlot, Review, ReviewStatus } from '@/types/database.types';
-import type { ReviewFormValues } from '@/utils/reviewSchemas';
 import { queryKeys } from '@/utils/queryKeys';
+import { summarizeMyReviews } from '@/utils/studioTarget';
 
 import { useAuthStore } from './useAuth';
 import { refreshFeeds } from './useFeed';
 import { showToast } from './useToastStore';
+
+export type { MyGameReviews } from '@/utils/studioTarget';
 
 function useViewerId(): string | null {
   return useAuthStore((s) => s.user?.id ?? null);
@@ -32,17 +42,26 @@ export function useMyReviews(status?: ReviewStatus) {
   });
 }
 
-/** The viewer's existing review (draft or published) for a game, to prefill the studio form. */
-export function useMyReviewForGame(gameId: number | null) {
+/** The viewer's reviews of a game (drafts included): what the Studio opens and the game page's button says. */
+export function useMyReviewsForGame(gameId: number | null) {
   const viewerId = useViewerId();
   return useQuery({
     queryKey: queryKeys.reviews.mineForGame(viewerId ?? 'anonymous', gameId ?? 0),
-    queryFn: () => fetchMyReviewForGame(viewerId!, gameId!),
+    queryFn: async () => summarizeMyReviews(await fetchMyReviewsForGame(viewerId!, gameId!)),
     enabled: viewerId !== null && gameId !== null,
   });
 }
 
-export type SaveReviewVariables = ReviewFormValues & {
+/** "Review 2 of 3": the author's published reviews of this review's game. */
+export function usePlaythroughs(reviewId: string | null) {
+  return useQuery({
+    queryKey: queryKeys.reviews.playthroughs(reviewId ?? 'none'),
+    queryFn: () => fetchPlaythroughs(reviewId!),
+    enabled: reviewId !== null,
+  });
+}
+
+export type SaveReviewVariables = SaveReviewInput & {
   /** When publishing from a Now Playing slot, free the slot afterwards. */
   clearSlot?: NowPlayingSlot;
 };
@@ -69,9 +88,8 @@ export function useSaveReview() {
       }
       return review;
     },
-    onSuccess: (review, vars) => {
+    onSuccess: (_review, vars) => {
       if (!viewerId) return;
-      queryClient.setQueryData(queryKeys.reviews.mineForGame(viewerId, review.game_id), review);
       if (vars.clearSlot !== undefined && vars.status === 'published') {
         queryClient.setQueryData<NowPlaying[]>(queryKeys.nowPlaying.byUser(viewerId), (rows) =>
           rows?.filter((r) => r.slot_index !== vars.clearSlot),
@@ -92,6 +110,8 @@ export function useSaveReview() {
       if (vars.status === 'published') refreshFeeds(queryClient);
       void queryClient.invalidateQueries({ queryKey: queryKeys.games.reviewStats(gameId) });
       void queryClient.invalidateQueries({ queryKey: queryKeys.stats.byUser(viewerId) });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.replays.all() }); // replay reviews count as replays (000040)
+      void queryClient.invalidateQueries({ queryKey: queryKeys.games.friendReviewsAll() });
       void queryClient.invalidateQueries({ queryKey: queryKeys.backlog.byUser(viewerId) }); // rating a game takes it off the backlog (000035)
       // A review's score is also the user's quick rating (sync trigger, migration 000015).
       void queryClient.invalidateQueries({ queryKey: queryKeys.ratings.byUser(viewerId) });
@@ -130,6 +150,9 @@ export function useDeleteReview() {
       void queryClient.invalidateQueries({ queryKey: queryKeys.games.reviewStatsAll() });
       void queryClient.invalidateQueries({ queryKey: queryKeys.games.friendReviewsAll() });
       void queryClient.invalidateQueries({ queryKey: queryKeys.stats.all() });
+      // Deleting your newest review puts your score back to the one before it (000040).
+      void queryClient.invalidateQueries({ queryKey: queryKeys.ratings.all() });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.replays.all() });
       void queryClient.invalidateQueries({ queryKey: queryKeys.backlog.all() }); // rating a game takes it off the backlog (000035)
     },
   });

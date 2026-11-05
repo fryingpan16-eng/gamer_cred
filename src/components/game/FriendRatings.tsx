@@ -49,6 +49,11 @@ export function FriendRatings({ gameId }: { gameId: number }) {
                 {f.platform_id !== null ? `on ${platformInfo(f.platform_id).short}` : ''}
                 {f.review_id ? `${f.platform_id !== null ? ' · ' : ''}Review` : ''}
               </Text>
+              {f.replays > 0 ? (
+                <Text className="font-mono text-retrogamingpc-xs font-bold text-retrogamingpc-text-muted" accessibilityLabel={`played ${f.replays + 1} times`}>
+                  ↻×{f.replays + 1}
+                </Text>
+              ) : null}
             </Pressable>
           ))}
         </ScrollView>

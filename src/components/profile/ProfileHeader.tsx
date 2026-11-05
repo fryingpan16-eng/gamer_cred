@@ -6,7 +6,9 @@ import { Thumbnail } from '@/components/search/Thumbnail';
 import { OfficialBadge, useShownName } from '@/components/user/UserName';
 import { RetroGamingPCBadge, RetroGamingPCPanel } from '@/components/ui';
 import { useAuthStore } from '@/hooks/useAuth';
+import { useGameLookup } from '@/hooks/useGames';
 import { useFriendCount } from '@/hooks/useProfile';
+import { useMostReplayed } from '@/hooks/useReplays';
 import type { Profile } from '@/types/database.types';
 import { shownName } from '@/utils/nameRules';
 import { TOUCH_SLOP } from '@/utils/platform';
@@ -61,8 +63,33 @@ export function ProfileHeader({ profile, actions }: ProfileHeaderProps) {
           </View>
           {actions ? <View className="flex-row flex-wrap gap-2">{actions}</View> : null}
         </View>
+        <MostReplayed userId={profile.id} />
         <ProfilePlatforms userId={profile.id} isOwner={isOwner} />
       </View>
     </RetroGamingPCPanel>
+  );
+}
+
+/** "Most replayed: Game (×4 plays)" — shown once a player has replayed something (migration 000040). */
+function MostReplayed({ userId }: { userId: string }) {
+  const most = useMostReplayed(userId);
+  const top = most.data ?? null;
+  const games = useGameLookup(top ? [top.gameId] : []);
+  if (!top) return null;
+  const name = games.data?.get(top.gameId)?.name ?? `Game #${top.gameId}`;
+  const plays = top.replays + 1;
+  return (
+    <Text className="text-retrogamingpc-sm text-retrogamingpc-text">
+      <Text className="text-retrogamingpc-text-muted">↻ Most replayed: </Text>
+      <Text
+        accessibilityRole="link"
+        accessibilityLabel={`Most replayed: ${name}, played ${plays} times. Open game page`}
+        onPress={() => router.push({ pathname: '/game/[id]', params: { id: String(top.gameId) } })}
+        className="font-bold text-retrogamingpc-text-bright underline"
+      >
+        {name}
+      </Text>
+      <Text className="font-mono text-retrogamingpc-text-muted"> ×{plays}</Text>
+    </Text>
   );
 }

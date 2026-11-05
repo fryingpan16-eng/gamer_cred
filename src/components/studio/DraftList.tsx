@@ -46,7 +46,7 @@ export function DraftList() {
                 ) : null}
                 <View className="flex-row items-center justify-between">
                   <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted">Edited {formatDate(draft.updated_at)}</Text>
-                  <RetroGamingPCButton variant="navigate" label="Resume" onPress={() => startReview({ gameId: draft.game_id })} />
+                  <RetroGamingPCButton variant="navigate" label="Resume" onPress={() => startReview({ gameId: draft.game_id, reviewId: draft.id })} />
                 </View>
               </RetroGamingPCCard>
             );

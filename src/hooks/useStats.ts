@@ -1,6 +1,7 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 
 import {
+  fetchReplayStats,
   fetchDeveloperStats,
   fetchGenreStats,
   fetchLikedStats,
@@ -37,6 +38,8 @@ export const useGenreStats = () => useStatQuery('genres', fetchGenreStats);
 export const useVsCommunity = (limit = 5) => useStatQuery('vsCommunity', () => fetchVsCommunity(limit), [limit]);
 export const useReleaseYearStats = () => useStatQuery('releaseYears', fetchReleaseYearStats);
 export const useLoggedOverTime = () => useStatQuery('loggedOverTime', fetchLoggedOverTime);
+/** Replays: totals, most replayed, by year, score changes (migration 000040). */
+export const useReplayStats = (limit = 10) => useStatQuery('replays', () => fetchReplayStats(limit), [limit]);
 /** Liked games by series / studios / genres / era; `limit` null = every row. */
 export const useLikedStats = (dimension: LikedDimension, limit: number | null) =>
   useStatQuery('liked', () => fetchLikedStats(dimension, limit), [dimension, limit]);

@@ -130,6 +130,11 @@ export function ReviewCard({
             <RetroGamingPCRating rating={review.rating} size="compact" />
           </View>
           <PlayedOnBadge platformId={review.platformId} />
+          {review.isReplay ? (
+            <View className="flex-row">
+              <RetroGamingPCBadge label="↻ Replay" />
+            </View>
+          ) : null}
           {when ? <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted">{when}</Text> : null}
         </View>
         {showGame ? (

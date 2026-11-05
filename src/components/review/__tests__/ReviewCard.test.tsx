@@ -20,6 +20,7 @@ const review: ReviewCardData = {
   platformId: null,
   content: 'Great game',
   date: '2026-11-01T00:00:00Z',
+  isReplay: false,
 };
 
 const wrap = (ui: ReactElement) => render(<QueryClientProvider client={new QueryClient()}>{ui}</QueryClientProvider>);

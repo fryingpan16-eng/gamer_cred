@@ -1,6 +1,7 @@
 /**
  * Quick-rating service against a recorded Supabase client: one batched read,
- * upsert on the one-per-game key, and never a write to public.reviews.
+ * upsert on the one-per-game key, and never a write to public.reviews. The
+ * profile list adds one batched replay-count RPC (migration 000040).
  */
 import { clearGameRating, fetchMyRatings, fetchUserRatings, rateGame, RatingError } from '../ratings';
 import { storedFromStars } from '@/utils/quickRating';
@@ -10,6 +11,8 @@ const entry = (stars: number, platformId: number | null = 8) => ({ ...storedFrom
 type Call = { table: string; ops: [string, unknown[]][] };
 const mockCalls: Call[] = [];
 let mockNextResult: { data: unknown; error: unknown } = { data: [], error: null };
+const mockRpcCalls: [string, unknown][] = [];
+let mockRpcResult: { data: unknown; error: unknown } = { data: [], error: null };
 
 jest.mock('@/services/supabase', () => {
   const builder = (call: Call) => {
@@ -30,8 +33,9 @@ jest.mock('@/services/supabase', () => {
         mockCalls.push(call);
         return builder(call);
       },
-      rpc: () => {
-        throw new Error('ratings never call RPCs');
+      rpc: (name: string, args: unknown) => {
+        mockRpcCalls.push([name, args]);
+        return Promise.resolve(mockRpcResult);
       },
     },
   };
@@ -40,6 +44,8 @@ jest.mock('@/services/supabase', () => {
 beforeEach(() => {
   mockCalls.length = 0;
   mockNextResult = { data: [], error: null };
+  mockRpcCalls.length = 0;
+  mockRpcResult = { data: [], error: null };
 });
 
 const ME = 'user-1';
@@ -116,20 +122,28 @@ describe('rateGame / clearGameRating', () => {
 });
 
 describe('fetchUserRatings (public profile list)', () => {
-  it('one query: that player, newest first, with the total count', async () => {
+  it('one query: that player, newest first, with the total count, plus one batched replay count', async () => {
     mockNextResult = {
-      data: [{ game_id: 7, rating: 60, rating_input_scale: 'numeric', rating_input: '60', platform_id: 130, updated_at: '2026-11-01T00:00:00Z' }],
+      data: [
+        { game_id: 7, rating: 60, rating_input_scale: 'numeric', rating_input: '60', platform_id: 130, updated_at: '2026-11-01T00:00:00Z' },
+        { game_id: 9, rating: 80, rating_input_scale: 'numeric', rating_input: '80', platform_id: null, updated_at: '2026-10-01T00:00:00Z' },
+      ],
       error: null,
       count: 31,
     } as never;
+    mockRpcResult = { data: [{ game_id: 9, replays: 2 }], error: null };
     const page = await fetchUserRatings('someone-else', 24);
+    expect(mockRpcCalls).toEqual([['replay_counts', { p_user_id: 'someone-else', p_game_ids: [7, 9] }]]);
     expect(mockCalls).toHaveLength(1);
     expect(mockCalls[0]!.table).toBe('game_ratings');
     expect(mockCalls[0]!.ops).toContainEqual(['eq', ['user_id', 'someone-else']]);
     expect(mockCalls[0]!.ops).toContainEqual(['order', ['updated_at', { ascending: false }]]);
     expect(mockCalls[0]!.ops).toContainEqual(['limit', [24]]);
     expect(page).toEqual({
-      ratings: [{ numeric: 60, inputScale: 'numeric', input: '60', platformId: 130, gameId: 7, ratedAt: '2026-11-01T00:00:00Z' }],
+      ratings: [
+        { numeric: 60, inputScale: 'numeric', input: '60', platformId: 130, gameId: 7, ratedAt: '2026-11-01T00:00:00Z', replays: 0 },
+        { numeric: 80, inputScale: 'numeric', input: '80', platformId: null, gameId: 9, ratedAt: '2026-10-01T00:00:00Z', replays: 2 },
+      ],
       total: 31,
     });
   });
