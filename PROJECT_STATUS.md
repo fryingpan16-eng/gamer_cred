@@ -14,7 +14,7 @@ _Last updated: 2026-11-04_
 - `app/(tabs)/` — Home, Search, Post (Review Studio), Stats, Profile
 - `app/game/[id].tsx`, `app/review/[id].tsx`, `app/reviews/[gameId].tsx`
 - `src/services/` (Supabase calls) · `src/hooks/` (queries) · `src/utils/queryKeys.ts`
-- `supabase/migrations/` (000001–000041) · `supabase/tests/` · `supabase/name-rules/`
+- `supabase/migrations/` (000001–000042) · `supabase/tests/` · `supabase/name-rules/`
 
 ## Completed
 - Auth, search, Review Studio, profiles, game and studio pages, feeds, trending, friends
@@ -24,9 +24,10 @@ _Last updated: 2026-11-04_
 - Security/privacy/performance hardening (000036–000037)
 - Permanent + display names, name rules, gold official badge, admin name reset (000038–000039, 000041)
 - Replays: Mark as Replayed, replay reviews, play counts, Stats → Replays (000040)
+- Other versions (Director's Cut…) fold into their original like remasters; Persona re-releases stay separate; saved data moves over (000042)
 
 ## Your to-do list (only you can do these)
-- [ ] Push `main` (4 local commits not on the remote yet)
+- [ ] Apply migration 000042 (`npx supabase db push`), THEN deploy the proxy (`npx supabase functions deploy igdb-proxy`)
 - [ ] Rebuild phone apps: builds older than 000040 can't save reviews
 - [ ] Admin: Settings → Admin Security → set up, THEN approve the authenticator in the SQL Editor (README → Admins). Unlocks admin tools and the badge.
 - [ ] Guest browsing, in this order: (1) Supabase → allow anonymous sign-ins; (2) Cloudflare Turnstile widget → `EXPO_PUBLIC_TURNSTILE_SITE_KEY` in `.env`; (3) LAST: Supabase CAPTCHA with the secret (earlier breaks every login)

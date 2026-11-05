@@ -1,6 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { Stack, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
+import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { CommunityReviews } from '@/components/game/CommunityReviews';
@@ -8,7 +8,7 @@ import { CollectionContents } from '@/components/game/EntryTypeBadge';
 import { FriendRatings } from '@/components/game/FriendRatings';
 import { GameFacts } from '@/components/game/GameFacts';
 import { GameHero } from '@/components/game/GameHero';
-import { RemastersPanel } from '@/components/game/RemastersPanel';
+import { RemastersPanel, VersionsPanel } from '@/components/game/RemastersPanel';
 import { ScreenshotStrip } from '@/components/game/ScreenshotStrip';
 import { SystemRequirementsPanel } from '@/components/game/SystemRequirementsPanel';
 import { RetroGamingPCAlert, RetroGamingPCButton, RetroGamingPCPanel, RetroGamingPCSpinner } from '@/components/ui';
@@ -82,6 +82,12 @@ export default function GameDetailScreen() {
   const game = detail.data?.game;
   const title = game?.name ?? light?.name ?? `Game #${id}`;
 
+  // Another version's old page (Director's Cut…): the proxy answered with the game it belongs to.
+  const movedTo = game && game.id !== gameId ? game.id : null;
+  useEffect(() => {
+    if (movedTo !== null) router.replace({ pathname: '/game/[id]', params: { id: String(movedTo) } });
+  }, [movedTo]);
+
   if (!valid || (detail.isError && detail.error instanceof SearchServiceError && detail.error.status === 404)) {
     return (
       <View className="flex-1 bg-retrogamingpc-dark p-3">
@@ -132,6 +138,7 @@ export default function GameDetailScreen() {
             </RetroGamingPCPanel>
           ) : null}
           <RemastersPanel remasters={game.remasters ?? []} />
+          <VersionsPanel versions={game.versions ?? []} />
           <About summary={game.summary} storyline={game.storyline} />
           <FriendRatings gameId={game.id} />
           <ScreenshotStrip imageIds={game.screenshotIds} gameName={game.name} />

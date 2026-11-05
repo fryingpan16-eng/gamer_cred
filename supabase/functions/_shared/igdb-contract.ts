@@ -107,10 +107,17 @@ export type IgdbGameDetail = IgdbGameResult & {
   publisherCompanies: CompanyRef[];
   /** Remasters of this game, oldest first (empty for most games). */
   remasters: GameRemaster[];
+  /** Other versions folded into this game (Director's Cut…), oldest first. Missing on older cached pages. */
+  versions?: GameRemaster[];
 };
 
 export type IgdbDetailResponse = {
   game: IgdbGameDetail;
+  /**
+   * Set when the requested id is another version folded into `game` (a
+   * Director's Cut's old page): the app should switch to `game.id`.
+   */
+  movedFrom?: number;
   cached: boolean;
   fetchedAt: string;
 };
@@ -149,6 +156,12 @@ export type IgdbLookupResponse = {
   results: IgdbGameResult[];
   /** Requested ids IGDB does not know (deleted/merged games). */
   missing: number[];
+  /**
+   * Requested ids that are other versions folded into another game (requested
+   * id → that game's id). The game's record is in `results`; saved data moves
+   * to it server-side (migration 000042).
+   */
+  moved?: Record<string, number>;
   /** How many of the results were served from igdb_cache. */
   cachedCount: number;
 };
@@ -215,6 +228,11 @@ export type IgdbGameResult = {
   /** Remasters of this game (not entries of their own) and their release years, ascending. */
   remasterCount: number;
   remasterYears: number[];
+  /**
+   * Short names of other versions folded into this game ("Director's Cut"), at
+   * most 3. Missing on records cached before versions were folded.
+   */
+  versionNames?: string[];
 };
 
 export type IgdbCompanyResult = {

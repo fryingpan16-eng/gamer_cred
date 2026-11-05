@@ -20,8 +20,13 @@ function flushLookupBatch() {
   pendingBatch = null;
   if (!batch) return;
   lookupGames([...batch.ids]).then(
-    ({ results }) => {
+    ({ results, moved }) => {
       const byId = new Map(results.map((g) => [g.id, g] as const));
+      // Another version's old id (Director's Cut…) shows the game it belongs to; its saved data moves there server-side.
+      for (const [from, to] of Object.entries(moved ?? {})) {
+        const game = byId.get(to);
+        if (game) byId.set(Number(from), game);
+      }
       for (const w of batch.waiters) w.resolve(byId);
     },
     (error: unknown) => {
@@ -73,10 +78,14 @@ export function useGameLookup(gameIds: readonly number[]) {
         const fetched = await batchedLookup(unknown);
         const results = unknown.flatMap((id) => {
           const game = fetched.get(id);
-          return game ? [game] : [];
+          return game ? [[id, game] as const] : [];
         });
-        primeGameCache(queryClient, results);
-        for (const game of results) byId.set(game.id, game);
+        primeGameCache(
+          queryClient,
+          results.map(([, game]) => game),
+        );
+        // Keyed by the id asked for: a moved version's old id maps to its game.
+        for (const [id, game] of results) byId.set(id, game);
       }
       return byId;
     },

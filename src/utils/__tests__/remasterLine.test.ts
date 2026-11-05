@@ -1,4 +1,4 @@
-import { remasterLine } from '@/components/search/GameResultCard';
+import { remasterLine, versionLine } from '@/components/search/GameResultCard';
 
 describe('remasterLine', () => {
   it('is empty for games with no remaster', () => {
@@ -11,5 +11,16 @@ describe('remasterLine', () => {
   it('falls back to a count when no year is known', () => {
     expect(remasterLine({ remasterCount: 1, remasterYears: [] })).toBe('Also remastered');
     expect(remasterLine({ remasterCount: 2, remasterYears: [] })).toBe('Also remastered (2 versions)');
+  });
+});
+
+describe('versionLine', () => {
+  it('names the other versions that share the page', () => {
+    expect(versionLine({ versionNames: ["Director's Cut"] })).toBe("Also: Director's Cut");
+    expect(versionLine({ versionNames: ['Complete', 'Enhanced'] })).toBe('Also: Complete, Enhanced');
+  });
+  it('is empty when there are none (or the record predates versions)', () => {
+    expect(versionLine({ versionNames: [] })).toBeNull();
+    expect(versionLine({})).toBeNull();
   });
 });

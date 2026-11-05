@@ -11,7 +11,11 @@
  *   1. version_parent must be null           → drops GOTY / Deluxe / Definitive editions
  *   2. must have a first_release_date
  *   3. game_type decides the entry:
- *        main game, expanded game  → 'game'
+ *        main game                 → 'game'
+ *        expanded game             → folded into its original (Director's Cut, Royal…:
+ *                                    reason 'other_version', see versionOriginalOf);
+ *                                    kept as 'game' when it has no original or is
+ *                                    on KEEP_SEPARATE_VERSION_NAMES
  *        remake                    → 'remake'   (own entry, e.g. FF7 Remake)
  *        expansion, standalone exp → 'expansion' (own category, not in top lists)
  *        DLC                       → 'dlc'       (own category, not in top lists)
@@ -191,6 +195,7 @@ export type OverrideAction = 'include' | 'exclude';
 export type DropReason =
   | 'override_exclude'
   | 'edition'
+  | 'other_version'
   | 'no_release_date'
   | 'excluded_game_type'
   | 'edition_bundle'
@@ -225,6 +230,47 @@ export function hasLegitimacySignal(game: CurationFields): boolean {
   return (game.total_rating_count ?? 0) >= MIN_RATING_COUNT && separatePublisher;
 }
 
+/**
+ * Expanded games (IGDB: a re-release with added content, e.g. Death Stranding
+ * Director's Cut) normally fold into their original, like remasters: one page,
+ * one rating, one review history. These differ enough to keep their own entry.
+ * Matched by normalized name (normalizeVersionName); add more here.
+ */
+export const KEEP_SEPARATE_VERSION_NAMES: readonly string[] = [
+  'Persona 5 Royal',
+  'Persona 4 Golden',
+  'Persona 3 Portable',
+  'Persona 3 Reload',
+  'Persona 4 Revival',
+];
+
+/** Lowercase, punctuation-free, single-spaced ("Persona 5: Royal" → "persona 5 royal"). */
+export function normalizeVersionName(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[\u2018\u2019']/g, '')
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .trim();
+}
+
+const KEEP_SEPARATE = new Set(KEEP_SEPARATE_VERSION_NAMES.map(normalizeVersionName));
+
+export function isKeptSeparate(game: Pick<CurationFields, 'name'>): boolean {
+  return typeof game.name === 'string' && KEEP_SEPARATE.has(normalizeVersionName(game.name));
+}
+
+/**
+ * The original an expanded game folds into, or null when it stays its own entry
+ * (another type, no known original, or on KEEP_SEPARATE_VERSION_NAMES).
+ * Overrides are checked by classifyGame first.
+ */
+export function versionOriginalOf(game: CurationFields): number | null {
+  if (gameTypeOf(game) !== GAME_TYPE.EXPANDED_GAME || isKeptSeparate(game)) return null;
+  const parent = game.parent_game;
+  const parentId = typeof parent === 'number' ? parent : parent?.id;
+  return typeof parentId === 'number' && parentId !== game.id ? parentId : null;
+}
+
 /** Decide one game. Pure; bundles must already have an entry in `ctx.collections`. */
 export function classifyGame(game: CurationFields, ctx: CurationContext): CurationDecision {
   const override = ctx.overrides.get(game.id);
@@ -238,6 +284,7 @@ export function classifyGame(game: CurationFields, ctx: CurationContext): Curati
 
   if (game.version_parent !== undefined && game.version_parent !== null) return { keep: false, reason: 'edition' };
   if (typeof game.first_release_date !== 'number') return { keep: false, reason: 'no_release_date' };
+  if (versionOriginalOf(game) !== null) return { keep: false, reason: 'other_version' };
 
   // Most specific reason first: what kind of entry is it?
   let entryType: EntryType | undefined;
@@ -370,6 +417,14 @@ export type CurationDeps = {
   checkCollections: (bundleIds: number[]) => Promise<ReadonlyMap<number, CollectionInfo>>;
 };
 
+/** `original`: for 'other_version', the game it folds into (its page, ratings and reviews). */
+export type DroppedGame = { id: number; reason: DropReason; original: number | null };
+
+/** Folded versions in a curation result: version id → original id. */
+export function foldedVersions(dropped: readonly DroppedGame[]): Map<number, number> {
+  return new Map(dropped.flatMap((d) => (d.reason === 'other_version' && d.original !== null ? [[d.id, d.original] as const] : [])));
+}
+
 export type CuratedGame<T> = T & {
   entryType: EntryType;
   /** Base games inside a collection (empty for every other entry type). */
@@ -384,20 +439,21 @@ export type CuratedGame<T> = T & {
 export async function curateGames<T extends CurationFields>(
   raw: readonly T[],
   deps: CurationDeps,
-): Promise<{ kept: CuratedGame<T>[]; dropped: { id: number; reason: DropReason }[] }> {
+): Promise<{ kept: CuratedGame<T>[]; dropped: DroppedGame[] }> {
   const overrides = await deps.getOverrides();
   const needed = bundlesNeedingCheck(raw, { overrides });
   const collections = needed.length > 0 ? await deps.checkCollections(needed) : new Map<number, CollectionInfo>();
 
   const kept: CuratedGame<T>[] = [];
-  const dropped: { id: number; reason: DropReason }[] = [];
+  const dropped: DroppedGame[] = [];
   for (const game of raw) {
     const decision = classifyGame(game, { overrides, collections });
     if (decision.keep) {
       const collectionGames = decision.entryType === 'collection' ? (collections.get(game.id)?.games ?? []) : [];
       kept.push({ ...game, entryType: decision.entryType, collectionGames });
     }
-    else dropped.push({ id: game.id, reason: decision.reason });
+    else if (decision.reason === 'other_version') dropped.push({ id: game.id, reason: decision.reason, original: versionOriginalOf(game) });
+    else dropped.push({ id: game.id, reason: decision.reason, original: null });
   }
   return { kept, dropped };
 }

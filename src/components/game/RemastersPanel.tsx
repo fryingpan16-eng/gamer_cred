@@ -52,3 +52,35 @@ export function RemastersPanel({ remasters }: { remasters: readonly GameRemaster
     </RetroGamingPCPanel>
   );
 }
+
+/**
+ * The game page's "Other Versions" card: re-releases such as a Director's Cut
+ * that share this page (one rating and review history for every version).
+ */
+export function VersionsPanel({ versions }: { versions: readonly GameRemaster[] }) {
+  if (versions.length === 0) return null;
+  return (
+    <RetroGamingPCPanel title="Other Versions">
+      <View className="gap-2">
+        {versions.map((v) => (
+          <View key={v.id} className="gap-1">
+            <Text className="text-retrogamingpc-sm font-bold text-retrogamingpc-text-bright">
+              {v.name}
+              {v.year ? <Text className="font-normal text-retrogamingpc-text-muted"> ({v.year})</Text> : null}
+            </Text>
+            {v.platforms.length > 0 ? (
+              <View className="flex-row flex-wrap gap-1">
+                {v.platforms.map((p) => (
+                  <RetroGamingPCBadge key={p} label={p} />
+                ))}
+              </View>
+            ) : null}
+          </View>
+        ))}
+        <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted">
+          These versions share this page: rate and review them here, and pick the console you played on.
+        </Text>
+      </View>
+    </RetroGamingPCPanel>
+  );
+}

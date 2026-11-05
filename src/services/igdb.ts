@@ -87,6 +87,7 @@ export async function lookupGames(ids: readonly number[], signal?: AbortSignal):
     entity_type: 'games',
     results: responses.flatMap((r) => r.results),
     missing: responses.flatMap((r) => r.missing),
+    moved: Object.assign({}, ...responses.map((r) => r.moved ?? {})) as Record<string, number>,
     cachedCount: responses.reduce((n, r) => n + r.cachedCount, 0),
   };
 }

@@ -53,6 +53,7 @@ import {
   COLLECTION_CHILD_GAME_TYPES,
   curateGames,
   CURATION_FIELDS,
+  foldedVersions,
   parentGameOf,
   SEARCH_CANDIDATE_LIMIT,
   searchWhereClause,
@@ -71,10 +72,14 @@ import * as rankingModule from './ranking.ts';
 import * as remastersModule from './remasters.ts';
 import {
   mapRemasters,
+  mapVersions,
   REMASTER_DETAIL_FIELDS,
   REMASTER_RESULT_FIELDS,
   remasterOriginals,
   summarizeRemasters,
+  VERSION_DETAIL_FIELDS,
+  VERSION_RESULT_FIELDS,
+  versionNames,
   type RawRemaster,
 } from './remasters.ts';
 import { fetchRawgPcRequirements, RawgError, searchRawgCreators } from './rawg.ts';
@@ -331,6 +336,8 @@ type RawGame = {
   involved_companies?: { developer?: boolean; publisher?: boolean; company?: { id: number; name?: string } }[];
   external_games?: { external_game_source?: number }[];
   remasters?: (RawRemaster | number)[];
+  /** Other versions (Director's Cut…) folded into this game (remasters.ts). */
+  expanded_games?: (RawRemaster | number)[];
 };
 
 type RawCompany = {
@@ -355,7 +362,7 @@ function compact(values: (string | undefined)[]): string[] {
 // CURATION_FIELDS already includes total_rating_count, external games and involved companies.
 const GAME_FIELDS = [
   `fields name,slug,cover.image_id,total_rating,${CURATION_FIELDS},`,
-  `platforms.id,platforms.abbreviation,platforms.name,release_dates.date,release_dates.platform.id,genres.name,${REMASTER_RESULT_FIELDS};`,
+  `platforms.id,platforms.abbreviation,platforms.name,release_dates.date,release_dates.platform.id,genres.name,${REMASTER_RESULT_FIELDS},${VERSION_RESULT_FIELDS};`,
 ].join(' ');
 
 async function searchGames(query: string, limit: number): Promise<IgdbGameResult[]> {
@@ -363,7 +370,8 @@ async function searchGames(query: string, limit: number): Promise<IgdbGameResult
   // Pre-filter at IGDB and fetch a wide pool: for broad terms IGDB's own ranking
   // puts fan games first, so official titles only appear deeper in the results.
   // Curation then drops the rest and ranking.ts orders by title match + popularity.
-  // Remasters are fetched too, only so their names can find the original (remasters.ts).
+  // Remasters are fetched too, only so their names can find the original (remasters.ts);
+  // so are other versions (Director's Cut…), which curation folds into theirs.
   const raw = await igdbRequest<RawGame[]>(
     'games',
     [
@@ -381,7 +389,10 @@ async function searchGames(query: string, limit: number): Promise<IgdbGameResult
       ? await igdbRequest<RawGame[]>('games', `${GAME_FIELDS} where id = (${missing.join(',')}); limit ${missing.length};`)
       : [];
   const { kept } = await curateGames([...raw, ...originals], curationDeps);
-  const withAliases = kept.map((g) => ({ ...g, aliases: aliases.get(g.id) ?? [] }));
+  // A version an override keeps as its own entry doesn't also find its original.
+  const keptIds = new Set(kept.map((g) => g.id));
+  const keptAliases = remasterOriginals(raw.filter((g) => !keptIds.has(g.id)));
+  const withAliases = kept.map((g) => ({ ...g, aliases: keptAliases.get(g.id) ?? [] }));
   return mapGames(rankGames(withAliases, query, limit));
 }
 
@@ -407,10 +418,17 @@ const DETAIL_FIELDS = [
   'summary,storyline,screenshots.image_id,artworks.image_id,themes.name,game_modes.name,',
   'player_perspectives.name,game_engines.name,franchises.name,',
   'release_dates.date,release_dates.human,release_dates.platform.abbreviation,release_dates.platform.name,',
-  `aggregated_rating,aggregated_rating_count,rating,rating_count,${REMASTER_DETAIL_FIELDS};`,
+  `aggregated_rating,aggregated_rating_count,rating,rating_count,${REMASTER_DETAIL_FIELDS},${VERSION_DETAIL_FIELDS};`,
 ].join(' ');
 
 const PC_PLATFORM_NAMES = new Set(['PC', 'Mac', 'Linux', 'PC (Microsoft Windows)']);
+
+/** Thrown inside a detail fetch when the id is another version folded into `to`. */
+class MovedError extends Error {
+  constructor(readonly to: number) {
+    super(`Game folded into ${to}`);
+  }
+}
 
 async function fetchGameDetail(
   id: number,
@@ -418,7 +436,9 @@ async function fetchGameDetail(
   allowRawg: () => Promise<boolean>,
 ): Promise<IgdbGameDetail | null> {
   const raw = await igdbRequest<RawGameDetail[]>('games', `${DETAIL_FIELDS} where id = ${id}; limit 1;`);
-  const { kept } = await curateGames(raw, curationDeps);
+  const { kept, dropped } = await curateGames(raw, curationDeps);
+  const movedTo = foldedVersions(dropped).get(id);
+  if (movedTo !== undefined) throw new MovedError(movedTo);
   const g = kept[0];
   if (!g) return null; // unknown id, or not a catalogue entry (edition, remaster, mod, …)
   const [base] = mapGames([g]);
@@ -466,6 +486,7 @@ async function fetchGameDetail(
     developerCompanies: companies('developer'),
     publisherCompanies: companies('publisher'),
     remasters: mapRemasters(g.remasters),
+    versions: mapVersions(g.expanded_games),
   };
 
   // PC requirements are best-effort: a RAWG outage or missing key never breaks the page.
@@ -484,11 +505,12 @@ async function fetchGameDetail(
   return detail;
 }
 
-async function fetchGamesByIds(ids: number[]): Promise<IgdbGameResult[]> {
+/** Games by id, plus the ids that are other versions folded into another game (id → that game). */
+async function fetchGamesByIds(ids: number[]): Promise<{ games: IgdbGameResult[]; moved: Map<number, number> }> {
   const raw = await igdbRequest<RawGame[]>('games', `${GAME_FIELDS} where id = (${ids.join(',')}); limit ${ids.length};`);
   // Ids that fail curation are simply not returned (they show up as `missing`).
-  const { kept } = await curateGames(raw, curationDeps);
-  return mapGames(kept);
+  const { kept, dropped } = await curateGames(raw, curationDeps);
+  return { games: mapGames(kept), moved: foldedVersions(dropped) };
 }
 
 function mapGames(raw: CuratedGame<RawGame>[]): IgdbGameResult[] {
@@ -510,6 +532,7 @@ function mapGames(raw: CuratedGame<RawGame>[]): IgdbGameResult[] {
       genres: compact((g.genres ?? []).map((x) => x.name)),
       developers: compact((g.involved_companies ?? []).filter((ic) => ic.developer).map((ic) => ic.company?.name)),
       ...summarizeRemasters(g.remasters),
+      versionNames: versionNames(g.expanded_games, g.name),
     }));
 }
 
@@ -759,7 +782,7 @@ async function withoutExcluded<T extends { id: number }>(games: T[]): Promise<T[
 const DETAIL_ONLY_KEYS = [
   'summary', 'storyline', 'screenshotIds', 'artworkIds', 'themes', 'gameModes', 'perspectives', 'publishers',
   'engines', 'franchises', 'releaseDates', 'criticRating', 'criticRatingCount', 'userRating', 'userRatingCount',
-  'systemRequirements', 'developerCompanies', 'publisherCompanies', 'remasters',
+  'systemRequirements', 'developerCompanies', 'publisherCompanies', 'remasters', 'versions',
 ] as const satisfies readonly Exclude<keyof IgdbGameDetail, keyof IgdbGameResult>[];
 // Compile-time check that the list above names every detail-only field.
 const _detailKeysComplete: Exclude<Exclude<keyof IgdbGameDetail, keyof IgdbGameResult>, (typeof DETAIL_ONLY_KEYS)[number]> extends never
@@ -831,9 +854,61 @@ async function cacheGameRecords(
 /**
  * Batch game lookup: serve every fresh per-game cache row, fetch only the
  * misses from IGDB in one request, and cache each game individually.
+ *
+ * Other versions folded into another game (game_merges, 000042) answer with
+ * that game's record and are listed in `moved`. A newly found one is recorded
+ * first, which moves its saved data over (merge_game_version).
  */
 async function handleLookup(ids: number[], caller: Caller): Promise<Response> {
   const db = cacheClient();
+  const known = await readMerges(db, ids);
+  const first = await lookupGames(db, [...new Set(ids.map((id) => known.get(id) ?? id))], caller);
+  await recordMerges(db, first.moved);
+  const late = [...new Set(first.moved.values())].filter((id) => !first.games.has(id));
+  const second = late.length > 0 ? await lookupGames(db, late, caller) : null;
+  const games = new Map([...first.games, ...(second?.games ?? [])]);
+  const moved = new Map([...known, ...first.moved]);
+
+  const results: IgdbGameResult[] = [];
+  const missing: number[] = [];
+  const seen = new Set<number>();
+  for (const id of ids) {
+    const game = games.get(moved.get(id) ?? id);
+    if (!game) missing.push(id);
+    else if (!seen.has(game.id)) {
+      seen.add(game.id);
+      results.push(game);
+    }
+  }
+  const movedOut = Object.fromEntries([...moved].filter(([from, to]) => ids.includes(from) && games.has(to)).map(([f, t]) => [String(f), t]));
+  const cachedCount = first.cachedCount + (second?.cachedCount ?? 0);
+  const data: IgdbLookupResponse = { entity_type: 'games', results, missing, cachedCount, moved: movedOut };
+  return respond(200, { success: true, data }, { 'X-Cache': first.fetchedAny || second?.fetchedAny ? (cachedCount > 0 ? 'PARTIAL' : 'MISS') : 'HIT' });
+}
+
+/** Folded versions among `ids` (game_merges): id → the game it belongs to. */
+async function readMerges(db: ReturnType<typeof cacheClient>, ids: readonly number[]): Promise<Map<number, number>> {
+  if (ids.length === 0) return new Map();
+  const { data, error } = await db.from('game_merges').select('from_id, to_id').in('from_id', [...ids]);
+  if (error) console.error('[igdb-proxy] game_merges read failed', error.message);
+  return new Map((data ?? []).map((r) => [Number(r.from_id), Number(r.to_id)]));
+}
+
+/** Records newly found folded versions; each call moves that id's saved data to its game (000042). */
+async function recordMerges(db: ReturnType<typeof cacheClient>, moved: ReadonlyMap<number, number>): Promise<void> {
+  for (const [from, to] of moved) {
+    const { data, error } = await db.rpc('merge_game_version', { p_from: from, p_to: to });
+    if (error) console.error(`[igdb-proxy] merge ${from} → ${to} failed`, error.message);
+    else if (typeof data === 'number' && data > 0) console.info(`[igdb-proxy] merged ${from} → ${to}: ${data} saved rows moved`);
+  }
+}
+
+/** The cache-then-IGDB core of handleLookup, for ids that are not known folded versions. */
+async function lookupGames(
+  db: ReturnType<typeof cacheClient>,
+  ids: number[],
+  caller: Caller,
+): Promise<{ games: Map<number, IgdbGameResult>; moved: Map<number, number>; cachedCount: number; fetchedAny: boolean }> {
   const { data: rows, error } = await db
     .from('igdb_cache')
     .select('cache_key, data, updated_at')
@@ -859,10 +934,12 @@ async function handleLookup(ids: number[], caller: Caller): Promise<Response> {
   const overrides = await getOverrides();
   const toFetch = ids.filter((id) => !fresh.has(id) && (!knownMissing.has(gameCacheKey(id)) || overrides.get(id) === 'include'));
   const fetched = new Map<number, IgdbGameResult>();
+  let moved = new Map<number, number>();
   if (toFetch.length > 0) {
     try {
       await caller.chargeUpstream();
-      const games = await fetchGamesByIds(toFetch);
+      const { games, moved: folded } = await fetchGamesByIds(toFetch);
+      moved = folded;
       const fetchedAt = new Date().toISOString();
       for (const game of games) fetched.set(game.id, game);
       await Promise.all([
@@ -878,21 +955,23 @@ async function handleLookup(ids: number[], caller: Caller): Promise<Response> {
   }
 
   const allowed = new Set((await withoutExcluded([...fresh.values(), ...fetched.values()])).map((g) => g.id));
-  const results: IgdbGameResult[] = [];
-  const missing: number[] = [];
+  const games = new Map<number, IgdbGameResult>();
   for (const id of ids) {
     const game = allowed.has(id) ? (fresh.get(id) ?? fetched.get(id)) : undefined;
-    if (game) results.push(game);
-    else missing.push(id);
+    if (game) games.set(id, game);
   }
-
-  const data: IgdbLookupResponse = { entity_type: 'games', results, missing, cachedCount: fresh.size };
-  return respond(200, { success: true, data }, { 'X-Cache': toFetch.length === 0 ? 'HIT' : fresh.size > 0 ? 'PARTIAL' : 'MISS' });
+  return { games, moved, cachedCount: fresh.size, fetchedAny: toFetch.length > 0 };
 }
 
 /** Full game page: cached 7 days as one record (IGDB detail + RAWG requirements). */
-async function handleDetail(id: number, caller: Caller): Promise<Response> {
+async function handleDetail(id: number, caller: Caller, movedFrom?: number): Promise<Response> {
   const db = cacheClient();
+  // Another version folded into a game (000042): answer with that game's page.
+  if (movedFrom === undefined) {
+    const to = (await readMerges(db, [id])).get(id);
+    if (to !== undefined) return handleDetail(to, caller, id);
+  }
+  const moved = movedFrom === undefined ? {} : { movedFrom };
   const cacheKey = `game-detail:${CACHE_VERSION}:igdb+rawg:${id}`;
   const cached = await readCache(db, cacheKey);
   const cachedGame = cached?.payload.results[0] as IgdbGameDetail | undefined;
@@ -908,7 +987,7 @@ async function handleDetail(id: number, caller: Caller): Promise<Response> {
     ? cacheFreshness({ ageMs: cached.ageMs, ttlMs: GAME_RECORD_TTL_MS, refreshAfterMs: null, rulesVersion: cached.payload.rulesVersion, currentRulesVersion: rulesVersion })
     : 'expired';
   if (cached && cachedGame && state !== 'expired') {
-    const data: IgdbDetailResponse = { game: cachedGame, cached: true, fetchedAt: cached.payload.fetchedAt };
+    const data: IgdbDetailResponse = { game: cachedGame, cached: true, fetchedAt: cached.payload.fetchedAt, ...moved };
     return respond(200, { success: true, data }, { 'X-Cache': 'HIT' });
   }
   // Refetching only because the IGDB rules changed? RAWG's PC requirements didn't — reuse them (saves RAWG quota).
@@ -927,11 +1006,17 @@ async function handleDetail(id: number, caller: Caller): Promise<Response> {
       if (seriesError) console.error('[igdb-proxy] series write failed', seriesError.message);
       return [game];
     }, { stampRules: true });
-    const data: IgdbDetailResponse = { game: payload.results[0] as IgdbGameDetail, cached: false, fetchedAt: payload.fetchedAt };
+    const data: IgdbDetailResponse = { game: payload.results[0] as IgdbGameDetail, cached: false, fetchedAt: payload.fetchedAt, ...moved };
     return respond(200, { success: true, data }, { 'X-Cache': cached ? 'REFRESH' : 'MISS' });
   } catch (error) {
+    if (error instanceof MovedError && movedFrom === undefined) {
+      // First sighting: record it (moves this id's saved data), then serve the game's page.
+      await recordMerges(db, new Map([[id, error.to]]));
+      return handleDetail(error.to, caller, id);
+    }
+    if (error instanceof MovedError) throw new HttpError(404, `Game ${id} is not in the GamerCred catalogue`);
     if (cached && cachedGame && cached.ageMs < STALE_MAX_MS && !(error instanceof HttpError && error.status === 404)) {
-      const data: IgdbDetailResponse = { game: cachedGame, cached: true, fetchedAt: cached.payload.fetchedAt };
+      const data: IgdbDetailResponse = { game: cachedGame, cached: true, fetchedAt: cached.payload.fetchedAt, ...moved };
       return respond(200, { success: true, data }, { 'X-Cache': 'STALE' });
     }
     if (error instanceof HttpError && error.status === 404) await writeMissing(db, [cacheKey]);

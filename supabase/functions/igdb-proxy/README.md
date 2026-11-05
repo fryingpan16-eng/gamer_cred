@@ -29,9 +29,26 @@ the game page's "Remastered" card, and search also fetches remasters so that a
 remaster's name finds its original (it ranks by the best of its own name and
 its remasters' names). Ratings and reviews of a remaster go on the original.
 
+**Other versions** (IGDB "expanded games": Death Stranding Director's Cut,
+Ghost of Tsushima Director's Cut) are folded the same way: search finds the
+original by the version's name, result cards say "Also: Director's Cut"
+(`versionNames`), and the game page lists them in an "Other Versions" card
+(`versions`). Re-releases that differ enough keep their own entry: they are
+listed by name in `KEEP_SEPARATE_VERSION_NAMES` (`curation.ts`; today Persona 5
+Royal, Persona 4 Golden, Persona 3 Portable, Persona 3 Reload, Persona 4
+Revival). An `include` override keeps any other one separate.
+
+Saved data on a version's old id moves to the original (migration 000042): the
+first time `lookup` or `detail` meets a folded id, the proxy records it in
+`game_merges` and calls `merge_game_version`, which moves reviews, ratings,
+Now Playing, Top 4, likes, backlog, list items and replays. After that,
+`detail` for the old id answers with the original's page (`movedFrom`), `lookup`
+lists it in `moved`, and new saves on the old id land on the original.
+
 | IGDB `game_type` | Result | `entryType` |
 |---|---|---|
-| main game, expanded game | kept | `game` |
+| main game | kept | `game` |
+| expanded game (Director's Cut, Royal…) | **folded into its original** (`other_version`); kept as `game` if it has no original or is on `KEEP_SEPARATE_VERSION_NAMES` | — |
 | remake | kept (own entry) | `remake` |
 | bundle (passes collection check) | kept, never merged with its games; lists them in `collectionGames` | `collection` |
 | expansion, standalone expansion | kept (own category) | `expansion` |
