@@ -46,6 +46,22 @@ function batchedLookup(ids: readonly number[]): Promise<Map<number, IgdbGameResu
   });
 }
 
+/** Ids being refreshed in the background, so each is asked for once. */
+const refreshing = new Set<number>();
+
+/** Re-fetch stale game records without holding up the screen; failures keep the old record. */
+function refreshInBackground(queryClient: QueryClient, ids: readonly number[]) {
+  const todo = ids.filter((id) => !refreshing.has(id));
+  if (todo.length === 0) return;
+  for (const id of todo) refreshing.add(id);
+  batchedLookup(todo)
+    .then((fetched) => primeGameCache(queryClient, [...new Set(fetched.values())]))
+    .catch(() => undefined)
+    .finally(() => {
+      for (const id of todo) refreshing.delete(id);
+    });
+}
+
 /** Seed per-game cache entries (e.g. from a search result the user just picked). */
 export function primeGameCache(queryClient: QueryClient, games: readonly IgdbGameResult[]): void {
   for (const game of games) queryClient.setQueryData(queryKeys.games.detail(game.id), game);
@@ -68,11 +84,17 @@ export function useGameLookup(gameIds: readonly number[]) {
     queryFn: async () => {
       const byId = new Map<number, IgdbGameResult>();
       const unknown: number[] = [];
+      const stale: number[] = [];
       for (const id of ids) {
-        const cached = queryClient.getQueryData<IgdbGameResult>(queryKeys.games.detail(id));
-        if (cached) byId.set(id, cached);
-        else unknown.push(id);
+        const key = queryKeys.games.detail(id);
+        const cached = queryClient.getQueryData<IgdbGameResult>(key);
+        if (cached) {
+          byId.set(id, cached);
+          // Saved on the device (gameRecordStore) or kept from earlier: shown now, refreshed quietly.
+          if (Date.now() - (queryClient.getQueryState(key)?.dataUpdatedAt ?? 0) > GAME_STALE_MS) stale.push(id);
+        } else unknown.push(id);
       }
+      refreshInBackground(queryClient, stale);
       if (unknown.length > 0) {
         // Shared with other lookups this tick, so it isn't cancelled per caller (an aborted caller just ignores it).
         const fetched = await batchedLookup(unknown);

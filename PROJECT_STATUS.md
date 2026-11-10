@@ -2,7 +2,7 @@
 
 The one list of next steps and to-dos. Claude reads this instead of re-deriving status, updates it when work lands, and reminds you of open items.
 
-_Last updated: 2026-11-04_
+_Last updated: 2026-11-09_
 
 ## Tech stack
 - Expo + React Native + Expo Router, TypeScript (strict); iOS, Android, web
@@ -14,7 +14,7 @@ _Last updated: 2026-11-04_
 - `app/(tabs)/` — Home, Search, Post (Review Studio), Stats, Profile
 - `app/game/[id].tsx`, `app/review/[id].tsx`, `app/reviews/[gameId].tsx`
 - `src/services/` (Supabase calls) · `src/hooks/` (queries) · `src/utils/queryKeys.ts`
-- `supabase/migrations/` (000001–000042) · `supabase/tests/` · `supabase/name-rules/`
+- `supabase/migrations/` (000001–000044) · `supabase/tests/` · `supabase/name-rules/`
 
 ## Completed
 - Auth, search, Review Studio, profiles, game and studio pages, feeds, trending, friends
@@ -25,10 +25,13 @@ _Last updated: 2026-11-04_
 - Permanent + display names, name rules, gold official badge, admin name reset (000038–000039, 000041)
 - Replays: Mark as Replayed, replay reviews, play counts, Stats → Replays (000040)
 - Other versions (Director's Cut…) fold into their original like remasters; Persona re-releases stay separate; saved data moves over (000042)
+- Review comments: flat thread with @replies, filtered like reviews, 60/hour, edit own ("edited"), private ♥, ⚑ report → admin removal, 💬 count on ReviewCard (000043)
+- IGDB cache: service-role only, purge keeps 60 days to match the outage fallback (000044); game records saved on the device for instant covers
 
 ## Your to-do list (only you can do these)
-- [ ] Apply migration 000042 (`npx supabase db push`), THEN deploy the proxy (`npx supabase functions deploy igdb-proxy`)
 - [ ] Rebuild phone apps: builds older than 000040 can't save reviews
+- [ ] Push migrations 000043 (review comments) and 000044 (cache lock-down + 60-day purge); older app builds keep working but show no comments
+- [ ] Phone rebuild also picks up AsyncStorage (game records saved on the device); web works without a rebuild
 - [ ] Admin: Settings → Admin Security → set up, THEN approve the authenticator in the SQL Editor (README → Admins). Unlocks admin tools and the badge.
 - [ ] Guest browsing, in this order: (1) Supabase → allow anonymous sign-ins; (2) Cloudflare Turnstile widget → `EXPO_PUBLIC_TURNSTILE_SITE_KEY` in `.env`; (3) LAST: Supabase CAPTCHA with the secret (earlier breaks every login)
 - [ ] Supabase Auth: minimum password length 8+, leaked-password protection on
@@ -39,9 +42,19 @@ _Last updated: 2026-11-04_
 - Custom SMTP (e.g. Resend) so confirmation emails reach testers
 - Host the web build on the Cloudflare subdomain; set Supabase Site URL + redirect URLs to it
 - Privacy page; app name and icon in `app.json`
-- Visual check of the replay screens on phone and desktop
+- Visual check of the replay screens and the review page (action bar, ⋯ menus, comments), profile, list, friends and Now Playing ⋯ on phone and desktop
+
+## Before closed testing (Google Play beta)
+Needs the alpha list above, plus:
+- Claude: `eas.json`, AAB build, `android.package` (permanent; choose the name first), confirm target API 36+
+- Claude: privacy page with a public URL
+- You: Play developer account ($25; personal or organization)
+- You: Data safety, content rating, target audience and app access forms; test login for Google that gets past email confirmation and CAPTCHA
+- You: store listing (icon, feature graphic, screenshots, descriptions)
+- Test Turnstile and the Supabase CAPTCHA on a real Android build
 
 ## Before store submission
+- Personal account: 12+ testers opted in for 14 straight days, then apply for production (recruit extras)
 - Publish the privacy policy; have the Terms reviewed
 - Hosted web build so `/delete-account` has a public URL (Google Play)
 - Reports handled within 24 hours
@@ -51,6 +64,7 @@ _Last updated: 2026-11-04_
 - Ratings don't appear in the activity feed (reviews, likes, replays do)
 - Trending posts rank by game popularity, not review likes
 - "Add to list" button on game pages (today: added from the list page)
+- Comments: players can't delete their own (only edit); add "Delete own" if testers ask
 
 ## After alpha (planned)
 - **Where to buy:** plain-text store chips filtered to the game's platforms; locale region with a Settings override; affiliate codes later with a "may earn a commission" note
@@ -62,7 +76,7 @@ _Last updated: 2026-11-04_
 - **B — core gaming:** Played / Dropped statuses; play diary (start date, hours; replays done); Steam library import; SQL recommendations; Year in review
 - **C — growth:** shareable image cards; public share pages; release calendar + "Notify me"; series, platform and creator pages
 - **D — store launch:** EAS builds (Android APK, then TestFlight); push notifications; store listings; store payments
-- **E — community depth:** follow critics; review comments; achievements; moderation tooling (search, suspensions, appeals, spam flags)
+- **E — community depth:** follow critics; comment notifications; achievements; moderation tooling (search, suspensions, appeals, spam flags)
 - **Ongoing:** precomputed stats, keyset paging, image caching; accessibility and translations; optional weekly digest
 
 ## To do later (your list)

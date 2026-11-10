@@ -3,17 +3,17 @@ import { router } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
 
 import { PlayedOnBadge } from '@/components/game/PlayedOnBadge';
-import { ReportLink } from '@/components/safety/ReportLink';
+import { MoreMenu } from '@/components/safety/MoreMenu';
 import { Thumbnail } from '@/components/search/Thumbnail';
-import { RetroGamingPCBadge, RetroGamingPCCard, RetroGamingPCRating } from '@/components/ui';
+import { RetroGamingPCBadge, RetroGamingPCCard, RetroGamingPCRating, RetroGamingPCTimeAgo } from '@/components/ui';
 import { UserName, useShownName } from '@/components/user/UserName';
 import { LIKE_COLOR } from '@/constants/likeColor';
 import { useIsGuest } from '@/hooks/useAuth';
+import { useThemeColors } from '@/hooks/useTheme';
 import { useToggleReviewLike } from '@/hooks/useReviewBrowser';
 import type { ReviewCardData, ReviewLikeInfo } from '@/services/reviewBrowser';
 import { igdbImageUrl, type IgdbGameResult } from '@/types/igdb';
 import { TOUCH_SLOP } from '@/utils/platform';
-import { timeAgo } from '@/utils/time';
 
 export type ReviewCardProps = {
   review: ReviewCardData;
@@ -28,11 +28,7 @@ export type ReviewCardProps = {
   showAuthor?: boolean;
   /** Lines of text before "…"; the full review is one tap away. */
   excerptLines?: number;
-  /** "3 days ago" (feeds) or "Nov 3, 2026". */
-  dateStyle?: 'relative' | 'date';
 };
-
-const fmtDate = (iso: string) => new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
 
 /** ♥ for someone else's review; on your own, the private count (only you see it). */
 export function ReviewLikeControl({ reviewId, isMine, like }: { reviewId: string; isMine: boolean; like?: ReviewLikeInfo }) {
@@ -77,16 +73,15 @@ export function ReviewCard({
   game,
   showAuthor = true,
   excerptLines = 4,
-  dateStyle = 'date',
 }: ReviewCardProps) {
   const isMine = review.userId === viewerId;
+  const themeColors = useThemeColors();
   const author = review.author;
   const authorName = useShownName(author?.id, author?.username ?? '').name;
   const gameName = game?.name ?? `Game #${review.gameId}`;
   const openReview = () => router.push({ pathname: '/review/[id]', params: { id: review.id } });
   const openAuthor = () => author && router.push(isMine ? '/profile' : { pathname: '/user/[id]', params: { id: author.id } });
   const openGame = () => router.push({ pathname: '/game/[id]', params: { id: String(review.gameId) } });
-  const when = review.date ? (dateStyle === 'relative' ? timeAgo(review.date) : fmtDate(review.date)) : '';
 
   return (
     <RetroGamingPCCard
@@ -135,7 +130,7 @@ export function ReviewCard({
               <RetroGamingPCBadge label="↻ Replay" />
             </View>
           ) : null}
-          {when ? <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted">{when}</Text> : null}
+          {review.date ? <RetroGamingPCTimeAgo iso={review.date} onPress={openReview} /> : null}
         </View>
         {showGame ? (
           <Pressable accessibilityRole="link" accessibilityLabel={`Open ${gameName}`} onPress={openGame}>
@@ -159,10 +154,22 @@ export function ReviewCard({
 
       <View className="flex-row flex-wrap items-center justify-between gap-2">
         <ReviewLikeControl reviewId={review.id} isMine={isMine} like={like} />
-        <View className="flex-row items-center gap-3">
+        <View className="flex-row flex-wrap items-center gap-3">
+          {like && like.comments > 0 ? (
+            <View
+              className="flex-row items-center gap-1"
+              accessible
+              accessibilityLabel={`${like.comments} ${like.comments === 1 ? 'comment' : 'comments'}`}
+            >
+              <MaterialCommunityIcons name="comment-outline" size={13} color={themeColors.text} />
+              <Text className="font-mono text-retrogamingpc-xs text-retrogamingpc-text">{like.comments}</Text>
+            </View>
+          ) : null}
+          <Text className="text-retrogamingpc-xs font-bold text-retrogamingpc-text-bright underline">Read review ▸</Text>
           {!isMine && author ? (
-            <ReportLink
-              subject={{
+            <MoreMenu
+              label={`${authorName}'s review`}
+              report={{
                 targetType: 'review',
                 targetId: review.id,
                 targetUserId: review.userId,
@@ -171,7 +178,6 @@ export function ReviewCard({
               }}
             />
           ) : null}
-          <Text className="text-retrogamingpc-xs font-bold text-retrogamingpc-text-bright underline">Read review ▸</Text>
         </View>
       </View>
     </RetroGamingPCCard>

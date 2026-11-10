@@ -1,7 +1,8 @@
 import { Text, View } from 'react-native';
 
 import { ReviewCard } from '@/components/review/ReviewCard';
-import { RetroGamingPCAlert, RetroGamingPCPanel, RetroGamingPCSpinner } from '@/components/ui';
+import { RetroGamingPCAlert, RetroGamingPCPanel } from '@/components/ui';
+import { ReviewCardSkeleton } from '@/components/review/ReviewCardSkeleton';
 import { useMemberId } from '@/hooks/useAuth';
 import { useGameLookup } from '@/hooks/useGames';
 import { usePublishedReviews } from '@/hooks/useProfile';
@@ -18,7 +19,7 @@ export function PublishedReviews({ userId, isOwner }: { userId: string; isOwner:
   return (
     <RetroGamingPCPanel title={`Reviews${reviews.data ? ` (${reviews.data.length})` : ''}`}>
       {reviews.isPending ? (
-        <RetroGamingPCSpinner label="Loading reviews…" />
+        <ReviewCardSkeleton />
       ) : reviews.isError ? (
         <RetroGamingPCAlert message={reviews.error.message} />
       ) : reviews.data.length === 0 ? (

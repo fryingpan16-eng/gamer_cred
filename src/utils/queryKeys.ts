@@ -57,6 +57,9 @@ export const queryKeys = {
     likesAll: () => [...queryKeys.reviews.all(), 'likes'] as const,
     likes: (viewerId: string, reviewIds: readonly string[]) =>
       [...queryKeys.reviews.likesAll(), viewerId, [...new Set(reviewIds)].sort()] as const,
+    /** One review's comments, paged (migration 000043). */
+    commentsAll: () => [...queryKeys.reviews.all(), 'comments'] as const,
+    comments: (reviewId: string, viewerId: string) => [...queryKeys.reviews.commentsAll(), reviewId, viewerId] as const,
   },
 
   /** The signed-in user's own quick ratings (private; migration 000015). */

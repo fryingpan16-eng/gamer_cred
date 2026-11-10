@@ -307,6 +307,28 @@ export type Database = {
         Update: { id?: string; user_id?: string; game_id?: number; platform_id?: number | null; finished_on?: string; created_at?: Timestamp };
         Relationships: [];
       };
+      /** Comments on a published review (migration 000043). Writer edits `content` only; no deletes. */
+      review_comments: {
+        Row: {
+          id: string;
+          review_id: string;
+          user_id: string;
+          content: string;
+          created_at: Timestamp;
+          updated_at: Timestamp;
+          edited_at: Timestamp | null;
+        };
+        Insert: { review_id: string; user_id: string; content: string };
+        Update: { content?: string };
+        Relationships: [];
+      };
+      /** ♥ on a comment (migration 000043). Private: you only read your own rows. */
+      review_comment_likes: {
+        Row: { user_id: string; comment_id: string; created_at: Timestamp };
+        Insert: { user_id: string; comment_id: string };
+        Update: { user_id?: string; comment_id?: string };
+        Relationships: [];
+      };
       /** ♥ on a review (migration 000030). Private: you only read your own rows. */
       review_likes: {
         Row: { user_id: string; review_id: string; created_at: Timestamp };
@@ -586,7 +608,24 @@ export type Database = {
       /** Whether you like each review; like counts only for your own reviews (migration 000030). */
       review_like_info: {
         Args: { p_review_ids: string[] };
-        Returns: { review_id: string; liked: boolean; like_count: number | null }[];
+        /** comment_count (migration 000043): visible comments on a published review. */
+        Returns: { review_id: string; liked: boolean; like_count: number | null; comment_count: number }[];
+      };
+      /** One review's comments, oldest first (migration 000043). like_count only on your own. */
+      review_comments_page: {
+        Args: { p_review_id: string; p_offset?: number; p_limit?: number };
+        Returns: {
+          id: string;
+          review_id: string;
+          user_id: string;
+          content: string;
+          created_at: string;
+          edited_at: string | null;
+          author_username: string;
+          author_avatar_url: string | null;
+          liked: boolean;
+          like_count: number | null;
+        }[];
       };
       /** One game's published reviews for the review browser (migration 000030). */
       game_reviews_browse: {
@@ -700,6 +739,8 @@ export type Database = {
           content_exists: boolean;
           status: 'open' | 'actioned' | 'dismissed';
           open_reports_on_target: number;
+          /** A comment's review id (migration 000043), for "Open"; null for other targets. */
+          context_id: string | null;
         }[];
       };
       admin_resolve_reports: {
@@ -783,7 +824,7 @@ export type Database = {
 };
 
 /** Row returned by the friend_reviews_for_game RPC (migration 000012). */
-export type ReportTarget = 'review' | 'list' | 'rating' | 'user';
+export type ReportTarget = 'review' | 'list' | 'rating' | 'user' | 'comment';
 export type ReportReason = 'spam' | 'harassment' | 'hate' | 'sexual' | 'violence' | 'self_harm' | 'impersonation' | 'spoilers' | 'other';
 
 export type FriendRatingRow = {

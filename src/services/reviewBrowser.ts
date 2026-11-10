@@ -108,14 +108,14 @@ export async function browseGameReviews(
   };
 }
 
-/** Your ♥ on a review, and (only on your own reviews) its like count. */
-export type ReviewLikeInfo = { liked: boolean; count: number | null };
+/** Your ♥ on a review, (only on your own reviews) its like count, and its comment count (everyone). */
+export type ReviewLikeInfo = { liked: boolean; count: number | null; comments: number };
 
 export async function fetchReviewLikeInfo(reviewIds: readonly string[]): Promise<Map<string, ReviewLikeInfo>> {
   if (reviewIds.length === 0) return new Map();
   const { data, error } = await supabase.rpc('review_like_info', { p_review_ids: [...reviewIds] });
   if (error) fail(error, 'Could not load likes.');
-  return new Map(data.map((r) => [r.review_id, { liked: r.liked, count: r.like_count }]));
+  return new Map(data.map((r) => [r.review_id, { liked: r.liked, count: r.like_count, comments: r.comment_count }]));
 }
 
 export async function setReviewLike(userId: string, reviewId: string, liked: boolean): Promise<void> {

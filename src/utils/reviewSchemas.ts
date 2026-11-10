@@ -91,3 +91,13 @@ export const slotDetailsSchema = z.object({
 });
 
 export type SlotDetailsValues = z.output<typeof slotDetailsSchema>;
+
+/** A comment on a review (migration 000043): 1–2,000 characters, through the same filter as reviews. */
+export const COMMENT_MAX_LENGTH = 2000;
+
+export const commentSchema = z
+  .string()
+  .trim()
+  .min(1, 'Write something first')
+  .max(COMMENT_MAX_LENGTH, `Keep it under ${COMMENT_MAX_LENGTH.toLocaleString()} characters`)
+  .refine((v) => !containsObjectionable(v), OBJECTIONABLE_MESSAGE);

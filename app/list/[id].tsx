@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { FlatList, Pressable, Text, View } from 'react-native';
 
 import { ListEditorModal } from '@/components/lists/ListEditorModal';
-import { ReportLink } from '@/components/safety/ReportLink';
+import { MoreMenu } from '@/components/safety/MoreMenu';
 import { Thumbnail } from '@/components/search/Thumbnail';
 import { gameMetaLine } from '@/components/search/GameResultCard';
 import { GamePickerModal } from '@/components/studio/GamePickerModal';
@@ -308,19 +308,19 @@ export default function ListScreen() {
           ) : null}
           {smart.isError ? <RetroGamingPCAlert message={smart.error.message} /> : null}
           {isOwner ? (
-            <View className="flex-row flex-wrap gap-2 pt-1">
+            <View className="flex-row flex-wrap items-center gap-2 pt-1">
               {smartRule ? null : (
                 <RetroGamingPCButton variant="create" label="Add Games" disabled={full} onPress={() => setAdding(true)} />
               )}
               <RetroGamingPCButton label="Edit Details" onPress={() => setEditing(true)} />
-              <RetroGamingPCButton variant="danger" label="Delete List" onPress={() => setConfirmDelete(true)} />
+              <MoreMenu label="this list" actions={[{ label: 'Delete List', variant: 'danger', onPress: () => setConfirmDelete(true) }]} />
             </View>
           ) : null}
           {!isOwner && data.owner ? (
-            <View className="flex-row">
-              <ReportLink
-                label="Report list"
-                subject={{
+            <View className="flex-row justify-end">
+              <MoreMenu
+                label="this list"
+                report={{
                   targetType: 'list',
                   targetId: data.id,
                   targetUserId: data.userId,

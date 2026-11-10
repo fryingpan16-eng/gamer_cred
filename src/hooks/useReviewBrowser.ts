@@ -10,7 +10,7 @@ import {
 } from '@/services/reviewBrowser';
 import { queryKeys } from '@/utils/queryKeys';
 
-import { useMemberId } from './useAuth';
+import { useAuthStore, useMemberId } from './useAuth';
 import { showToast } from './useToastStore';
 
 /** One game's reviews for the browser: paged as you scroll. */
@@ -34,14 +34,15 @@ export function useReviewPreview(gameId: number, sort: ReviewSort, count: number
   });
 }
 
-/** Your ♥ on a batch of reviews (members only; guests get an empty map). */
+/** Your ♥ on a batch of reviews, plus their 💬 counts (guests get the counts, never ♥). */
 export function useReviewLikes(reviewIds: readonly string[]) {
   const viewerId = useMemberId();
+  const hasSession = useAuthStore((s) => s.user !== null);
   const ids = [...new Set(reviewIds)];
   return useQuery({
     queryKey: queryKeys.reviews.likes(viewerId ?? 'guest', ids),
     queryFn: () => fetchReviewLikeInfo(ids),
-    enabled: viewerId !== null && ids.length > 0,
+    enabled: hasSession && ids.length > 0,
     staleTime: 60_000,
     placeholderData: (previous) => previous,
   });
@@ -53,11 +54,12 @@ export function useReviewLikes(reviewIds: readonly string[]) {
  */
 export function useReviewLikesByPage(pages: readonly (readonly string[])[]) {
   const viewerId = useMemberId();
+  const hasSession = useAuthStore((s) => s.user !== null);
   const results = useQueries({
     queries: pages.map((ids) => ({
       queryKey: queryKeys.reviews.likes(viewerId ?? 'guest', ids),
       queryFn: () => fetchReviewLikeInfo(ids),
-      enabled: viewerId !== null && ids.length > 0,
+      enabled: hasSession && ids.length > 0,
       staleTime: 60_000,
     })),
   });

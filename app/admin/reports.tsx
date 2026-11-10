@@ -158,7 +158,7 @@ function HeldPictures() {
 }
 
 const REASON_LABEL = Object.fromEntries(REPORT_REASONS.map((r) => [r.key, r.label]));
-const TYPE_LABEL = { review: 'Review', list: 'List', rating: 'Rating', user: 'Player' } as const;
+const TYPE_LABEL = { review: 'Review', list: 'List', rating: 'Rating', user: 'Player', comment: 'Comment' } as const;
 
 const fmt = (iso: string) =>
   new Date(iso).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
@@ -168,6 +168,9 @@ function openTarget(r: AdminReport) {
   if (r.target_type === 'review') router.push({ pathname: '/review/[id]', params: { id: r.target_id } });
   else if (r.target_type === 'list') router.push({ pathname: '/list/[id]', params: { id: r.target_id } });
   else if (r.target_type === 'rating') router.push({ pathname: '/game/[id]', params: { id: r.target_id } });
+  else if (r.target_type === 'comment') {
+    if (r.context_id) router.push({ pathname: '/review/[id]', params: { id: r.context_id } });
+  }
   else router.push({ pathname: '/user/[id]', params: { id: r.target_user_id } });
 }
 

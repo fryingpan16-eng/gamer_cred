@@ -15,6 +15,7 @@ import { RetroGamingPCWindowFrame } from '@/components/RetroGamingPCWindowFrame'
 import { RetroGamingPCToastHost } from '@/components/ui';
 import { useAuthStore } from '@/hooks/useAuth';
 import { useIsDesktop } from '@/hooks/useIsDesktop';
+import { restoreGameRecords, startSavingGameRecords } from '@/services/gameRecordStore';
 import { queryClient } from '@/services/queryClient';
 import { useThemeColors, useThemeStore, useThemeVars } from '@/hooks/useTheme';
 
@@ -33,6 +34,11 @@ void SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   useEffect(() => useAuthStore.getState().initialize(), []);
+  // Game records saved on this device: covers show at once on launch (public IGDB data only).
+  useEffect(() => {
+    void restoreGameRecords(queryClient);
+    return startSavingGameRecords(queryClient);
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>

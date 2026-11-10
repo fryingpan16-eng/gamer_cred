@@ -1,4 +1,6 @@
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { useRef, type ComponentRef } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { PlayedOnBadge } from '@/components/game/PlayedOnBadge';
@@ -12,15 +14,19 @@ import {
   RetroGamingPCPanel,
   RetroGamingPCRating,
   RetroGamingPCSpinner,
+  RetroGamingPCTimeAgo,
 } from '@/components/ui';
 import { ReviewLikeControl } from '@/components/review/ReviewCard';
-import { ReportLink } from '@/components/safety/ReportLink';
+import { ReviewComments } from '@/components/review/ReviewComments';
+import { MoreMenu } from '@/components/safety/MoreMenu';
 import { UserName, useShownName } from '@/components/user/UserName';
-import { useAuthStore } from '@/hooks/useAuth';
+import { useAuthStore, useIsGuest } from '@/hooks/useAuth';
 import { useGameLookup } from '@/hooks/useGames';
 import { useReviewLikes } from '@/hooks/useReviewBrowser';
 import { usePlaythroughs, useReview } from '@/hooks/useReviews';
 import { useStudioStore } from '@/hooks/useStudioStore';
+import { useThemeColors } from '@/hooks/useTheme';
+import { TOUCH_SLOP } from '@/utils/platform';
 import { reviewRating } from '@/utils/ratingColumns';
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -40,6 +46,11 @@ export default function ReviewScreen() {
   const games = useGameLookup(review.data ? [review.data.game_id] : []);
   const likes = useReviewLikes(valid && review.data?.status === 'published' ? [id] : []);
   const playthroughs = usePlaythroughs(valid && review.data?.status === 'published' ? id : null);
+  const isGuest = useIsGuest();
+  const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
+  const commentsY = useRef(0);
+  const themeColors = useThemeColors();
+  const commentCount = likes.data?.get(id)?.comments ?? 0;
 
   if (valid && review.isPending) {
     return (
@@ -69,7 +80,13 @@ export default function ReviewScreen() {
   const openAuthor = () => author && router.push(isMine ? '/profile' : { pathname: '/user/[id]', params: { id: author.id } });
 
   return (
-    <ScrollView className="flex-1 bg-retrogamingpc-dark" contentContainerClassName="w-full gap-3 self-center p-3 md:max-w-[760px]">
+    <ScrollView
+      ref={scrollRef}
+      className="flex-1 bg-retrogamingpc-dark"
+      contentContainerClassName="w-full gap-3 self-center p-3 md:max-w-[760px]"
+      automaticallyAdjustKeyboardInsets
+      keyboardShouldPersistTaps="handled"
+    >
       <Stack.Screen options={{ title: `${author ? authorName : 'Player'} on ${game?.name ?? 'a game'}` }} />
 
       <RetroGamingPCPanel>
@@ -94,15 +111,27 @@ export default function ReviewScreen() {
                   {data.status === 'draft' ? <RetroGamingPCBadge label="Draft" variant="draft" /> : null}
                   {data.is_replay ? <RetroGamingPCBadge label="↻ Replay" /> : null}
                 </View>
-                <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted">
-                  {formatDate(data.published_at ?? data.updated_at)}
-                </Text>
+                <RetroGamingPCTimeAgo iso={data.published_at ?? data.updated_at} onPress={openAuthor} />
               </View>
             </Pressable>
             <RetroGamingPCRating rating={reviewRating(data)} expanded />
             <PlayedOnBadge platformId={data.platform_id} />
             {data.is_replay && data.finished_on ? (
               <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted">Finished {formatFinishedOn(data.finished_on)}</Text>
+            ) : null}
+            {data.status === 'published' && (commentCount > 0 || !isGuest) ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={commentCount > 0 ? `Jump to ${commentCount} ${commentCount === 1 ? 'comment' : 'comments'}` : 'Jump to comments'}
+                hitSlop={TOUCH_SLOP}
+                onPress={() => scrollRef.current?.scrollTo({ y: commentsY.current, animated: true })}
+                className="min-h-[28px] flex-row items-center gap-1 self-start"
+              >
+                <MaterialCommunityIcons name="comment-outline" size={13} color={themeColors.textBright} />
+                <Text className="text-retrogamingpc-xs font-bold text-retrogamingpc-text-bright underline">
+                  {commentCount > 0 ? `${commentCount} ${commentCount === 1 ? 'comment' : 'comments'} ▾` : 'Comment ▾'}
+                </Text>
+              </Pressable>
             ) : null}
           </View>
         </View>
@@ -143,42 +172,38 @@ export default function ReviewScreen() {
         )}
       </RetroGamingPCPanel>
 
+      {/* One action bar: ♥ on the left; navigation, editing and ⋯ (report) on the right. */}
+      <View className="flex-row flex-wrap items-center justify-between gap-2">
+        {data.status === 'published' ? <ReviewLikeControl reviewId={data.id} isMine={isMine} like={likes.data?.get(data.id)} /> : <View />}
+        <View className="flex-row flex-wrap items-center justify-end gap-2">
+          {data.status === 'published' ? (
+            <RetroGamingPCButton
+              variant="navigate"
+              label={`All reviews of ${game?.name ?? 'this game'} ▸`}
+              onPress={() => router.push({ pathname: '/reviews/[gameId]', params: { gameId: String(data.game_id) } })}
+            />
+          ) : null}
+          {isMine ? (
+            <RetroGamingPCButton
+              variant="navigate"
+              label="Edit in Review Studio"
+              onPress={() => {
+                startReview({ gameId: data.game_id, reviewId: data.id });
+                router.push('/post');
+              }}
+            />
+          ) : author ? (
+            <MoreMenu
+              label="this review"
+              report={{ targetType: 'review', targetId: data.id, targetUserId: data.user_id, label: 'this review', ownerName: authorName }}
+            />
+          ) : null}
+        </View>
+      </View>
+
       {data.status === 'published' ? (
-        <View className="flex-row flex-wrap items-center justify-between gap-2">
-          <ReviewLikeControl reviewId={data.id} isMine={isMine} like={likes.data?.get(data.id)} />
-          <RetroGamingPCButton
-            variant="navigate"
-            label={`All reviews of ${game?.name ?? 'this game'} ▸`}
-            onPress={() => router.push({ pathname: '/reviews/[gameId]', params: { gameId: String(data.game_id) } })}
-          />
-        </View>
-      ) : null}
-
-      {!isMine && author ? (
-        <View className="flex-row justify-end">
-          <ReportLink
-            label="Report review"
-            subject={{
-              targetType: 'review',
-              targetId: data.id,
-              targetUserId: data.user_id,
-              label: 'this review',
-              ownerName: authorName,
-            }}
-          />
-        </View>
-      ) : null}
-
-      {isMine ? (
-        <View className="flex-row justify-end">
-          <RetroGamingPCButton
-            variant="navigate"
-            label="Edit in Review Studio"
-            onPress={() => {
-              startReview({ gameId: data.game_id, reviewId: data.id });
-              router.push('/post');
-            }}
-          />
+        <View onLayout={(e) => (commentsY.current = e.nativeEvent.layout.y)}>
+          <ReviewComments reviewId={data.id} viewerId={viewerId} />
         </View>
       ) : null}
     </ScrollView>

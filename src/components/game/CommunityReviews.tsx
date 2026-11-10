@@ -3,7 +3,8 @@ import { router } from 'expo-router';
 import { Text, View } from 'react-native';
 
 import { ReviewCard } from '@/components/review/ReviewCard';
-import { RetroGamingPCAlert, RetroGamingPCButton, RetroGamingPCPanel, RetroGamingPCSpinner } from '@/components/ui';
+import { RetroGamingPCAlert, RetroGamingPCButton, RetroGamingPCPanel } from '@/components/ui';
+import { ReviewCardSkeleton } from '@/components/review/ReviewCardSkeleton';
 import { useMemberId } from '@/hooks/useAuth';
 import { useGameReviewStats } from '@/hooks/useGameDetail';
 import { useReviewLikes, useReviewPreview } from '@/hooks/useReviewBrowser';
@@ -87,7 +88,7 @@ export function CommunityReviews({ gameId }: { gameId: number }) {
         ) : null}
 
         {preview.isPending ? (
-          <RetroGamingPCSpinner label="Loading reviews…" />
+          <ReviewCardSkeleton count={2} />
         ) : preview.isError ? (
           <View className="gap-2">
             <RetroGamingPCAlert message={preview.error.message} />

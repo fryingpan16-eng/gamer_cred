@@ -14,6 +14,7 @@ import {
   RetroGamingPCTabs,
   type RetroGamingPCTabItem,
 } from '@/components/ui';
+import { ReviewCardSkeleton } from '@/components/review/ReviewCardSkeleton';
 import { useIsGuest, useMemberId } from '@/hooks/useAuth';
 import { useFriendRatingsForGame } from '@/hooks/useGameDetail';
 import { useGameLookup } from '@/hooks/useGames';
@@ -143,7 +144,7 @@ export default function ReviewBrowserScreen() {
           onEndReachedThreshold={0.5}
           ListEmptyComponent={
             list.isPending ? (
-              <RetroGamingPCSpinner label="Loading reviews…" />
+              <ReviewCardSkeleton count={4} />
             ) : list.isError ? (
               <View className="gap-2">
                 <RetroGamingPCAlert message={list.error.message} />

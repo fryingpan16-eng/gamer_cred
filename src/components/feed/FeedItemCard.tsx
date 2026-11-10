@@ -35,7 +35,6 @@ export function FeedItemCard({ item, game, viewerId, like }: FeedItemCardProps) 
         like={like}
         showGame
         game={game}
-        dateStyle="relative"
         excerptLines={3}
       />
     );

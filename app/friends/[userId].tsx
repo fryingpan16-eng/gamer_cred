@@ -4,6 +4,7 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { UserName } from '@/components/user/UserName';
 import { Thumbnail } from '@/components/search/Thumbnail';
+import { MoreMenu } from '@/components/safety/MoreMenu';
 import {
   RetroGamingPCAlert,
   RetroGamingPCButton,
@@ -142,11 +143,11 @@ export default function FriendsScreen() {
                     viewerId={viewerId}
                     actions={
                       isOwner ? (
-                        <RetroGamingPCButton
-                          variant="danger"
-                          label="Unfriend"
-                          disabled={busyId === entry.friendshipId}
-                          onPress={() => setUnfriending(entry)}
+                        <MoreMenu
+                          label={entry.person.username}
+                          actions={[
+                            { label: 'Unfriend', variant: 'danger', disabled: busyId === entry.friendshipId, onPress: () => setUnfriending(entry) },
+                          ]}
                         />
                       ) : undefined
                     }

@@ -21,3 +21,4 @@ export { RetroGamingPCBarChart, type RetroGamingPCBarChartProps } from './RetroG
 export { RetroGamingPCToastHost } from './RetroGamingPCToastHost';
 export { RetroGamingPCSaveStatus, saveStatusOf, type RetroGamingPCSaveStatusProps } from './RetroGamingPCSaveStatus';
 export { RetroGamingPCSheet, type RetroGamingPCSheetProps } from './RetroGamingPCSheet';
+export { RetroGamingPCTimeAgo, fullDate, type RetroGamingPCTimeAgoProps } from './RetroGamingPCTimeAgo';

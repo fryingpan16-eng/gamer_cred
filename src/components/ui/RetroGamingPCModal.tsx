@@ -31,7 +31,7 @@ export function TitlebarCloseButton({ onPress }: { onPress: () => void }) {
     <Pressable
       accessibilityRole="button"
       accessibilityLabel="Close dialog"
-      // 18px chrome, ~42px touch area.
+      // Phones: 28px chrome, ~52px touch area (thumbs). Desktop: 22px, ~46px.
       hitSlop={12}
       onPress={onPress}
       onPressIn={() => setPressed(true)}
@@ -44,9 +44,9 @@ export function TitlebarCloseButton({ onPress }: { onPress: () => void }) {
         borderBottomColor: pressed ? CANCEL.light : CANCEL.dark,
         borderRightColor: pressed ? CANCEL.light : CANCEL.dark,
       }}
-      className="h-[18px] w-[18px] items-center justify-center border"
+      className="h-[28px] w-[28px] items-center justify-center border md:h-[22px] md:w-[22px]"
     >
-      <Text className="text-retrogamingpc-xs font-bold" style={{ color: CANCEL.label }}>
+      <Text className="text-retrogamingpc-base font-bold md:text-retrogamingpc-sm" style={{ color: CANCEL.label }}>
         ✕
       </Text>
     </Pressable>

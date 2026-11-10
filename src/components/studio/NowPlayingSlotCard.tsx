@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Image, Pressable, Text, View } from 'react-native';
 
+import { MoreMenu } from '@/components/safety/MoreMenu';
 import { RetroGamingPCBadge, RetroGamingPCButton, RetroGamingPCRating, RetroGamingPCSpinner } from '@/components/ui';
 import type { NowPlaying, NowPlayingSlot } from '@/types/database.types';
 import { igdbImageUrl, type IgdbGameResult } from '@/types/igdb';
@@ -42,7 +43,12 @@ export function NowPlayingSlotCard({
     <View className={cn('retrogamingpc-bevel gap-1.5 bg-retrogamingpc-card p-1.5', selected && 'border-retrogamingpc-highlight')}>
       <View className="flex-row items-center justify-between">
         <Text className="font-mono text-retrogamingpc-xs text-retrogamingpc-text-muted">SLOT {slot}</Text>
-        {filled && row.preliminary_score === null ? <RetroGamingPCBadge label="Unrated" variant="draft" /> : null}
+        <View className="flex-row items-center gap-1">
+          {filled && row.preliminary_score === null ? <RetroGamingPCBadge label="Unrated" variant="draft" /> : null}
+          {filled ? (
+            <MoreMenu label={`${title} in slot ${slot}`} actions={[{ label: 'Remove from Now Playing', variant: 'danger', onPress: onRemove }]} />
+          ) : null}
+        </View>
       </View>
 
       <Pressable
@@ -88,7 +94,6 @@ export function NowPlayingSlotCard({
             <RetroGamingPCButton label="Notes" onPress={onEdit} className="flex-1 px-1" />
             <RetroGamingPCButton variant="create" label="Review" onPress={onReview} className="flex-1 px-1" />
           </View>
-          <RetroGamingPCButton label="Remove" variant="danger" onPress={onRemove} className="px-1" />
         </>
       ) : null}
     </View>
