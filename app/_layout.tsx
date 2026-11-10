@@ -17,7 +17,7 @@ import { useAuthStore } from '@/hooks/useAuth';
 import { useIsDesktop } from '@/hooks/useIsDesktop';
 import { restoreGameRecords, startSavingGameRecords } from '@/services/gameRecordStore';
 import { queryClient } from '@/services/queryClient';
-import { useThemeColors, useThemeStore, useThemeVars } from '@/hooks/useTheme';
+import { useIsLightTheme, useThemeColors, useThemeStore, useThemeVars } from '@/hooks/useTheme';
 
 // Global error boundary. Expo Router has no `+error.tsx` file convention (it
 // rejects route files starting with '+'), so the boundary is exported here.
@@ -33,6 +33,7 @@ export const unstable_settings = {
 void SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
+  const isLight = useIsLightTheme();
   useEffect(() => useAuthStore.getState().initialize(), []);
   // Game records saved on this device: covers show at once on launch (public IGDB data only).
   useEffect(() => {
@@ -45,7 +46,7 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <ThemeRoot>
           <SafeAreaView className="flex-1 bg-retrogamingpc-dark" edges={['top', 'left', 'right']}>
-            <StatusBar style="light" />
+            <StatusBar style={isLight ? 'dark' : 'light'} />
             <RetroGamingPCWindowFrame>
               <RootNavigator />
             </RetroGamingPCWindowFrame>

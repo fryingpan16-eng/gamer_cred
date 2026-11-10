@@ -1,6 +1,6 @@
 import { ACTION_COLORS, ACTION_KINDS } from '@/constants/actionColors';
 import palettes from '@/constants/themePalettes.json';
-import { THEME_NAMES } from '@/constants/themes';
+import { STATUS_TOKENS, THEME_NAMES } from '@/constants/themes';
 
 function luminance(hex: string): number {
   const channel = (i: number) => {
@@ -14,7 +14,7 @@ function contrast(a: string, b: string): number {
   return (hi + 0.05) / (lo + 0.05);
 }
 
-describe('action colours (fixed across themes)', () => {
+describe('action colours (button faces fixed across themes)', () => {
   it('has save, cancel, danger, create and navigate', () => {
     expect(ACTION_KINDS.sort()).toEqual(['cancel', 'create', 'danger', 'navigate', 'save']);
   });
@@ -24,14 +24,15 @@ describe('action colours (fixed across themes)', () => {
     for (const face of [c.fill, c.hover, c.pressed]) expect(contrast(c.label, face)).toBeGreaterThanOrEqual(4.5);
   });
 
-  it.each(ACTION_KINDS)('%s: its text colour is readable on every theme surface (≥ 4.5:1)', (kind) => {
-    for (const name of THEME_NAMES) {
-      const t = palettes[name] as Record<string, string>;
+  it.each(THEME_NAMES)('%s: the status text colours are readable on every surface (≥ 4.5:1)', (name) => {
+    const t = palettes[name] as Record<string, string>;
+    for (const token of STATUS_TOKENS) {
       for (const surface of ['dark', 'card', 'panel', 'button']) {
-        expect(contrast(ACTION_COLORS[kind].text, t[surface]!)).toBeGreaterThanOrEqual(4.5);
+        expect(contrast(t[token]!, t[surface]!)).toBeGreaterThanOrEqual(4.5);
       }
     }
   });
+
 
   it('start / add actions use the same bright green as save', () => {
     expect(ACTION_COLORS.create).toEqual(ACTION_COLORS.save);

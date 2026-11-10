@@ -5,7 +5,7 @@ import { FlatList, Pressable, ScrollView, Text, TextInput, View } from 'react-na
 import { PlaysTag } from '@/components/replays/PlaysTag';
 import { RetroGamingPCButton, RetroGamingPCTabs, type RetroGamingPCTabItem } from '@/components/ui';
 import { RATING_TIERS, type TierCode } from '@/constants/ratingRubric';
-import { useThemeColors } from '@/hooks/useTheme';
+import { useDividerColor, useThemeColors } from '@/hooks/useTheme';
 import { cn } from '@/utils/cn';
 import { noZoomInputStyle } from '@/utils/platform';
 import { formatStars, tierDefinition, tierBorderColor, tierSpokenName } from '@/utils/rating';
@@ -40,7 +40,6 @@ const COLUMNS: readonly Column[] = [
 ];
 const TABLE_WIDTH = COLUMNS.reduce((w, c) => w + c.width, 0);
 const ROW_HEIGHT = 30;
-const DIVIDER = 'rgba(255,255,255,0.12)';
 
 const REVIEW_TABS: readonly RetroGamingPCTabItem<ReviewFilter>[] = [
   { key: 'any', label: 'Any' },
@@ -165,6 +164,7 @@ function Filters({ rows, filters, onChange }: { rows: readonly RatingsTableRow[]
 }
 
 function HeaderCell({ column, sort, canSort, onSort }: { column: Column; sort: TableSort; canSort: boolean; onSort: (k: SortKey) => void }) {
+  const divider = useDividerColor();
   // Tier / Stars share the score sort; show the arrow on the 1–100 column only.
   const active = canSort && sort.key === column.sort && (column.sort !== 'score' || column.key === 'score');
   const content = (
@@ -179,7 +179,7 @@ function HeaderCell({ column, sort, canSort, onSort }: { column: Column; sort: T
   const cellClass = 'h-8 justify-center border-r px-1.5';
   if (!canSort) {
     return (
-      <View style={{ width: column.width, borderRightColor: DIVIDER }} className={cellClass}>
+      <View style={{ width: column.width, borderRightColor: divider }} className={cellClass}>
         {content}
       </View>
     );
@@ -189,7 +189,7 @@ function HeaderCell({ column, sort, canSort, onSort }: { column: Column; sort: T
       accessibilityRole="button"
       accessibilityLabel={`Sort by ${column.label}${active ? (sort.dir === 'asc' ? ', ascending' : ', descending') : ''}`}
       onPress={() => onSort(column.sort)}
-      style={{ width: column.width, borderRightColor: DIVIDER }}
+      style={{ width: column.width, borderRightColor: divider }}
       className={cellClass}
     >
       {content}
@@ -198,8 +198,9 @@ function HeaderCell({ column, sort, canSort, onSort }: { column: Column; sort: T
 }
 
 function Cell({ width, align, children }: { width: number; align?: 'right' | 'center'; children: ReactNode }) {
+  const divider = useDividerColor();
   return (
-    <View style={{ width, borderRightColor: DIVIDER }} className={cn('h-full justify-center border-r px-1.5', align === 'right' && 'items-end', align === 'center' && 'items-center')}>
+    <View style={{ width, borderRightColor: divider }} className={cn('h-full justify-center border-r px-1.5', align === 'right' && 'items-end', align === 'center' && 'items-center')}>
       {children}
     </View>
   );
@@ -208,13 +209,14 @@ function Cell({ width, align, children }: { width: number; align?: 'right' | 'ce
 const cellText = 'text-retrogamingpc-xs text-retrogamingpc-text';
 
 function Row({ row, index }: { row: RatingsTableRow; index: number }) {
+  const divider = useDividerColor();
   const tier = tierDefinition(row.tier);
   return (
     <Pressable
       accessibilityRole="link"
       accessibilityLabel={`${row.name}: ${row.score} out of 100, tier ${tierSpokenName(row.tier)}, played on ${row.platform}${row.replays > 0 ? `, played ${row.replays + 1} times` : ''}. Open game page`}
       onPress={() => router.push({ pathname: '/game/[id]', params: { id: String(row.gameId) } })}
-      style={{ height: ROW_HEIGHT, borderBottomColor: DIVIDER }}
+      style={{ height: ROW_HEIGHT, borderBottomColor: divider }}
       className={cn('flex-row border-b', index % 2 === 1 ? 'bg-retrogamingpc-card' : 'bg-retrogamingpc-dark')}
     >
       <Cell width={COLUMNS[0]!.width}>

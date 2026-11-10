@@ -14,7 +14,7 @@ _Last updated: 2026-11-09_
 - `app/(tabs)/` — Home, Search, Post (Review Studio), Stats, Profile
 - `app/game/[id].tsx`, `app/review/[id].tsx`, `app/reviews/[gameId].tsx`
 - `src/services/` (Supabase calls) · `src/hooks/` (queries) · `src/utils/queryKeys.ts`
-- `supabase/migrations/` (000001–000044) · `supabase/tests/` · `supabase/name-rules/`
+- `supabase/migrations/` (000001–000045) · `supabase/tests/` · `supabase/name-rules/`
 
 ## Completed
 - Auth, search, Review Studio, profiles, game and studio pages, feeds, trending, friends
@@ -26,12 +26,11 @@ _Last updated: 2026-11-09_
 - Replays: Mark as Replayed, replay reviews, play counts, Stats → Replays (000040)
 - Other versions (Director's Cut…) fold into their original like remasters; Persona re-releases stay separate; saved data moves over (000042)
 - Review comments: flat thread with @replies, filtered like reviews, 60/hour, edit own ("edited"), private ♥, ⚑ report → admin removal, 💬 count on ReviewCard (000043)
+- Light theme (colours only, Wii/3DS-inspired white + silver + sky blue): shown as "Cloud" (id `white`); status colours (errors, likes, gold) now follow the theme (000045)
 - IGDB cache: service-role only, purge keeps 60 days to match the outage fallback (000044); game records saved on the device for instant covers
 
 ## Your to-do list (only you can do these)
-- [ ] Rebuild phone apps: builds older than 000040 can't save reviews
-- [ ] Push migrations 000043 (review comments) and 000044 (cache lock-down + 60-day purge); older app builds keep working but show no comments
-- [ ] Phone rebuild also picks up AsyncStorage (game records saved on the device); web works without a rebuild
+- [ ] Phones (Expo Go): restart `npx expo start -c` and reload Expo Go to get comments + on-device game records
 - [ ] Admin: Settings → Admin Security → set up, THEN approve the authenticator in the SQL Editor (README → Admins). Unlocks admin tools and the badge.
 - [ ] Guest browsing, in this order: (1) Supabase → allow anonymous sign-ins; (2) Cloudflare Turnstile widget → `EXPO_PUBLIC_TURNSTILE_SITE_KEY` in `.env`; (3) LAST: Supabase CAPTCHA with the secret (earlier breaks every login)
 - [ ] Supabase Auth: minimum password length 8+, leaked-password protection on
@@ -42,6 +41,7 @@ _Last updated: 2026-11-09_
 - Custom SMTP (e.g. Resend) so confirmation emails reach testers
 - Host the web build on the Cloudflare subdomain; set Supabase Site URL + redirect URLs to it
 - Privacy page; app name and icon in `app.json`
+- Visual check of the light theme on every screen (phone + desktop)
 - Visual check of the replay screens and the review page (action bar, ⋯ menus, comments), profile, list, friends and Now Playing ⋯ on phone and desktop
 
 ## Before closed testing (Google Play beta)
@@ -64,6 +64,7 @@ Needs the alpha list above, plus:
 - Ratings don't appear in the activity feed (reviews, likes, replays do)
 - Trending posts rank by game popularity, not review likes
 - "Add to list" button on game pages (today: added from the list page)
+- Light theme step 2 (maybe): rounded buttons/cards and soft shadows
 - Comments: players can't delete their own (only edit); add "Delete own" if testers ask
 
 ## After alpha (planned)

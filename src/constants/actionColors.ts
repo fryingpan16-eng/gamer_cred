@@ -10,7 +10,9 @@
  *                            same colours as save
  *   navigate  blue         — go somewhere (view details, view profile, open in Review Studio)
  *
- * Everything else uses the themed `default` / `primary` buttons.
+ * Everything else uses the themed `default` / `primary` buttons. The matching
+ * text colours on theme surfaces (status text, outlines, icons) are theme tokens
+ * (`saveText`, `cancelText`, `navigateText` from useThemeColors()), darker in the light theme.
  */
 import colors from './actionColors.json';
 
@@ -26,8 +28,6 @@ export type ActionColor = {
   dark: string;
   /** Label colour on the fill. */
   label: string;
-  /** Text / border colour on the dark theme surfaces (status text, outlines, icons). */
-  text: string;
 };
 
 export const ACTION_COLORS: Record<ActionKind, ActionColor> = colors;

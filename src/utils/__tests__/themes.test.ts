@@ -3,6 +3,7 @@ import {
   DEFAULT_THEME,
   hexToTriplet,
   NEUTRAL_TEXT_TOKENS,
+  isLightTheme,
   isThemeName,
   THEME_LABELS,
   THEME_NAMES,
@@ -24,6 +25,9 @@ function contrast(a: string, b: string): number {
   return (hi + 0.05) / (lo + 0.05);
 }
 
+const DARK = THEME_NAMES.filter((n) => !isLightTheme(n));
+const LIGHT = THEME_NAMES.filter(isLightTheme);
+
 const PAIRS: [string, string][] = [
   ['text', 'dark'],
   ['text-bright', 'card'],
@@ -33,10 +37,10 @@ const PAIRS: [string, string][] = [
 ];
 
 describe('colour themes', () => {
-  it('offers blue (default, listed first), olive, red, yellow and pink', () => {
-    expect(THEME_NAMES).toEqual(['blue', 'olive', 'red', 'yellow', 'pink']);
+  it('offers blue (default, listed first), olive, red, yellow, pink and the light theme', () => {
+    expect(THEME_NAMES).toEqual(['blue', 'olive', 'red', 'yellow', 'pink', 'white']);
     expect(DEFAULT_THEME).toBe('blue');
-    expect(THEME_NAMES.map((n) => THEME_LABELS[n])).toEqual(['Mega', 'Chief', 'Super', 'Pika', 'Peach']);
+    expect(THEME_NAMES.map((n) => THEME_LABELS[n])).toEqual(['Mega', 'Chief', 'Super', 'Pika', 'Peach', 'Cloud']);
     expect(Object.keys(palettes).sort()).toEqual([...THEME_NAMES].sort());
   });
 
@@ -46,7 +50,7 @@ describe('colour themes', () => {
     for (const hex of Object.values(palette)) expect(hex).toMatch(/^#[0-9a-f]{6}$/i);
   });
 
-  it.each(THEME_NAMES.filter((n) => n !== 'olive'))('%s keeps olive’s text contrast (±0.25)', (name) => {
+  it.each(DARK.filter((n) => n !== 'olive'))('%s keeps olive’s text contrast (±0.25)', (name) => {
     const olive = palettes.olive as Record<string, string>;
     const theme = palettes[name] as Record<string, string>;
     for (const [fg, bg] of PAIRS) {
@@ -54,9 +58,9 @@ describe('colour themes', () => {
     }
   });
 
-  it('text is neutral grey (no tint) and identical in every theme', () => {
+  it.each([['dark', DARK], ['light', LIGHT]] as const)('%s themes: text is neutral grey (no tint) and identical in each', (_kind, names) => {
     for (const token of NEUTRAL_TEXT_TOKENS) {
-      const values = new Set(THEME_NAMES.map((n) => (palettes[n] as Record<string, string>)[token]));
+      const values = new Set(names.map((n) => (palettes[n] as Record<string, string>)[token]));
       expect(values.size).toBe(1);
       const hex = [...values][0]!;
       expect(hex.slice(1, 3)).toBe(hex.slice(3, 5)); // R = G
@@ -73,12 +77,21 @@ describe('colour themes', () => {
     }
     expect(contrast(t['text-bright']!, t.active!)).toBeGreaterThanOrEqual(4.5); // primary buttons
     expect(contrast(t.ink!, t.highlight!)).toBeGreaterThanOrEqual(4.5); // "Main" badge
+    // Stars, meters and focus rings stand out (non-text, ≥ 3:1).
+    for (const surface of ['dark', 'card', 'panel', 'button']) expect(contrast(t.highlight!, t[surface]!)).toBeGreaterThanOrEqual(3);
   });
 
-  it.each(THEME_NAMES)('%s is a dark theme (backgrounds near black)', (name) => {
+  it.each(DARK)('%s is a dark theme (backgrounds near black)', (name) => {
     const t = palettes[name] as Record<string, string>;
     expect(luminance(t.dark!)).toBeLessThan(0.015);
     expect(luminance(t.card!)).toBeLessThan(0.02);
+  });
+
+  it.each(LIGHT)('%s is a light theme (light backgrounds, dark text)', (name) => {
+    const t = palettes[name] as Record<string, string>;
+    expect(luminance(t.dark!)).toBeGreaterThan(0.7);
+    expect(luminance(t.card!)).toBeGreaterThan(0.85);
+    expect(luminance(t.text!)).toBeLessThan(0.03);
   });
 
   it('builds JS palettes and CSS variables', () => {

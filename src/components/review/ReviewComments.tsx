@@ -16,22 +16,23 @@ import {
   RetroGamingPCTimeAgo,
 } from '@/components/ui';
 import { UserName, useShownName } from '@/components/user/UserName';
-import { LIKE_COLOR } from '@/constants/likeColor';
 import { useIsGuest } from '@/hooks/useAuth';
 import { useEditComment, usePostComment, useReviewComments, useToggleCommentLike } from '@/hooks/useComments';
 import type { ReviewComment } from '@/services/comments';
 import { TOUCH_SLOP } from '@/utils/platform';
 import { COMMENT_MAX_LENGTH } from '@/utils/reviewSchemas';
+import { useThemeColors } from '@/hooks/useTheme';
 
 /** ♥ on someone else's comment; on your own, the private count. */
 function CommentLike({ comment, isMine }: { comment: ReviewComment; isMine: boolean }) {
+  const themeColors = useThemeColors();
   const isGuest = useIsGuest();
   const toggle = useToggleCommentLike(comment.reviewId);
   if (isMine) {
     const n = comment.likeCount ?? 0;
     return n > 0 ? (
       <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted">
-        <Text style={{ color: LIKE_COLOR }}>♥ {n}</Text> · only you see this
+        <Text style={{ color: themeColors.like }}>♥ {n}</Text> · only you see this
       </Text>
     ) : null;
   }
@@ -45,8 +46,8 @@ function CommentLike({ comment, isMine }: { comment: ReviewComment; isMine: bool
       onPress={() => toggle.mutate({ commentId: comment.id, liked: !comment.liked })}
       className="min-h-[28px] flex-row items-center gap-1"
     >
-      <MaterialCommunityIcons name={comment.liked ? 'heart' : 'heart-outline'} size={13} color={LIKE_COLOR} />
-      <Text className="text-retrogamingpc-xs font-bold" style={{ color: LIKE_COLOR }}>
+      <MaterialCommunityIcons name={comment.liked ? 'heart' : 'heart-outline'} size={13} color={themeColors.like} />
+      <Text className="text-retrogamingpc-xs font-bold" style={{ color: themeColors.like }}>
         {comment.liked ? 'Liked' : 'Like'}
       </Text>
     </Pressable>

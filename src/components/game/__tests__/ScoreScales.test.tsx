@@ -1,10 +1,13 @@
 import { render, screen } from '@testing-library/react-native';
 
-import { PERFECT_TIER_GOLD, RATING_TIERS } from '@/constants/ratingRubric';
-import { THEME_NAMES, themePalette } from '@/constants/themes';
+import { RATING_TIERS } from '@/constants/ratingRubric';
+import { isLightTheme, THEME_NAMES, themePalette } from '@/constants/themes';
 import { contrast, mix } from '@/utils/color';
 
 import { ScoreScales, scoreBoxScales, tierBoxStyle } from '../ScoreScales';
+
+/** Largest single-channel difference (0–255): a tint can change hue without changing brightness. */
+const channelGap = (a: string, b: string) => Math.max(...[1, 3, 5].map((i) => Math.abs(parseInt(a.slice(i, i + 2), 16) - parseInt(b.slice(i, i + 2), 16))));
 
 const rating = { numeric: 92, inputScale: 'numeric' as const, input: '92' };
 
@@ -51,8 +54,10 @@ describe('game page score box scales', () => {
       expect(contrast(t.text, bg)).toBeGreaterThanOrEqual(7);
       expect(contrast(t.textBright, bg)).toBeGreaterThanOrEqual(7);
       expect(contrast(t.textMuted, bg)).toBeGreaterThanOrEqual(4.5);
-      // clearly coloured: at least twice the old 10% tint
-      expect(contrast(bg, t.dark)).toBeGreaterThan(contrast(mix(tier.color, t.dark, 0.2), t.dark) - 0.01);
+      // clearly coloured: at least twice the old 10% tint (light theme: dark text caps the tint, still visible)
+      if (isLightTheme(name)) expect(channelGap(bg, t.dark)).toBeGreaterThanOrEqual(10); // a visible hue shift
+      if (isLightTheme(name)) expect(contrast(tierBoxStyle({ numeric: tier.max, inputScale: 'numeric', input: String(tier.max) }, t)!.borderColor, t.dark)).toBeGreaterThanOrEqual(1.6);
+      else expect(contrast(bg, t.dark)).toBeGreaterThan(contrast(mix(tier.color, t.dark, 0.2), t.dark) - 0.01);
     }
   });
 
@@ -63,7 +68,7 @@ describe('game page score box scales', () => {
     );
     for (const bg of [...fiveStarBoxes, t.dark, t.card, t.panel]) {
       // The "5/5" label is text (4.5:1); the star glyphs themselves need 3:1.
-      expect(contrast(PERFECT_TIER_GOLD, bg)).toBeGreaterThanOrEqual(4.5);
+      expect(contrast(t.gold, bg)).toBeGreaterThanOrEqual(4.5);
     }
   });
 });

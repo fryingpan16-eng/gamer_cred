@@ -3,12 +3,10 @@ import { useState, type ReactNode } from 'react';
 import { Platform, Pressable, Text, TextInput, View } from 'react-native';
 
 import { RetroGamingPCTierBadge } from '@/components/ui';
-import { ACTION_COLORS } from '@/constants/actionColors';
 import {
   NOT_GOOD,
   NUMERIC_MAX,
   NUMERIC_MIN,
-  PERFECT_TIER_GOLD,
   RATING_SCALE_LABELS,
   STARS_MAX,
   type RatingScale,
@@ -104,6 +102,7 @@ function Chip({
   onPress?: () => void;
   children: ReactNode;
 }) {
+  const themeColors = useThemeColors();
   return (
     <Pressable
       testID={testID}
@@ -120,7 +119,7 @@ function Chip({
         style={{
           backgroundColor: color,
           opacity: dimmed && !selected && !previewed ? 0.45 : 1,
-          borderColor: selected ? '#fafafa' : previewed ? '#b8b8b8' : 'rgba(0,0,0,0.35)',
+          borderColor: selected ? themeColors.textBright : previewed ? themeColors.textMuted : 'rgba(0,0,0,0.35)',
         }}
       >
         <Text className="font-mono text-retrogamingpc-xs font-bold" style={{ color: textColor }} numberOfLines={1}>
@@ -277,7 +276,7 @@ export function QuickRating({
         style={{ width: dims.clear, height: dims.clear }}
         className="items-center justify-center"
       >
-        <Text className="font-mono text-retrogamingpc-sm font-bold" style={{ color: ACTION_COLORS.cancel.text }}>
+        <Text className="font-mono text-retrogamingpc-sm font-bold" style={{ color: themeColors.cancelText }}>
           ✕
         </Text>
       </Pressable>
@@ -316,7 +315,7 @@ export function QuickRating({
           const starsShown = highlighted ? Number(highlighted.value) : 0;
           const fill = starsShown - i; // ≥1 full, 0.5 half, ≤0 empty
           // A full 5/5 shines gold, like the perfect-score S.
-          const filledColor = starsShown >= STARS_MAX ? PERFECT_TIER_GOLD : themeColors.highlight;
+          const filledColor = starsShown >= STARS_MAX ? themeColors.gold : themeColors.highlight;
           const icon = fill >= 1 ? 'star' : fill >= 0.5 ? 'star-half-full' : 'star-outline';
           return (
             <View key={i} style={{ width: dims.cell, height: dims.height }} className="items-center justify-center">
@@ -398,7 +397,7 @@ export function QuickRating({
         // Headline value, styled like the Gamer Cred score's.
         <Text
           className={cn(HERO_SCORE.valueClass, value ? 'text-retrogamingpc-text-bright' : 'text-retrogamingpc-text-muted')}
-          style={shown && Number(shown.value) >= STARS_MAX ? { color: PERFECT_TIER_GOLD } : undefined}
+          style={shown && Number(shown.value) >= STARS_MAX ? { color: themeColors.gold } : undefined}
         >
           {shown ? (
             <>

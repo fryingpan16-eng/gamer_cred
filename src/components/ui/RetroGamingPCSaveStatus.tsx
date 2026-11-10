@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Text, View } from 'react-native';
 
-import { ACTION_COLORS } from '@/constants/actionColors';
 import { cn } from '@/utils/cn';
+import { useThemeColors } from '@/hooks/useTheme';
 
 const SHOW_SAVED_MS = 2500;
 
@@ -23,6 +23,7 @@ export type RetroGamingPCSaveStatusProps = {
  * (Errors are shown by the setting's own alert.)
  */
 export function RetroGamingPCSaveStatus({ pending, savedAt, className }: RetroGamingPCSaveStatusProps) {
+  const themeColors = useThemeColors();
   const [hiddenFor, setHiddenFor] = useState<number | null>(null);
 
   useEffect(() => {
@@ -38,7 +39,7 @@ export function RetroGamingPCSaveStatus({ pending, savedAt, className }: RetroGa
       {pending ? (
         <Text className="font-mono text-retrogamingpc-xs text-retrogamingpc-text-muted">Saving…</Text>
       ) : showSaved ? (
-        <Text className="font-mono text-retrogamingpc-xs font-bold" style={{ color: ACTION_COLORS.save.text }}>
+        <Text className="font-mono text-retrogamingpc-xs font-bold" style={{ color: themeColors.saveText }}>
           ✓ Saved
         </Text>
       ) : null}

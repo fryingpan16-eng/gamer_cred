@@ -1,4 +1,3 @@
-import { PERFECT_TIER_GOLD } from '@/constants/ratingRubric';
 import { router } from 'expo-router';
 import { Text, View } from 'react-native';
 
@@ -11,12 +10,14 @@ import { useReviewLikes, useReviewPreview } from '@/hooks/useReviewBrowser';
 import type { GameReviewStats } from '@/services/games';
 
 import { tierDefinition, tierHistogram, tierLabel, tierSpokenName } from '@/utils/rating';
+import { useThemeColors } from '@/hooks/useTheme';
 
 /**
  * Tier histogram, F → S, bars in the rubric's tier colours. Perfect 100s are part
  * of the S bar, shown as its gold top portion (and counted in the legend).
  */
 function Distribution({ stats }: { stats: GameReviewStats }) {
+  const themeColors = useThemeColors();
   const buckets = tierHistogram(stats.distribution);
   const max = Math.max(1, ...buckets.map((b) => b.count));
   const perfect = buckets.find((b) => b.perfect > 0)?.perfect ?? 0;
@@ -40,7 +41,7 @@ function Distribution({ stats }: { stats: GameReviewStats }) {
               }}
             >
               {/* Perfect 100s: the gold top of the S bar. */}
-              {gold > 0 ? <View style={{ height: `${(gold / count) * 100}%`, backgroundColor: PERFECT_TIER_GOLD }} /> : null}
+              {gold > 0 ? <View style={{ height: `${(gold / count) * 100}%`, backgroundColor: themeColors.gold }} /> : null}
             </View>
             <Text className="font-mono text-retrogamingpc-xs text-retrogamingpc-text-muted">{tierLabel(tier)}</Text>
           </View>
@@ -48,9 +49,9 @@ function Distribution({ stats }: { stats: GameReviewStats }) {
       </View>
       {perfect > 0 ? (
         <View className="flex-row items-center gap-1">
-          <View className="h-2 w-2" style={{ backgroundColor: PERFECT_TIER_GOLD }} />
+          <View className="h-2 w-2" style={{ backgroundColor: themeColors.gold }} />
           <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted">
-            <Text className="font-bold" style={{ color: PERFECT_TIER_GOLD }}>
+            <Text className="font-bold" style={{ color: themeColors.gold }}>
               {perfect}
             </Text>{' '}
             perfect 100{perfect === 1 ? '' : 's'} (in S)

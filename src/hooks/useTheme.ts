@@ -5,6 +5,7 @@ import { create } from 'zustand';
 
 import {
   DEFAULT_THEME,
+  isLightTheme,
   isThemeName,
   themeCssVariables,
   themePalette,
@@ -64,6 +65,16 @@ export const useThemeStore = create<ThemeState>()((set, get) => ({
 export function useThemeColors(): ThemePalette {
   const theme = useThemeStore((s) => s.theme);
   return useMemo(() => themePalette(theme), [theme]);
+}
+
+/** True for the light theme (dark status bar text, dark dividers). */
+export function useIsLightTheme(): boolean {
+  return useThemeStore((s) => isLightTheme(s.theme));
+}
+
+/** A faint line between rows: light on the dark themes, dark on the light one. */
+export function useDividerColor(alpha = 0.12): string {
+  return useIsLightTheme() ? `rgba(0,0,0,${alpha})` : `rgba(255,255,255,${alpha})`;
 }
 
 /** NativeWind `vars()` style for the themed root view. */

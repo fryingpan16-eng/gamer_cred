@@ -1,7 +1,6 @@
 import { Image, Text, View } from 'react-native';
 
 import { CoverTile } from '@/components/profile/CoverTile';
-import { LIKE_COLOR } from '@/constants/likeColor';
 import { HERO_SCORE } from '@/constants/scoreBox';
 import { useGameLikes } from '@/hooks/useLikes';
 import { QuickRating } from '@/components/rating/QuickRating';
@@ -15,11 +14,12 @@ import { useMyReviewsForGame } from '@/hooks/useReviews';
 import type { GameReviewStats } from '@/services/games';
 import { igdbImageUrl, type IgdbGameDetail } from '@/types/igdb';
 import type { StoredRating } from '@/utils/rating';
+import { useDividerColor, useThemeColors } from '@/hooks/useTheme';
 
 import { CompanyLinks } from './CompanyLinks';
 import { EntryTypeBadge } from './EntryTypeBadge';
 import { RemasterNote } from './RemastersPanel';
-import { SCALE_DIVIDER, ScoreScales, TierScoreBox } from './ScoreScales';
+import { SCALE_DIVIDER_ALPHA, ScoreScales, TierScoreBox } from './ScoreScales';
 import { NowPlayingButton } from './GameActions';
 import { BacklogButton } from './BacklogButton';
 import { LikeButton } from './LikeButton';
@@ -40,6 +40,8 @@ function firstRelease(game: IgdbGameDetail): string | null {
  * "Write a review" button.
  */
 export function GameHero({ game, stats }: GameHeroProps) {
+  const themeColors = useThemeColors();
+  const divider = useDividerColor(SCALE_DIVIDER_ALPHA);
   const backdrop = game.artworkIds[0] ?? game.screenshotIds[0] ?? null;
   const release = firstRelease(game);
   const mine = useMyReviewsForGame(game.id);
@@ -70,10 +72,10 @@ export function GameHero({ game, stats }: GameHeroProps) {
             // The exact average (one decimal), not the rounded score used for tier / stars.
             numericText={community && stats?.average !== null && stats?.average !== undefined ? stats.average.toFixed(1) : undefined}
           />
-          <Text className="border-t pt-1 text-retrogamingpc-xs text-retrogamingpc-text-muted" style={{ borderTopColor: SCALE_DIVIDER }}>
+          <Text className="border-t pt-1 text-retrogamingpc-xs text-retrogamingpc-text-muted" style={{ borderTopColor: divider }}>
             {stats ? (stats.count > 0 ? `${stats.count} rating${stats.count === 1 ? '' : 's'}` : 'No ratings yet') : '…'}
             {likes.data && likes.data.count > 0 ? (
-              <Text style={{ color: LIKE_COLOR }}>
+              <Text style={{ color: themeColors.like }}>
                 {'  ·  ♥ '}
                 {likes.data.count} {likes.data.count === 1 ? 'like' : 'likes'}
               </Text>
@@ -104,7 +106,7 @@ export function GameHero({ game, stats }: GameHeroProps) {
               onChange={control.setPlatform}
             />
             <ScoreScales rating={myRating.rating} primaryScale={primaryScale} omitPrimary dividerBeforeFirst className="mt-1" />
-            <Text className="border-t pt-1 text-retrogamingpc-xs text-retrogamingpc-text-muted" style={{ borderTopColor: SCALE_DIVIDER }}>
+            <Text className="border-t pt-1 text-retrogamingpc-xs text-retrogamingpc-text-muted" style={{ borderTopColor: divider }}>
               {myRating.rating
                 ? mine.data?.latestPublished || mine.data?.draft
                   ? (mine.data.published.length > 1 ? 'Also the score on your newest review.' : 'Also the score on your review.')

@@ -1,11 +1,11 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Text } from 'react-native';
 
-import { PERFECT_TIER_GOLD } from '@/constants/ratingRubric';
 import { useProfileName } from '@/hooks/useNames';
 import { showToast } from '@/hooks/useToastStore';
 import { cn } from '@/utils/cn';
 import { shownName } from '@/utils/nameRules';
+import { useThemeColors } from '@/hooks/useTheme';
 
 export const OFFICIAL_LABEL = 'Official GamerCred account';
 
@@ -15,6 +15,7 @@ export const OFFICIAL_LABEL = 'Official GamerCred account';
  * Players can't fake it: display names can't contain symbols like ✓ or emoji.
  */
 export function OfficialBadge({ size = 12 }: { size?: number }) {
+  const themeColors = useThemeColors();
   return (
     <Text
       accessibilityRole="button"
@@ -23,7 +24,7 @@ export function OfficialBadge({ size = 12 }: { size?: number }) {
       onPress={() => showToast(`${OFFICIAL_LABEL}: a member of the GamerCred team.`, 'info')}
       suppressHighlighting
     >
-      <MaterialCommunityIcons name="checkbox-marked" size={size} color={PERFECT_TIER_GOLD} />
+      <MaterialCommunityIcons name="checkbox-marked" size={size} color={themeColors.gold} />
     </Text>
   );
 }

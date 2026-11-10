@@ -13,7 +13,13 @@
     "text-bright": "#fafafa",
     "text": "#e6e6e6",
     "text-muted": "#b8b8b8",
-    "ink": "#101010"
+    "ink": "#101010",
+    "error": "#ff8a7a",
+    "save-text": "#5fe07f",
+    "cancel-text": "#ff8a7a",
+    "navigate-text": "#7ab8ff",
+    "like": "#ff7a9a",
+    "gold": "#ffd54a"
   },
   "blue": {
     "dark": "#16191d",
@@ -29,7 +35,13 @@
     "text-bright": "#fafafa",
     "text": "#e6e6e6",
     "text-muted": "#b8b8b8",
-    "ink": "#101010"
+    "ink": "#101010",
+    "error": "#ff8a7a",
+    "save-text": "#5fe07f",
+    "cancel-text": "#ff8a7a",
+    "navigate-text": "#7ab8ff",
+    "like": "#ff7a9a",
+    "gold": "#ffd54a"
   },
   "red": {
     "dark": "#1f1718",
@@ -45,7 +57,13 @@
     "text-bright": "#fafafa",
     "text": "#e6e6e6",
     "text-muted": "#b8b8b8",
-    "ink": "#101010"
+    "ink": "#101010",
+    "error": "#ff8a7a",
+    "save-text": "#5fe07f",
+    "cancel-text": "#ff8a7a",
+    "navigate-text": "#7ab8ff",
+    "like": "#ff7a9a",
+    "gold": "#ffd54a"
   },
   "yellow": {
     "dark": "#1b1914",
@@ -61,7 +79,13 @@
     "text-bright": "#fafafa",
     "text": "#e6e6e6",
     "text-muted": "#b8b8b8",
-    "ink": "#101010"
+    "ink": "#101010",
+    "error": "#ff8a7a",
+    "save-text": "#5fe07f",
+    "cancel-text": "#ff8a7a",
+    "navigate-text": "#7ab8ff",
+    "like": "#ff7a9a",
+    "gold": "#ffd54a"
   },
   "pink": {
     "dark": "#1f171b",
@@ -77,6 +101,34 @@
     "text-bright": "#fafafa",
     "text": "#e6e6e6",
     "text-muted": "#b8b8b8",
-    "ink": "#101010"
+    "ink": "#101010",
+    "error": "#ff8a7a",
+    "save-text": "#5fe07f",
+    "cancel-text": "#ff8a7a",
+    "navigate-text": "#7ab8ff",
+    "like": "#ff7a9a",
+    "gold": "#ffd54a"
+  },
+  "white": {
+    "dark": "#e8ecf0",
+    "card": "#f8fafc",
+    "panel": "#dfe5eb",
+    "accent": "#c2cbd5",
+    "highlight": "#07629a",
+    "button": "#f1f4f7",
+    "button-border": "#9aa6b3",
+    "active": "#9ad8f5",
+    "bevel-light": "#ffffff",
+    "bevel-dark": "#8692a0",
+    "text-bright": "#111111",
+    "text": "#222222",
+    "text-muted": "#555555",
+    "ink": "#ffffff",
+    "error": "#b3261e",
+    "save-text": "#0b6b25",
+    "cancel-text": "#b3261e",
+    "navigate-text": "#0b5aa8",
+    "like": "#c2185b",
+    "gold": "#664700"
   }
 }

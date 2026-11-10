@@ -2,11 +2,11 @@ import type { ReactNode } from 'react';
 import { Text, View } from 'react-native';
 
 import { RetroGamingPCStarRating } from '@/components/ui';
-import { PERFECT_TIER_GOLD, STARS_MAX, type RatingScale } from '@/constants/ratingRubric';
+import { STARS_MAX, type RatingScale } from '@/constants/ratingRubric';
 import { HERO_SCORE } from '@/constants/scoreBox';
-import { useThemeColors } from '@/hooks/useTheme';
+import { useDividerColor, useThemeColors } from '@/hooks/useTheme';
 import { cn } from '@/utils/cn';
-import { mix, readableTintAlpha } from '@/utils/color';
+import { luminance, mix, readableTintAlpha } from '@/utils/color';
 import {
   deriveAllScales,
   formatNumeric,
@@ -19,7 +19,7 @@ import {
 } from '@/utils/rating';
 
 /** Light hairline between the scales in a score box. */
-export const SCALE_DIVIDER = 'rgba(255,255,255,0.16)';
+export const SCALE_DIVIDER_ALPHA = 0.16;
 
 /**
  * Which scales a game-page score box shows, in order: the viewer's default
@@ -46,6 +46,7 @@ function ScaleValue({
   numericText?: string;
   emphasis: Emphasis;
 }) {
+  const themeColors = useThemeColors();
   const big = emphasis === 'primary';
   const valueClass = cn('text-retrogamingpc-text-bright', big ? HERO_SCORE.valueClass : 'font-mono font-bold text-[16px] leading-[19px]');
   const unitClass = cn('font-mono text-retrogamingpc-text-muted', big ? 'text-retrogamingpc-lg' : 'text-retrogamingpc-sm');
@@ -70,7 +71,7 @@ function ScaleValue({
             cell={big ? HERO_SCORE.starCell : undefined}
             showValue={false}
           />
-          <Text className={valueClass} style={derived.stars >= STARS_MAX ? { color: PERFECT_TIER_GOLD } : undefined}>
+          <Text className={valueClass} style={derived.stars >= STARS_MAX ? { color: themeColors.gold } : undefined}>
             {derived.stars}
             <Text className={unitClass}> /{STARS_MAX}</Text>
           </Text>
@@ -124,6 +125,7 @@ export function ScoreScales({
   dividerBeforeFirst = false,
   className,
 }: ScoreScalesProps) {
+  const divider = useDividerColor(SCALE_DIVIDER_ALPHA);
   const scales = scoreBoxScales(primaryScale);
   const shown = omitPrimary ? scales.slice(1) : scales;
   return (
@@ -135,7 +137,7 @@ export function ScoreScales({
           <View
             key={scale}
             className={cn('flex-row items-center gap-2 py-1.5', divided && 'border-t')}
-            style={[divided ? { borderTopColor: SCALE_DIVIDER } : null, primary ? { minHeight: HERO_SCORE.rowHeight } : null]}
+            style={[divided ? { borderTopColor: divider } : null, primary ? { minHeight: HERO_SCORE.rowHeight } : null]}
           >
             {primary ? null : <Text className="w-10 text-retrogamingpc-xs text-retrogamingpc-text-muted">{LABELS[scale]}</Text>}
             <ScaleValue scale={scale} rating={rating} numericText={numericText} emphasis={primary ? 'primary' : 'secondary'} />
@@ -158,7 +160,9 @@ export function tierBoxStyle(rating: StoredRating | null, base: TintBase) {
   if (!rating) return undefined;
   const { color } = tierDefinitionForNumeric(rating.numeric);
   const alpha = readableTintAlpha(color, base.dark, { body: base.text, muted: base.textMuted });
-  return { borderColor: color, borderLeftColor: color, backgroundColor: mix(color, base.dark, alpha) };
+  // Light theme: pale tier colours (B, C) would vanish as borders on silver, so they're darkened.
+  const border = luminance(base.dark) > 0.5 ? mix(color, '#000000', 0.65) : color;
+  return { borderColor: border, borderLeftColor: border, backgroundColor: mix(color, base.dark, alpha) };
 }
 
 /**

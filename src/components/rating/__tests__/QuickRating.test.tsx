@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
 
-import { PERFECT_TIER_GOLD } from '@/constants/ratingRubric';
+import { DEFAULT_THEME, themePalette } from '@/constants/themes';
 import { useAuthStore } from '@/hooks/useAuth';
 import { storedFromStars } from '@/utils/quickRating';
 import { toStoredRating } from '@/utils/rating';
@@ -24,7 +24,7 @@ describe('QuickRating', () => {
     );
     expect(screen.getByText('4 /5').props.style).toBeUndefined();
     await rerender(<QuickRating gameId={1} value={storedFromStars(5)} onChange={jest.fn()} size="hero" showTierBadge={false} />);
-    expect(screen.getByText('5 /5').props.style).toEqual({ color: PERFECT_TIER_GOLD });
+    expect(screen.getByText('5 /5').props.style).toEqual({ color: themePalette(DEFAULT_THEME).gold });
     await rerender(<QuickRating gameId={1} value={null} onChange={jest.fn()} size="hero" showTierBadge={false} />);
     expect(screen.getByText('--')).toBeTruthy();
   });

@@ -1,7 +1,7 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Pressable, Text, View } from 'react-native';
 
-import { PERFECT_TIER_GOLD, STARS_MAX, STARS_STEP } from '@/constants/ratingRubric';
+import { STARS_MAX, STARS_STEP } from '@/constants/ratingRubric';
 import { cn } from '@/utils/cn';
 import { useThemeColors } from '@/hooks/useTheme';
 
@@ -26,7 +26,7 @@ export function RetroGamingPCStarRating({ stars, size = 12, cell, showValue = tr
   const value = stars ?? 0;
   // A full 5/5 shines gold, like the perfect-score S.
   const golden = value >= STARS_MAX;
-  const filled = golden ? PERFECT_TIER_GOLD : themeColors.highlight;
+  const filled = golden ? themeColors.gold : themeColors.highlight;
 
   return (
     <View
@@ -67,7 +67,7 @@ export function RetroGamingPCStarRating({ stars, size = 12, cell, showValue = tr
       {showValue ? (
         <Text
           className="font-mono text-retrogamingpc-xs font-bold text-retrogamingpc-text-bright"
-          style={golden ? { color: PERFECT_TIER_GOLD } : undefined}
+          style={golden ? { color: themeColors.gold } : undefined}
         >
           {stars === null ? (
             '--'

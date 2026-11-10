@@ -7,7 +7,6 @@ import { MoreMenu } from '@/components/safety/MoreMenu';
 import { Thumbnail } from '@/components/search/Thumbnail';
 import { RetroGamingPCBadge, RetroGamingPCCard, RetroGamingPCRating, RetroGamingPCTimeAgo } from '@/components/ui';
 import { UserName, useShownName } from '@/components/user/UserName';
-import { LIKE_COLOR } from '@/constants/likeColor';
 import { useIsGuest } from '@/hooks/useAuth';
 import { useThemeColors } from '@/hooks/useTheme';
 import { useToggleReviewLike } from '@/hooks/useReviewBrowser';
@@ -32,13 +31,14 @@ export type ReviewCardProps = {
 
 /** ♥ for someone else's review; on your own, the private count (only you see it). */
 export function ReviewLikeControl({ reviewId, isMine, like }: { reviewId: string; isMine: boolean; like?: ReviewLikeInfo }) {
+  const themeColors = useThemeColors();
   const isGuest = useIsGuest();
   const toggle = useToggleReviewLike();
   if (isMine) {
     const n = like?.count ?? 0;
     return n > 0 ? (
       <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted">
-        <Text style={{ color: LIKE_COLOR }}>♥ {n}</Text> {n === 1 ? 'person likes' : 'people like'} your review · only you see this
+        <Text style={{ color: themeColors.like }}>♥ {n}</Text> {n === 1 ? 'person likes' : 'people like'} your review · only you see this
       </Text>
     ) : null;
   }
@@ -52,8 +52,8 @@ export function ReviewLikeControl({ reviewId, isMine, like }: { reviewId: string
       onPress={() => toggle.mutate({ reviewId, liked: !like.liked })}
       className="min-h-[28px] flex-row items-center gap-1"
     >
-      <MaterialCommunityIcons name={like.liked ? 'heart' : 'heart-outline'} size={14} color={LIKE_COLOR} />
-      <Text className="text-retrogamingpc-xs font-bold" style={{ color: LIKE_COLOR }}>
+      <MaterialCommunityIcons name={like.liked ? 'heart' : 'heart-outline'} size={14} color={themeColors.like} />
+      <Text className="text-retrogamingpc-xs font-bold" style={{ color: themeColors.like }}>
         {like.liked ? 'Liked' : 'Like'}
       </Text>
     </Pressable>

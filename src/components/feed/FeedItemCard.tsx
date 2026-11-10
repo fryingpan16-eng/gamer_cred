@@ -5,12 +5,12 @@ import { Thumbnail } from '@/components/search/Thumbnail';
 import { RetroGamingPCBadge, RetroGamingPCCard, RetroGamingPCRating } from '@/components/ui';
 import { ReviewCard } from '@/components/review/ReviewCard';
 import { UserName, useShownName } from '@/components/user/UserName';
-import { LIKE_COLOR } from '@/constants/likeColor';
 import { cardFromFeedRow, type ReviewLikeInfo } from '@/services/reviewBrowser';
 import type { ActivityFeedRow } from '@/types/database.types';
 import { igdbImageUrl, type IgdbGameResult } from '@/types/igdb';
 import { reviewRating, slotRating } from '@/utils/ratingColumns';
 import { timeAgo } from '@/utils/time';
+import { useThemeColors } from '@/hooks/useTheme';
 
 type FeedItemCardProps = {
   item: ActivityFeedRow;
@@ -44,6 +44,7 @@ export function FeedItemCard({ item, game, viewerId, like }: FeedItemCardProps) 
 
 /** Now Playing, ♥ like and replay entries. */
 function ActivityCard({ item, game, viewerId }: Omit<FeedItemCardProps, 'like'>) {
+  const themeColors = useThemeColors();
   const isMe = item.actor_id === viewerId;
   const actorName = useShownName(item.actor_id, item.actor_username).name;
   const gameName = game?.name ?? `Game #${item.game_id}`;
@@ -82,7 +83,7 @@ function ActivityCard({ item, game, viewerId }: Omit<FeedItemCardProps, 'like'>)
         {item.kind === 'review' ? (
           <RetroGamingPCRating rating={reviewRating(item)} size="compact" />
         ) : item.kind === 'like' ? (
-          <Text className="text-retrogamingpc-sm font-bold" style={{ color: LIKE_COLOR }} accessibilityLabel="Liked">
+          <Text className="text-retrogamingpc-sm font-bold" style={{ color: themeColors.like }} accessibilityLabel="Liked">
             ♥
           </Text>
         ) : item.kind === 'replay' ? (

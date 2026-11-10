@@ -17,7 +17,6 @@ import {
   RetroGamingPCSpinner,
   RetroGamingPCTierBadge,
 } from '@/components/ui';
-import { ACTION_COLORS } from '@/constants/actionColors';
 import { useAuthStore } from '@/hooks/useAuth';
 import { useGameLookup } from '@/hooks/useGames';
 import {
@@ -34,10 +33,10 @@ import { showToast } from '@/hooks/useToastStore';
 import type { ListDetail } from '@/services/lists';
 import { igdbImageUrl, type IgdbGameResult } from '@/types/igdb';
 import { cn } from '@/utils/cn';
-import { LIKE_COLOR } from '@/constants/likeColor';
 import { LIST_MAX_GAMES } from '@/utils/listSchemas';
 import { numericToTier } from '@/utils/rating';
 import { describeRequirements, describeSmartRule, type SmartListGame } from '@/utils/smartLists';
+import { useThemeColors } from '@/hooks/useTheme';
 
 const fmtDate = (iso: string) => new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
 
@@ -143,6 +142,7 @@ function GameRow({
   onMove: (to: number) => void;
   onRemove: () => void;
 }) {
+  const themeColors = useThemeColors();
   const name = game?.name ?? `Game #${gameId}`;
   const meta = game ? gameMetaLine(game) : '';
   return (
@@ -186,7 +186,7 @@ function GameRow({
             .join(', ')}
         >
           {score.likeCount !== undefined ? (
-            <Text className="font-mono text-retrogamingpc-base font-bold" style={{ color: LIKE_COLOR }}>
+            <Text className="font-mono text-retrogamingpc-base font-bold" style={{ color: themeColors.like }}>
               ♥ {score.likeCount}
             </Text>
           ) : null}
@@ -212,7 +212,7 @@ function GameRow({
         <View className="flex-row gap-1">
           <StepButton label="▲" a11y={`Move ${name} up`} disabled={index === 0} onPress={() => onMove(index)} />
           <StepButton label="▼" a11y={`Move ${name} down`} disabled={index === total - 1} onPress={() => onMove(index + 2)} />
-          <StepButton label="✕" a11y={`Remove ${name} from the list`} tone={ACTION_COLORS.cancel.text} onPress={onRemove} />
+          <StepButton label="✕" a11y={`Remove ${name} from the list`} tone={themeColors.cancelText} onPress={onRemove} />
         </View>
       ) : null}
     </View>

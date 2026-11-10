@@ -29,7 +29,7 @@ module.exports = {
   presets: [require('nativewind/preset')],
   // Must be 'class': NativeWind's web runtime (react-native-css-interop 0.2.x)
   // throws "Cannot manually set color scheme, as dark mode is type 'media'" on
-  // load otherwise. The app is dark-only and uses no `dark:` variants.
+  // load otherwise. Light/dark come from the palette CSS variables; no `dark:` variants.
   darkMode: 'class',
   theme: {
     extend: {
@@ -40,9 +40,6 @@ module.exports = {
         ...Object.fromEntries(
           THEME_TOKENS.map((token) => [`retrogamingpc-${token}`, `rgb(var(--rgpc-${token}) / <alpha-value>)`]),
         ),
-        // Semantic, not themed.
-        // Bright enough for ≥ 4.5:1 on every dark theme surface.
-        'retrogamingpc-error': '#ff8a7a',
       },
       // Phones get the type scale 10% larger (see FONT_SIZES); desktop keeps the compact sizes.
       fontSize: Object.fromEntries(

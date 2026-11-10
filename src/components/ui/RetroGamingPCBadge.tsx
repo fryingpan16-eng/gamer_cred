@@ -15,7 +15,8 @@ const VARIANTS: Record<RetroGamingPCBadgeVariant, { box: string; text: string }>
   main: { box: 'bg-retrogamingpc-highlight border-retrogamingpc-text-bright', text: 'text-retrogamingpc-ink' },
   nowPlaying: { box: 'bg-retrogamingpc-active border-retrogamingpc-highlight', text: 'text-retrogamingpc-text-bright' },
   published: { box: 'bg-retrogamingpc-panel border-retrogamingpc-highlight', text: 'text-retrogamingpc-text-bright' },
-  draft: { box: 'bg-retrogamingpc-dark border-retrogamingpc-accent', text: 'text-retrogamingpc-text-muted' },
+  // Green outline: the save-text theme token (darker in the light theme).
+  draft: { box: 'border-retrogamingpc-save-text', text: 'text-retrogamingpc-save-text' },
   neutral: { box: 'bg-retrogamingpc-button border-retrogamingpc-button-border', text: 'text-retrogamingpc-text' },
 };
 
@@ -26,7 +27,6 @@ const VARIANTS: Record<RetroGamingPCBadgeVariant, { box: string; text: string }>
  */
 const FIXED: Partial<Record<RetroGamingPCBadgeVariant, { fill: string; label: string; border: string }>> = {
   published: { fill: ACTION_COLORS.save.fill, label: ACTION_COLORS.save.label, border: ACTION_COLORS.save.dark },
-  draft: { fill: 'transparent', label: ACTION_COLORS.save.text, border: ACTION_COLORS.save.text },
   nowPlaying: { fill: ACTION_COLORS.navigate.fill, label: ACTION_COLORS.navigate.label, border: ACTION_COLORS.navigate.dark },
 };
 

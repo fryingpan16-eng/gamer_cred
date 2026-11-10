@@ -816,7 +816,7 @@ export type Database = {
       friendship_status: 'pending' | 'accepted' | 'rejected';
       review_status: 'draft' | 'published';
       rating_scale: 'numeric' | 'tier' | 'stars' | 'rounded';
-      ui_theme: 'olive' | 'blue' | 'red' | 'yellow' | 'pink';
+      ui_theme: 'olive' | 'blue' | 'red' | 'yellow' | 'pink' | 'white';
       now_playing_visibility: 'public' | 'friends' | 'private';
     };
     CompositeTypes: { [_ in never]: never };

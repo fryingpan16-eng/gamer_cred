@@ -1,6 +1,7 @@
 import { Text, View } from 'react-native';
 
-import { ACTION_COLORS } from '@/constants/actionColors';
+import type { ThemePalette } from '@/constants/themes';
+import { useThemeColors } from '@/hooks/useTheme';
 import { cn } from '@/utils/cn';
 
 export type RetroGamingPCAlertTone = 'error' | 'info' | 'success';
@@ -11,16 +12,17 @@ export type RetroGamingPCAlertProps = {
   className?: string;
 };
 
-/** Fixed in every theme: error red, info blue, success green. */
-const TONES: Record<RetroGamingPCAlertTone, { color: string; glyph: string }> = {
-  error: { color: ACTION_COLORS.cancel.text, glyph: '▲ ' },
-  info: { color: ACTION_COLORS.navigate.text, glyph: 'ⓘ ' },
-  success: { color: ACTION_COLORS.save.text, glyph: '✓ ' },
+/** Status tones (theme tokens, darker in the light theme): error red, info blue, success green. */
+const TONES: Record<RetroGamingPCAlertTone, { color: keyof ThemePalette; glyph: string }> = {
+  error: { color: 'cancelText', glyph: '▲ ' },
+  info: { color: 'navigateText', glyph: 'ⓘ ' },
+  success: { color: 'saveText', glyph: '✓ ' },
 };
 
 /** Inline sunken message box for form-level errors and notices. */
 export function RetroGamingPCAlert({ message, tone = 'error', className }: RetroGamingPCAlertProps) {
-  const t = TONES[tone];
+  const themeColors = useThemeColors();
+  const t = { ...TONES[tone], color: themeColors[TONES[tone].color] };
   return (
     <View
       accessibilityRole="alert"
