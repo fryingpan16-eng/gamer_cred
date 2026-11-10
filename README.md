@@ -103,7 +103,7 @@ Every chart shows the exact value when you tap a bar, and has a table view that 
 - **Gamer Cred score:** the community average, shown large in your default scale, then in 1–100, stars and tier.
 - **Your rating:** the same layout as an interactive control, plus your "played on" platform, a **Write a review** button and **Add to Now Playing**.
 - **♥ Like:** one tap to show interest without rating or reviewing; the Gamer Cred box shows how many players like the game. Liking never creates a rating.
-- **↻ Mark as Replayed** (migration 000040): log another playthrough with a date finished (today, or backdated) and platform; no score or text, and your score doesn't change. The button shows **↻ Played ×N** once you've replayed it, and its dialog lists your replays (delete game-page ones with ✕). Replaying takes the game off your backlog. Unlimited in principle (capped at 1,000 per game). Public like ratings: Friends' Ratings shows ↻×N and friends see "replayed" in their feed.
+- **↻ Replayed** button (Mark as Replayed, migration 000040): log another playthrough with a date finished (today, or backdated) and platform; no score or text, and your score doesn't change. The button shows **↻ Played ×N** once you've replayed it, and its dialog lists your replays (delete game-page ones with ✕). Replaying takes the game off your backlog. Unlimited in principle (capped at 1,000 per game). Public like ratings: Friends' Ratings shows ↻×N and friends see "replayed" in their feed.
 - Both score boxes are coloured by the tier of their score.
 - **Friends' Ratings** (above the screenshots), About, Screenshots, Community Reviews, game facts, and PC system requirements (from RAWG).
 

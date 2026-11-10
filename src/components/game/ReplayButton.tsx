@@ -18,7 +18,7 @@ export function formatFinishedOn(day: string): string {
 }
 
 export function playsLabel(plays: number): string {
-  return plays > 1 ? `↻ Played ×${plays}` : '↻ Mark as Replayed';
+  return plays > 1 ? `↻ Played ×${plays}` : '↻ Replayed';
 }
 
 type Row = { key: string; day: string; platformId: number | null; replayId: string | null; fromReview: boolean };

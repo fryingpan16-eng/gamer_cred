@@ -118,15 +118,21 @@ export function GameHero({ game, stats }: GameHeroProps) {
           </TierScoreBox>
         )}
       </View>
-      {/* Review on the left, Now Playing bottom-right of the hero card. */}
       {isGuest ? (
         <GuestPrompt feature="like, rate or review this game, or add it to your backlog or Now Playing" compact />
       ) : (
-        <View className="flex-row flex-wrap items-center justify-between gap-2 pt-1">
-          <View className="flex-row flex-wrap items-center gap-2">
+        // Phones: review across the top, then two even pairs. Desktop: one row, Now Playing on the right.
+        <View className="flex-row flex-wrap gap-2 pt-1">
+          <View className="w-full md:w-auto">
             <WriteReviewButton gameId={game.id} />
+          </View>
+          <View className="min-w-[45%] flex-1 md:min-w-0 md:flex-none">
             <LikeButton gameId={game.id} gameName={game.name} />
+          </View>
+          <View className="min-w-[45%] flex-1 md:min-w-0 md:flex-none">
             <BacklogButton gameId={game.id} gameName={game.name} />
+          </View>
+          <View className="min-w-[45%] flex-1 md:min-w-0 md:flex-none">
             <ReplayButton
               gameId={game.id}
               gameName={game.name}
@@ -134,7 +140,9 @@ export function GameHero({ game, stats }: GameHeroProps) {
               defaultPlatformId={control.platformId}
             />
           </View>
-          <NowPlayingButton game={game} />
+          <View className="min-w-[45%] flex-1 md:ml-auto md:min-w-0 md:flex-none">
+            <NowPlayingButton game={game} />
+          </View>
         </View>
       )}
     </>

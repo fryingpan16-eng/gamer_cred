@@ -14,7 +14,7 @@ _Last updated: 2026-11-09_
 - `app/(tabs)/` — Home, Search, Post (Review Studio), Stats, Profile
 - `app/game/[id].tsx`, `app/review/[id].tsx`, `app/reviews/[gameId].tsx`
 - `src/services/` (Supabase calls) · `src/hooks/` (queries) · `src/utils/queryKeys.ts`
-- `supabase/migrations/` (000001–000045) · `supabase/tests/` · `supabase/name-rules/`
+- `supabase/migrations/` (000001–000046) · `supabase/tests/` · `supabase/name-rules/`
 
 ## Completed
 - Auth, search, Review Studio, profiles, game and studio pages, feeds, trending, friends
@@ -25,7 +25,7 @@ _Last updated: 2026-11-09_
 - Permanent + display names, name rules, gold official badge, admin name reset (000038–000039, 000041)
 - Replays: Mark as Replayed, replay reviews, play counts, Stats → Replays (000040)
 - Other versions (Director's Cut…) fold into their original like remasters; Persona re-releases stay separate; saved data moves over (000042)
-- Review comments: flat thread with @replies, filtered like reviews, 60/hour, edit own ("edited"), private ♥, ⚑ report → admin removal, 💬 count on ReviewCard (000043)
+- Review comments: flat thread with @replies, filtered like reviews, 60/hour, edit own ("edited"), private ♥, ⚑ report → admin removal, 💬 count on ReviewCard (000043); edits limited to 30/hour (000046)
 - Light theme (colours only, Wii/3DS-inspired white + silver + sky blue): shown as "Cloud" (id `white`); status colours (errors, likes, gold) now follow the theme (000045)
 - IGDB cache: service-role only, purge keeps 60 days to match the outage fallback (000044); game records saved on the device for instant covers
 
