@@ -1,3 +1,5 @@
+import { isUuid } from '@/utils/ids';
+
 import { supabase } from './supabase';
 
 type PersonRef = { id: string; username: string; avatar_url: string | null };
@@ -60,6 +62,7 @@ export function toFriendsList(rows: readonly FriendshipRowWithPeople[], userId: 
  * only returned to the two players involved, so they appear on your own page only.
  */
 export async function fetchFriendsList(userId: string, viewerId: string): Promise<FriendsList> {
+  if (!isUuid(userId)) throw new Error('That player doesn’t exist.');
   const { data, error } = await supabase
     .from('friendships')
     .select(

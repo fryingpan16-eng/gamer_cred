@@ -4,6 +4,7 @@ import type { FavoriteRank, Friendship, Profile, Review, UserFavorite, UserPlatf
 import type { RatingScale } from '@/constants/ratingRubric';
 import type { NowPlayingVisibility } from '@/constants/privacy';
 import type { ThemeName } from '@/constants/themes';
+import { isUuid } from '@/utils/ids';
 
 import { supabase } from './supabase';
 import { relationFor, type FriendRelation } from './users';
@@ -21,6 +22,11 @@ export class ProfileError extends Error {
 function fail(error: PostgrestError, fallback: string): never {
   if (error.code === '23505') throw new ProfileError('That conflicts with something already on your profile.', error.code);
   throw new ProfileError(error.message || fallback, error.code ?? null);
+}
+
+/** Ids go into PostgREST filter strings: anything but a UUID could rewrite the filter. */
+function assertIds(...ids: string[]): void {
+  if (!ids.every(isUuid)) throw new ProfileError('That player doesn’t exist.', null);
 }
 
 // -----------------------------------------------------------------------------
@@ -143,6 +149,7 @@ export async function updatePcSpecs(userId: string, platformId: number, pcSpecs:
 
 /** Viewer ↔ other relationship. RLS exposes pending/rejected rows only to the two parties. */
 export async function fetchRelation(viewerId: string, otherId: string): Promise<FriendRelation> {
+  assertIds(viewerId, otherId);
   const { data, error } = await supabase
     .from('friendships')
     .select('*')
@@ -153,6 +160,7 @@ export async function fetchRelation(viewerId: string, otherId: string): Promise<
 
 /** Accepted friendships are public, so any viewer can count them. */
 export async function fetchFriendCount(userId: string): Promise<number> {
+  assertIds(userId);
   const { count, error } = await supabase
     .from('friendships')
     .select('id', { count: 'exact', head: true })

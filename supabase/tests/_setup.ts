@@ -117,14 +117,14 @@ const GRANTS = `
 const migration = (name: string) => Deno.readTextFile(new URL(`../migrations/${name}`, import.meta.url));
 
 /** Fresh database. `beforeMigrations` runs between the stub schema and 000014 (e.g. cache rows for the backfill). */
-export async function freshDb(opts: { beforeMigrations?: string; through?: 14 | 15 | 16 | 17 | 19 | 20 | 21 | 22 | 23 | 25 | 26 | 27 | 28 | 29 | 30 | 31 | 32 | 33 | 34 | 35 | 36 | 37 | 38 | 40 | 41 | 42 | 43 | 44 | 45 | 46 } = {}): Promise<PGlite> {
+export async function freshDb(opts: { beforeMigrations?: string; through?: 14 | 15 | 16 | 17 | 19 | 20 | 21 | 22 | 23 | 25 | 26 | 27 | 28 | 29 | 30 | 31 | 32 | 33 | 34 | 35 | 36 | 37 | 38 | 40 | 41 | 42 | 43 | 44 | 45 | 46 | 47 } = {}): Promise<PGlite> {
   const db = new PGlite({ extensions: { pg_trgm } });
   await db.exec(BASE_SCHEMA);
   await db.exec(`insert into auth.users (id) values ('${ME}'), ('${OTHER}'), ('${THIRD}');
     insert into public.profiles (id, username) values ('${ME}', 'myself'), ('${OTHER}', 'other'), ('${THIRD}', 'third');`);
   if (opts.beforeMigrations) await db.exec(opts.beforeMigrations);
   await db.exec(await migration('000014_games_and_stats.sql'));
-  const through = opts.through ?? 46;
+  const through = opts.through ?? 47;
   if (through >= 15) await db.exec(await migration('000015_quick_ratings.sql'));
   if (through >= 16) await db.exec(await migration('000016_public_ratings_and_platform.sql'));
   if (through >= 17) await db.exec(await migration('000017_user_ratings_table.sql'));
@@ -176,6 +176,7 @@ export async function freshDb(opts: { beforeMigrations?: string; through?: 14 | 
     await db.exec(await migration('000045_light_theme.sql'));
   }
   if (through >= 46) await db.exec(await migration('000046_comment_edit_limit.sql'));
+  if (through >= 47) await db.exec(await migration('000047_write_limits.sql'));
   await db.exec(GRANTS);
   // GRANTS re-grants every table; 000044 takes the cache back from the API roles.
   if (through >= 44) await db.exec('revoke all on public.igdb_cache from authenticated;');

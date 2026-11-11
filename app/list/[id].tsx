@@ -36,6 +36,7 @@ import { cn } from '@/utils/cn';
 import { LIST_MAX_GAMES } from '@/utils/listSchemas';
 import { numericToTier } from '@/utils/rating';
 import { describeRequirements, describeSmartRule, type SmartListGame } from '@/utils/smartLists';
+import { isUuid } from '@/utils/ids';
 import { useThemeColors } from '@/hooks/useTheme';
 
 const fmtDate = (iso: string) => new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
@@ -222,13 +223,15 @@ function GameRow({
 /** A game list: header, owner tools (edit, add games, reorder, delete) and admin featuring. */
 export default function ListScreen() {
   // ?add=1: just created from "New List" — open the game picker straight away.
-  const { id, add } = useLocalSearchParams<{ id: string; add?: string }>();
+  const params = useLocalSearchParams<{ id: string; add?: string }>();
+  const id = isUuid(params.id) ? params.id : null;
+  const add = params.add;
   const viewerId = useAuthStore((s) => s.user?.id ?? null);
-  const list = useList(id ?? null);
+  const list = useList(id);
   const data = list.data ?? null;
   const ownerName = useShownName(data?.owner?.id, data?.owner?.username ?? '').name;
   const smartRule = data?.smartRule ?? null;
-  const smart = useSmartListGames(id ?? null, smartRule !== null);
+  const smart = useSmartListGames(id, smartRule !== null);
   const smartGames = smart.data?.games ?? [];
   const gameIds = smartRule ? smartGames.map((g) => g.gameId) : (data?.gameIds ?? []);
   const scoreById = new Map(smartGames.map((g) => [g.gameId, g] as const));
@@ -241,7 +244,7 @@ export default function ListScreen() {
   const [adding, setAdding] = useState(add === '1');
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  if (list.isPending) {
+  if (id !== null && list.isPending) {
     return (
       <View className="flex-1 bg-retrogamingpc-dark p-3">
         <RetroGamingPCSpinner label="Loading list…" />
