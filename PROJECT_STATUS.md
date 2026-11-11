@@ -2,7 +2,7 @@
 
 The one list of next steps and to-dos. Claude reads this instead of re-deriving status, updates it when work lands, and reminds you of open items.
 
-_Last updated: 2026-11-10_
+_Last updated: 2026-11-11_
 
 ## Tech stack
 - Expo + React Native + Expo Router, TypeScript (strict); iOS, Android, web
@@ -14,7 +14,7 @@ _Last updated: 2026-11-10_
 - `app/(tabs)/` — Home, Search, Post (Review Studio), Stats, Profile
 - `app/game/[id].tsx`, `app/review/[id].tsx`, `app/reviews/[gameId].tsx`
 - `src/services/` (Supabase calls) · `src/hooks/` (queries) · `src/utils/queryKeys.ts`
-- `supabase/migrations/` (000001–000047) · `supabase/tests/` · `supabase/name-rules/`
+- `supabase/migrations/` (000001–000048) · `supabase/tests/` · `supabase/name-rules/`
 
 ## Completed
 - Auth, search, Review Studio, profiles, game and studio pages, feeds, trending, friends
@@ -31,6 +31,8 @@ _Last updated: 2026-11-10_
 - Settings → About: version, Terms, Privacy Policy (`/privacy`, public), Open-source licenses (`/licenses`, from `npm run licenses`), data credits. Terms now mention Cloudflare Turnstile (TERMS_VERSION 2026-11-10: everyone re-accepts once)
 - IGDB credit: "Game data from IGDB · View on IGDB ↗" at the foot of game pages; studio pages and Search credit IGDB too
 - Audit 2026-11-10 (000047): hourly caps on new reviews (30), lists (20), reports (30), friend requests (60); `game_merges` reads need a session; ratings/list pages and friendship queries reject non-UUID ids
+- Audit pass 2 (000048): report indexes (faster account deletion), blocked authors' reviews left out of like/comment info; edited reviews refresh on Back; cancelled friend requests and uneditable comments now say so
+- Now Playing: tapping a filled cover opens the game page; Change game is in the slot's ⋯ menu
 - IGDB cache: service-role only, purge keeps 60 days to match the outage fallback (000044); game records saved on the device for instant covers
 
 ## Your to-do list (only you can do these)

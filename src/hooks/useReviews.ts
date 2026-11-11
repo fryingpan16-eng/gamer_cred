@@ -101,6 +101,12 @@ export function useSaveReview() {
       const { gameId } = vars;
       // Other review lists are marked stale (refresh when next shown); this game's and your own refetch now.
       void queryClient.invalidateQueries({ queryKey: queryKeys.reviews.all(), refetchType: 'none' });
+      // The review page stays mounted under the Studio: refresh the edited review so Back shows the new text.
+      const reviewId = vars.reviewId ?? _review?.id;
+      if (reviewId) {
+        void queryClient.invalidateQueries({ queryKey: queryKeys.reviews.detail(reviewId) });
+        void queryClient.invalidateQueries({ queryKey: queryKeys.reviews.playthroughs(reviewId) });
+      }
       void queryClient.invalidateQueries({ queryKey: queryKeys.reviews.mineAll(viewerId) });
       void queryClient.invalidateQueries({ queryKey: queryKeys.reviews.byUser(viewerId) });
       void queryClient.invalidateQueries({ queryKey: queryKeys.reviews.byGame(gameId) });

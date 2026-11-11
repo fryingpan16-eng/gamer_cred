@@ -54,3 +54,17 @@ Deno.test('game_merges: signed-in reads only', async () => {
   );
   assertEquals(policy!.roles, ['authenticated']);
 });
+
+// 000048 follow-ups.
+Deno.test('review_like_info skips reviews by blocked players', async () => {
+  const db = await freshDb();
+  const [review] = await asOwner<{ id: string }>(
+    db,
+    `insert into public.reviews (user_id, game_id, rating, rating_input_scale, rating_input, status)
+     values ('${OTHER}', 1, ${numeric(80)}, 'published') returning id`,
+  );
+  const info = () => asUser<{ review_id: string }>(db, ME, 'select * from public.review_like_info($1)', [[review!.id]]);
+  assertEquals((await info()).length, 1);
+  await asUser(db, OTHER, 'select public.block_user($1)', [ME]);
+  assertEquals((await info()).length, 0);
+});

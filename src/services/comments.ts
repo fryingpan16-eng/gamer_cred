@@ -67,8 +67,14 @@ export async function postReviewComment(userId: string, reviewId: string, conten
 }
 
 export async function editReviewComment(commentId: string, content: string): Promise<void> {
-  const { error } = await supabase.from('review_comments').update({ content: cleanComment(content) }).eq('id', commentId);
+  const { data, error } = await supabase
+    .from('review_comments')
+    .update({ content: cleanComment(content) })
+    .eq('id', commentId)
+    .select('id');
   if (error) fail(error, 'Could not save your comment.');
+  // RLS skips rows you can't edit without an error (removed, or no longer visible).
+  if (data.length === 0) throw new Error('That comment can’t be edited any more.');
 }
 
 export async function setCommentLike(userId: string, commentId: string, liked: boolean): Promise<void> {

@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { useState } from 'react';
 import { Image, Pressable, Text, View } from 'react-native';
 
@@ -22,7 +23,8 @@ type NowPlayingSlotCardProps = {
 
 /**
  * One Now Playing slot. Empty: big "+" target. Filled: cover, title, score
- * badge, notes snippet. Tapping the cover opens the picker to swap the game.
+ * badge, notes snippet. Tapping the cover opens the game page; the ⋯ menu
+ * changes the game or removes it.
  */
 export function NowPlayingSlotCard({
   slot,
@@ -46,15 +48,18 @@ export function NowPlayingSlotCard({
         <View className="flex-row items-center gap-1">
           {filled && row.preliminary_score === null ? <RetroGamingPCBadge label="Unrated" variant="draft" /> : null}
           {filled ? (
-            <MoreMenu label={`${title} in slot ${slot}`} actions={[{ label: 'Remove from Now Playing', variant: 'danger', onPress: onRemove }]} />
+            <MoreMenu label={`${title} in slot ${slot}`} actions={[
+                { label: 'Change game', onPress: onAssign },
+                { label: 'Remove from Now Playing', variant: 'danger', onPress: onRemove },
+              ]} />
           ) : null}
         </View>
       </View>
 
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={filled ? `Swap ${title} in slot ${slot}` : `Add a game to slot ${slot}`}
-        onPress={onAssign}
+        accessibilityLabel={filled ? `Open ${title}` : `Add a game to slot ${slot}`}
+        onPress={() => (row ? router.push({ pathname: '/game/[id]', params: { id: String(row.game_id) } }) : onAssign())}
         onPressIn={() => setPressed(true)}
         onPressOut={() => setPressed(false)}
         className={cn(

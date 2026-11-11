@@ -280,7 +280,7 @@ function ReviewEditor({ target, existing, priorReviews, quickRating, onRequestCl
 
 function ReviewChoice({ latest, count, onClose }: { latest: Review; count: number; onClose: () => void }) {
   const chooseReview = useStudioStore((s) => s.chooseReview);
-  const when = latest.finished_on ?? (latest.published_at ?? latest.created_at).slice(0, 10);
+  const when = latest.finished_on ?? localToday(new Date(latest.published_at ?? latest.created_at));
   return (
     <View className="gap-3">
       <Text className="text-retrogamingpc-sm leading-[19px] text-retrogamingpc-text">

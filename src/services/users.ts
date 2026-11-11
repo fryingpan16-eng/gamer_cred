@@ -121,9 +121,12 @@ export async function removeFriendship(friendshipId: string): Promise<void> {
 
 /** RLS: only the recipient may update the row. */
 export async function respondToFriendRequest(friendshipId: string, accept: boolean): Promise<void> {
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('friendships')
     .update({ status: accept ? 'accepted' : 'rejected' })
-    .eq('id', friendshipId);
+    .eq('id', friendshipId)
+    .select('id');
   if (error) fail(error, 'Could not update friend request.');
+  // RLS skips a request that was cancelled meanwhile, without an error.
+  if (data.length === 0) throw new UserServiceError('That friend request was cancelled.', null);
 }
