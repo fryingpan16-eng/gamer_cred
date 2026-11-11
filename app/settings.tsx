@@ -1,6 +1,7 @@
 import { Stack } from 'expo-router';
 import { ScrollView, Text, View } from 'react-native';
 
+import { AboutSetting } from '@/components/settings/AboutSetting';
 import { AccountSettings } from '@/components/settings/AccountSettings';
 import { AdminSecuritySetting } from '@/components/settings/AdminSecuritySetting';
 import { AvatarSetting } from '@/components/settings/AvatarSetting';
@@ -16,7 +17,7 @@ import { useAuthStore } from '@/hooks/useAuth';
 import { useProfile } from '@/hooks/useProfile';
 import { GuestScreen } from '@/components/auth/MembersOnly';
 
-/** Settings (opened from the Profile tab): profile picture, appearance, hardware & platforms, ratings, privacy, account. */
+/** Settings (opened from the Profile tab): profile picture, appearance, hardware & platforms, ratings, privacy, account, about. */
 export default function SettingsScreen() {
   const userId = useAuthStore((s) => s.user?.id ?? null);
   const isGuest = useAuthStore((s) => s.isGuest);
@@ -79,6 +80,10 @@ export default function SettingsScreen() {
       ) : (
         <RetroGamingPCSpinner label="Loading account…" />
       )}
+
+      <RetroGamingPCPanel title="About">
+        <AboutSetting />
+      </RetroGamingPCPanel>
 
       {profile.data ? (
         <RetroGamingPCPanel title="Delete Account">

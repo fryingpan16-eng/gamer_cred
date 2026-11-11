@@ -26,7 +26,7 @@ const pendingPath = (uid: string) => `${uid}/pending.jpg`;
 const heldPath = (uid: string) => `held/${uid}.jpg`;
 const VISION_TIMEOUT_MS = 8000;
 /** Picture checks per member per hour (each is a paid Vision call). */
-const SUBMITS_PER_HOUR = 10;
+const SUBMITS_PER_HOUR = 1;
 const SIGNED_URL_SECONDS = 15 * 60;
 
 function respond(status: number, body: unknown): Response {

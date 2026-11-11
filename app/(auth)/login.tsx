@@ -125,6 +125,10 @@ export default function LoginScreen() {
                 <Text onPress={() => router.push('/terms')} className="text-retrogamingpc-text-bright underline">
                   Terms
                 </Text>
+                . See the{' '}
+                <Text onPress={() => router.push('/privacy')} className="text-retrogamingpc-text-bright underline">
+                  Privacy Policy
+                </Text>
                 .
               </Text>
             </View>

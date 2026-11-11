@@ -151,6 +151,8 @@ function RootNavigator() {
         {/* Public in both states: linked from sign-up, Settings and the store listings. */}
         <Stack.Screen name="terms" options={{ title: 'Terms & Community Guidelines' }} />
         <Stack.Screen name="delete-account" options={{ title: 'Delete your account' }} />
+        <Stack.Screen name="privacy" options={{ title: 'Privacy Policy' }} />
+        <Stack.Screen name="licenses" options={{ title: 'Open-source licenses' }} />
       </Stack>
       {showBottomNav ? <RetroGamingPCBottomNav /> : null}
     </View>

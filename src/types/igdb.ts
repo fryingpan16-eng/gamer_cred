@@ -24,6 +24,7 @@ export {
   type IgdbCompanyGame,
   type EntryType,
   type GameReleaseDate,
+  type GameTimeToBeat,
   type IgdbDetailRequest,
   type IgdbDetailResponse,
   type IgdbGameDetail,

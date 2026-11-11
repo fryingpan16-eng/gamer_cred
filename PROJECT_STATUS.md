@@ -27,6 +27,9 @@ _Last updated: 2026-11-09_
 - Other versions (Director's Cut…) fold into their original like remasters; Persona re-releases stay separate; saved data moves over (000042)
 - Review comments: flat thread with @replies, filtered like reviews, 60/hour, edit own ("edited"), private ♥, ⚑ report → admin removal, 💬 count on ReviewCard (000043); edits limited to 30/hour (000046)
 - Light theme (colours only, Wii/3DS-inspired white + silver + sky blue): shown as "Cloud" (id `white`); status colours (errors, likes, gold) now follow the theme (000045)
+- How long to beat (IGDB `game_time_to_beats`): "To beat: ~12h main story" in the game page header; Main story / Main + extras / Completionist in Game Details
+- Settings → About: version, Terms, Privacy Policy (`/privacy`, public), Open-source licenses (`/licenses`, from `npm run licenses`), data credits. Terms now mention Cloudflare Turnstile (TERMS_VERSION 2026-11-10: everyone re-accepts once)
+- IGDB credit: "Game data from IGDB · View on IGDB ↗" at the foot of game pages; studio pages and Search credit IGDB too
 - IGDB cache: service-role only, purge keeps 60 days to match the outage fallback (000044); game records saved on the device for instant covers
 
 ## Your to-do list (only you can do these)
@@ -34,20 +37,28 @@ _Last updated: 2026-11-09_
 - [ ] Admin: Settings → Admin Security → set up, THEN approve the authenticator in the SQL Editor (README → Admins). Unlocks admin tools and the badge.
 - [ ] Guest browsing, in this order: (1) Supabase → allow anonymous sign-ins; (2) Cloudflare Turnstile widget → `EXPO_PUBLIC_TURNSTILE_SITE_KEY` in `.env`; (3) LAST: Supabase CAPTCHA with the secret (earlier breaks every login)
 - [ ] Supabase Auth: minimum password length 8+, leaked-password protection on
-- [ ] Google Vision key: `npx supabase secrets set GOOGLE_VISION_API_KEY=...`
 - [ ] Ko-fi page (when monetization starts); tell Claude your country for "Where to buy"
 
+## Alpha launch: web + Android APK together (next)
+Done: `eas.json` (`preview` = APK for friends, `production` = Play AAB), app name GamerCred, dark splash + placeholder pixel "GC" icon; profile pictures limited to 1 check per hour; `igdb-proxy` (how long to beat) and `avatar` deployed 2026-11-10.
+- [ ] You: review the Privacy Policy and Terms drafts (`src/constants/legal.ts`, also at `/privacy` and `/terms`); the Privacy Policy names Resend for email, so tell Claude if you pick another provider
+- [ ] You: app logo (1024×1024 master; Claude makes the sizes) — placeholder is fine until then
+- [ ] You: choose the permanent Android package name (e.g. `com.<you>.gamercred`); Claude adds it to `app.json`
+- [ ] You: Expo account, then `! npx eas-cli login`; Claude runs `eas init` and stores `EXPO_PUBLIC_SUPABASE_URL` / `_ANON_KEY` as EAS env vars (`.env` never reaches builds)
+- [ ] You: Google Vision key for picture checks (Cloud Vision API enabled, key restricted to it, budget alert), then `! npx supabase secrets set GOOGLE_VISION_API_KEY=...`. Without it every picture waits for admin review.
+- [ ] You: custom SMTP (Resend) — Supabase's built-in email only reaches project members
+- [ ] You: Supabase → Auth → URL Configuration → add `gamercred://auth/callback` and the web address's `/auth/callback`; set Site URL to the web address
+- [ ] Claude + you: host the web build on the Cloudflare subdomain
+- [ ] Claude: `eas build -p android --profile preview` → share the APK link and the web link the same day (friends allow "install unknown apps")
+
 ## Before alpha
-- Custom SMTP (e.g. Resend) so confirmation emails reach testers
-- Host the web build on the Cloudflare subdomain; set Supabase Site URL + redirect URLs to it
-- Privacy page; app name and icon in `app.json`
 - Visual check of the light theme on every screen (phone + desktop)
 - Visual check of the replay screens and the review page (action bar, ⋯ menus, comments), profile, list, friends and Now Playing ⋯ on phone and desktop
 
 ## Before closed testing (Google Play beta)
 Needs the alpha list above, plus:
 - Claude: `eas.json`, AAB build, `android.package` (permanent; choose the name first), confirm target API 36+
-- Claude: privacy page with a public URL
+- Privacy policy public URL: `https://<web address>/privacy` once the web build is hosted
 - You: Play developer account ($25; personal or organization)
 - You: Data safety, content rating, target audience and app access forms; test login for Google that gets past email confirmation and CAPTCHA
 - You: store listing (icon, feature graphic, screenshots, descriptions)

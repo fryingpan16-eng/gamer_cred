@@ -6,6 +6,7 @@ import { Pressable, View } from 'react-native';
 import { ListCard } from '@/components/lists/ListCard';
 import { CompanyResultCard } from '@/components/search/CompanyResultCard';
 import { CreatorResultCard } from '@/components/search/CreatorResultCard';
+import { IgdbAttribution } from '@/components/search/IgdbAttribution';
 import { RawgAttribution } from '@/components/search/RawgAttribution';
 import { GameResultCard } from '@/components/search/GameResultCard';
 import { SearchResultList } from '@/components/search/SearchResultList';
@@ -73,6 +74,7 @@ function GameResults({ term, typing }: ResultsProps) {
       statusNote={query.data?.cached ? 'cached' : undefined}
       keyExtractor={(g) => String(g.id)}
       renderItem={(g) => <GameResultCard game={g} />}
+      footer={<IgdbAttribution />}
     />
   );
 }
@@ -91,6 +93,7 @@ function CompanyResults({ term, typing }: ResultsProps) {
       statusNote={query.data?.cached ? 'cached' : undefined}
       keyExtractor={(c) => String(c.id)}
       renderItem={(c) => <CompanyResultCard company={c} />}
+      footer={<IgdbAttribution page={{ kind: 'companies', slug: null }} />}
     />
   );
 }

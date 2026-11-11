@@ -122,7 +122,7 @@ export function ReviewCard({
             </Text>
           ) : null}
           <View pointerEvents="none">
-            <RetroGamingPCRating rating={review.rating} size="compact" />
+            <RetroGamingPCRating rating={review.rating} size="compact" withNumeric />
           </View>
           <PlayedOnBadge platformId={review.platformId} />
           {review.isReplay ? (

@@ -51,6 +51,7 @@ An original early-2000s desktop game-client look: olive palette, beveled chrome,
 
 ## Backend rules
 - The client never calls IGDB or Twitch directly; game, company and creator search goes through the `igdb-proxy` Edge Function, cached in `igdb_cache` (`cache_key`, `data` JSONB, `updated_at`).
+- Credit data sources in plain text (no logos): `IgdbAttribution` on game, studio and game/studio search pages; a RAWG link wherever RAWG data shows (`RawgAttribution`, PC requirements).
 - Edge Functions return `{ success: boolean, data?: T, error?: string }`; env types live in `src/types/env.d.ts`.
 - Migrations include indexes for `reviews`, `favorites`, `igdb_cache`, `now_playing`, `user_platforms`, `user_favorites`, and `friendships(user_id, friend_id, status)`. Never edit a migration that has been pushed.
 
@@ -63,12 +64,13 @@ An original early-2000s desktop game-client look: olive palette, beveled chrome,
 - `created_at` / `updated_at` / `published_at` are stamped by triggers (000036); new tables whose times order feeds need the same.
 - Guests (000027) are read-only. Wrap new write actions in `MembersOnly`, and give new user-writable tables the restrictive `members insert/update/delete` policies. Sign-in, sign-up and guest sessions pass a Turnstile token (`HumanCheck`).
 - Public content needs a ⚑ Report entry point (`ReportLink`, a `content_reports` target) and a restrictive `<table>: hide blocked` select policy.
-- Profile pictures are screened by the `avatar` Edge Function (Vision SafeSearch, JPEG only, 10 per hour). Only that function writes `avatars` or `profiles.avatar_url`.
+- Profile pictures are screened by the `avatar` Edge Function (Vision SafeSearch, JPEG only, 1 per hour). Only that function writes `avatars` or `profiles.avatar_url`.
 - `igdb-proxy` needs a signed-in user and is rate limited (`take_rate_limit`).
 - Admin powers need `is_app_admin()`: an aal2 session plus an owner-approved authenticator (000025, 000037; `_shared/admin-auth.ts` in Edge Functions). Log each admin action with `log_admin_action`.
 - Names (000038): `username` is the PERMANENT name (locked, the only thing search matches); `display_name` changes once a day. Show any player's name with `UserName` / `useShownName`, never `username` alone. Name lists live in `supabase/name-rules/*.txt`; regenerate them with `scripts/generate-name-rules.py <new migration>`. The app asks `check_name`; the lists never ship in the app.
 - Account deletion is the `account` Edge Function; new user tables cascade from `profiles` / `auth.users`.
-- Contact and terms live in `src/constants/legal.ts`. Bump `TERMS_VERSION` when the terms change.
+- Contact, terms and the Privacy Policy live in `src/constants/legal.ts` (`/terms`, `/privacy`, both public; Settings → About). Bump `TERMS_VERSION` / `PRIVACY_VERSION` when they change; update the Privacy Policy whenever the app collects something new or adds a service provider.
+- Open-source licenses (Settings → About, `/licenses`): run `npm run licenses` after adding or upgrading dependencies (test-enforced). New native-only Android libraries go in `NATIVE_LIBRARIES` in `scripts/generate-licenses.ts`.
 
 ## Monetization rules (after alpha)
 - Never pay-to-rank: payments, supporters or affiliates never affect rankings, Popular, feed order, the Gamer Cred score or smart lists. Supporter perks are cosmetic only.

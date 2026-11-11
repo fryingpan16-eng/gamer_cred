@@ -14,6 +14,7 @@ import { useMyReviewsForGame } from '@/hooks/useReviews';
 import type { GameReviewStats } from '@/services/games';
 import { igdbImageUrl, type IgdbGameDetail } from '@/types/igdb';
 import type { StoredRating } from '@/utils/rating';
+import { headlinePlaytime } from '@/utils/playtime';
 import { useDividerColor, useThemeColors } from '@/hooks/useTheme';
 
 import { CompanyLinks } from './CompanyLinks';
@@ -44,6 +45,7 @@ export function GameHero({ game, stats }: GameHeroProps) {
   const divider = useDividerColor(SCALE_DIVIDER_ALPHA);
   const backdrop = game.artworkIds[0] ?? game.screenshotIds[0] ?? null;
   const release = firstRelease(game);
+  const playtime = headlinePlaytime(game.timeToBeat);
   const mine = useMyReviewsForGame(game.id);
   const myRating = useMyGameRating(game.id);
   const control = useGameRatingControl(game, myRating.rating);
@@ -185,6 +187,13 @@ export function GameHero({ game, stats }: GameHeroProps) {
             <Text className="text-retrogamingpc-sm text-retrogamingpc-text">
               <Text className="text-retrogamingpc-text-muted">Release: </Text>
               {release}
+            </Text>
+          ) : null}
+          {playtime ? (
+            <Text className="text-retrogamingpc-sm text-retrogamingpc-text">
+              <Text className="text-retrogamingpc-text-muted">To beat: </Text>
+              <Text className="font-mono">{playtime.text}</Text>
+              <Text className="text-retrogamingpc-text-muted"> {playtime.label.toLowerCase()}</Text>
             </Text>
           ) : null}
           <View className="flex-row flex-wrap gap-1 pt-1">

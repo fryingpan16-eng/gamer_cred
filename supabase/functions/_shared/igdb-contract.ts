@@ -83,6 +83,18 @@ export type GameRemaster = {
   platforms: string[];
 };
 
+/** Average play times in seconds (IGDB player submissions); a missing tier is null. */
+export type GameTimeToBeat = {
+  /** To the credits, few extras ("Main story"). */
+  main: number | null;
+  /** Story plus some extras ("Main + extras"). */
+  extras: number | null;
+  /** Everything ("Completionist"). */
+  complete: number | null;
+  /** How many players submitted times. */
+  count: number;
+};
+
 export type IgdbGameDetail = IgdbGameResult & {
   summary: string | null;
   storyline: string | null;
@@ -109,6 +121,8 @@ export type IgdbGameDetail = IgdbGameResult & {
   remasters: GameRemaster[];
   /** Other versions folded into this game (Director's Cut…), oldest first. Missing on older cached pages. */
   versions?: GameRemaster[];
+  /** How long to beat; null when nobody has submitted times. Missing on older cached pages. */
+  timeToBeat?: GameTimeToBeat | null;
 };
 
 export type IgdbDetailResponse = {

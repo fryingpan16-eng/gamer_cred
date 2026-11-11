@@ -135,8 +135,14 @@ export default function RegisterScreen() {
                 description="Zero tolerance for objectionable content and abusive users."
                 disabled={busy}
               />
-              <Text onPress={() => router.push('/terms')} className="pl-6 text-retrogamingpc-xs text-retrogamingpc-text-bright underline">
-                Read them
+              <Text className="pl-6 text-retrogamingpc-xs text-retrogamingpc-text-muted">
+                <Text onPress={() => router.push('/terms')} className="text-retrogamingpc-text-bright underline">
+                  Read them
+                </Text>
+                {' · '}
+                <Text onPress={() => router.push('/privacy')} className="text-retrogamingpc-text-bright underline">
+                  Privacy Policy
+                </Text>
               </Text>
               {fieldErrors.acceptedTerms ? (
                 <Text className="pl-6 text-retrogamingpc-xs text-retrogamingpc-error">▲ {fieldErrors.acceptedTerms}</Text>

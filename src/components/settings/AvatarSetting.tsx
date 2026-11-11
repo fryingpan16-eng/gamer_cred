@@ -70,7 +70,7 @@ export function AvatarSetting() {
         <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted">
           {mutation.isPending
             ? 'Uploading and checking…'
-            : 'JPG, PNG or WebP. Cropped to a square and resized automatically. Pictures are checked automatically and must follow the Community Guidelines.'}
+            : 'JPG, PNG or WebP. Cropped to a square and resized automatically. Pictures are checked automatically and must follow the Community Guidelines. You can change it once an hour.'}
         </Text>
         {held ? (
           <RetroGamingPCAlert

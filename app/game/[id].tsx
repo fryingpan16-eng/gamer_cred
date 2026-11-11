@@ -12,6 +12,7 @@ import { RemastersPanel, VersionsPanel } from '@/components/game/RemastersPanel'
 import { ScreenshotStrip } from '@/components/game/ScreenshotStrip';
 import { SystemRequirementsPanel } from '@/components/game/SystemRequirementsPanel';
 import { RetroGamingPCAlert, RetroGamingPCButton, RetroGamingPCPanel, RetroGamingPCSpinner } from '@/components/ui';
+import { IgdbAttribution } from '@/components/search/IgdbAttribution';
 import { useGameDetail, useGameReviewStats } from '@/hooks/useGameDetail';
 import { SearchServiceError } from '@/services/igdb';
 import type { IgdbGameResult } from '@/types/igdb';
@@ -149,6 +150,7 @@ export default function GameDetailScreen() {
           <SystemRequirementsPanel requirements={game.systemRequirements} hasPc={hasPc} />
         </View>
       </View>
+      <IgdbAttribution page={{ kind: 'games', slug: game.slug }} />
     </ScrollView>
   );
 }

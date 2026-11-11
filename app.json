@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "gamercred",
+    "name": "GamerCred",
     "slug": "gamercred",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -11,7 +11,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#16191d",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -35,6 +35,14 @@
           "photosPermission": "GamerCred uses your photo library so you can choose a profile picture.",
           "cameraPermission": false,
           "microphonePermission": false
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#16191d",
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 200
         }
       ]
     ],

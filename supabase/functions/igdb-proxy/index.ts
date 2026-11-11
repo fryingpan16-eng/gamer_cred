@@ -70,6 +70,7 @@ import { releasePlatformOrder } from './platform_order.ts';
 import { chunk, companyGameIds, IGDB_PAGE_MAX, tagCompanyGames } from './company_games.ts';
 import * as rankingModule from './ranking.ts';
 import * as remastersModule from './remasters.ts';
+import { mapTimeToBeat, TIME_TO_BEAT_FIELDS, type RawTimeToBeat } from './time_to_beat.ts';
 import {
   mapRemasters,
   mapVersions,
@@ -487,7 +488,17 @@ async function fetchGameDetail(
     publisherCompanies: companies('publisher'),
     remasters: mapRemasters(g.remasters),
     versions: mapVersions(g.expanded_games),
+    timeToBeat: null,
   };
+
+  // How long to beat is best-effort too: no times, or an IGDB error, just hides the row.
+  try {
+    const [ttb] = await igdbRequest<RawTimeToBeat[]>('game_time_to_beats', `${TIME_TO_BEAT_FIELDS} where game_id = ${id}; limit 1;`);
+    detail.timeToBeat = mapTimeToBeat(ttb);
+  } catch (error) {
+    detail.timeToBeat = null;
+    console.warn('[igdb-proxy] time to beat unavailable', error instanceof Error ? error.message : error);
+  }
 
   // PC requirements are best-effort: a RAWG outage or missing key never breaks the page.
   const apiKey = Deno.env.get('RAWG_API_KEY');
@@ -783,6 +794,7 @@ const DETAIL_ONLY_KEYS = [
   'summary', 'storyline', 'screenshotIds', 'artworkIds', 'themes', 'gameModes', 'perspectives', 'publishers',
   'engines', 'franchises', 'releaseDates', 'criticRating', 'criticRatingCount', 'userRating', 'userRatingCount',
   'systemRequirements', 'developerCompanies', 'publisherCompanies', 'remasters', 'versions',
+  'timeToBeat',
 ] as const satisfies readonly Exclude<keyof IgdbGameDetail, keyof IgdbGameResult>[];
 // Compile-time check that the list above names every detail-only field.
 const _detailKeysComplete: Exclude<Exclude<keyof IgdbGameDetail, keyof IgdbGameResult>, (typeof DETAIL_ONLY_KEYS)[number]> extends never

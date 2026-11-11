@@ -29,6 +29,8 @@ export type RetroGamingPCRatingProps = {
   expanded?: boolean;
   /** Prefix such as "Avg" for aggregates. */
   prefix?: string;
+  /** Also show the 1–100 score next to a stars / rounded value (review cards). */
+  withNumeric?: boolean;
   className?: string;
 };
 
@@ -38,7 +40,7 @@ export type RetroGamingPCRatingProps = {
  * (tap to reveal). Numeric scores derived from coarse input show as "~89";
  * S** always shows as exactly 100.
  */
-export function RetroGamingPCRating({ rating, scale: scaleProp, size = 'regular', suffix, expanded: forceExpanded = false, prefix, className }: RetroGamingPCRatingProps) {
+export function RetroGamingPCRating({ rating, scale: scaleProp, size = 'regular', suffix, expanded: forceExpanded = false, prefix, withNumeric = false, className }: RetroGamingPCRatingProps) {
   const primary = usePrimaryRatingScale();
   const scale = scaleProp ?? primary;
   const [open, setOpen] = useState(false);
@@ -74,6 +76,12 @@ export function RetroGamingPCRating({ rating, scale: scaleProp, size = 'regular'
       <View className="flex-row flex-wrap items-center gap-1.5">
         {prefix ? <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted">{prefix}</Text> : null}
         {primaryValue}
+        {withNumeric && scale !== 'numeric' ? (
+          <Text className="font-mono text-retrogamingpc-sm font-bold text-retrogamingpc-text-bright">
+            {formatNumeric(rating)}
+            <Text className="text-retrogamingpc-xs font-normal text-retrogamingpc-text-muted">/100</Text>
+          </Text>
+        ) : null}
         <RetroGamingPCTierBadge tier={derived.tier} showDescriptor={!compact || scale === 'tier'} size={compact ? 'compact' : 'regular'} />
         {suffix ? <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted">{suffix}</Text> : null}
         {!forceExpanded ? <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted">{open ? '▾' : '▸'}</Text> : null}

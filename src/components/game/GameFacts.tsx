@@ -2,6 +2,7 @@ import { Text, View } from 'react-native';
 
 import { RetroGamingPCPanel } from '@/components/ui';
 import type { CompanyRef, IgdbGameDetail } from '@/types/igdb';
+import { formatPlaytime, TIME_TO_BEAT_TIERS } from '@/utils/playtime';
 
 import { CompanyLinks } from './CompanyLinks';
 
@@ -22,6 +23,8 @@ function FactRow({ label, values, companies }: { label: string; values: string[]
 export function GameFacts({ game }: { game: IgdbGameDetail }) {
   // One row per platform; IGDB can list several regional dates for the same platform.
   const releases = [...new Map(game.releaseDates.map((r) => [r.platform, r])).values()];
+  const ttb = game.timeToBeat ?? null;
+  const tiers = ttb ? TIME_TO_BEAT_TIERS.filter((t) => ttb[t.key] !== null) : [];
 
   return (
     <RetroGamingPCPanel title="Game Details">
@@ -36,6 +39,22 @@ export function GameFacts({ game }: { game: IgdbGameDetail }) {
         <FactRow label="Franchise" values={game.franchises} />
         <FactRow label="Platforms" values={game.platforms} />
       </View>
+      {ttb && tiers.length > 0 ? (
+        <View className="gap-0.5 pt-2">
+          <Text className="retrogamingpc-label pb-1">How long to beat</Text>
+          {tiers.map((t) => (
+            <View key={t.key} className="flex-row justify-between">
+              <Text className="text-retrogamingpc-xs text-retrogamingpc-text">{t.label}</Text>
+              <Text className="font-mono text-retrogamingpc-xs text-retrogamingpc-text-muted">{formatPlaytime(ttb[t.key]!)}</Text>
+            </View>
+          ))}
+          {ttb.count > 0 ? (
+            <Text className="pt-0.5 text-retrogamingpc-xs text-retrogamingpc-text-muted">
+              {`Based on ${ttb.count.toLocaleString()} ${ttb.count === 1 ? 'player' : 'players'}`}
+            </Text>
+          ) : null}
+        </View>
+      ) : null}
       {releases.length > 0 ? (
         <View className="gap-0.5 pt-2">
           <Text className="retrogamingpc-label pb-1">Release dates</Text>

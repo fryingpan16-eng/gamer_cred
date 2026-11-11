@@ -4,6 +4,7 @@ import { FlatList, Text, View } from 'react-native';
 
 import { GameResultCard } from '@/components/search/GameResultCard';
 import { Thumbnail } from '@/components/search/Thumbnail';
+import { IgdbAttribution } from '@/components/search/IgdbAttribution';
 import {
   RetroGamingPCAlert,
   RetroGamingPCBadge,
@@ -155,6 +156,7 @@ export default function StudioScreen() {
           </View>
         </View>
       }
+      ListFooterComponent={<IgdbAttribution page={{ kind: 'companies', slug: company.slug }} />}
       ListEmptyComponent={
         <View className="retrogamingpc-bevel-inset items-center bg-retrogamingpc-dark px-4 py-6">
           <Text className="text-retrogamingpc-sm text-retrogamingpc-text-muted">No catalogue games for this studio yet.</Text>

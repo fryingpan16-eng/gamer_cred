@@ -388,7 +388,7 @@ Storage: a private `avatar-uploads` bucket (each user can write only their own p
 - **Actions:**
   - `search`: games, companies or creators;
   - `lookup`: games by id;
-  - `detail`: the full game page, with RAWG PC requirements;
+  - `detail`: the full game page, with RAWG PC requirements and IGDB time to beat (best-effort);
   - `company`: a studio and every game it developed or published.
 - **Response format:** every response is `{ success, data?, error? }`.
 - **Access:** signed-in players only, rate limited to 120 requests a minute each.
