@@ -1,3 +1,4 @@
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Image, Text, View } from 'react-native';
 
 import { CoverTile } from '@/components/profile/CoverTile';
@@ -190,11 +191,20 @@ export function GameHero({ game, stats }: GameHeroProps) {
             </Text>
           ) : null}
           {playtime ? (
-            <Text className="text-retrogamingpc-sm text-retrogamingpc-text">
-              <Text className="text-retrogamingpc-text-muted">To beat: </Text>
-              <Text className="font-mono">{playtime.text}</Text>
-              <Text className="text-retrogamingpc-text-muted"> {playtime.label.toLowerCase()}</Text>
-            </Text>
+            <View
+              className="retrogamingpc-bevel-inset flex-row items-center gap-2 self-start bg-retrogamingpc-dark px-2.5 py-1.5"
+              accessible
+              accessibilityLabel={`Time to beat: about ${playtime.text.replace('~', '')}, ${playtime.label.toLowerCase()}`}
+            >
+              <MaterialCommunityIcons name="timer-outline" size={22} color={themeColors.text} />
+              <View>
+                <Text className="retrogamingpc-label">Time to beat</Text>
+                <Text className="text-retrogamingpc-text">
+                  <Text className="font-mono text-retrogamingpc-xl font-bold text-retrogamingpc-text-bright">{playtime.text}</Text>
+                  <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted"> {playtime.label.toLowerCase()}</Text>
+                </Text>
+              </View>
+            </View>
           ) : null}
           <View className="flex-row flex-wrap gap-1 pt-1">
             {game.genres.slice(0, 4).map((g) => (

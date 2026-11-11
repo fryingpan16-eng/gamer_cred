@@ -152,6 +152,7 @@ function NumericField({
   const [text, setText] = useState(current === null ? '' : String(current));
   // Re-sync the field when the saved value changes underneath it (other device, rollback).
   const [lastSeen, setLastSeen] = useState(current);
+  const [focused, setFocused] = useState(false);
   if (current !== lastSeen) {
     setLastSeen(current);
     setText(current === null ? '' : String(current));
@@ -195,6 +196,8 @@ function NumericField({
     );
   }
 
+  // The game page's headline row gets the big score size; smaller rows keep the compact one.
+  const big = height >= HERO_SCORE.rowHeight;
   return (
     <View className="flex-row items-center">
       {stepButton(-1)}
@@ -203,7 +206,10 @@ function NumericField({
         value={text}
         onChangeText={setText}
         onSubmitEditing={submit}
-        onBlur={submit}
+        onBlur={() => {
+          setFocused(false);
+          submit();
+        }}
         keyboardType="number-pad"
         inputMode="numeric"
         returnKeyType="done"
@@ -213,11 +219,25 @@ function NumericField({
         placeholderTextColor={themeColors.textMuted}
         accessibilityLabel={`${label}, ${NUMERIC_MIN} to ${NUMERIC_MAX}`}
         accessibilityHint="Type a score and press Enter"
-        style={{ ...noZoomInputStyle, height: height - 8 }}
-        className="w-14 border border-b-retrogamingpc-bevel-light border-l-retrogamingpc-bevel-dark border-r-retrogamingpc-bevel-light border-t-retrogamingpc-bevel-dark bg-retrogamingpc-dark text-center font-mono text-retrogamingpc-lg font-bold text-retrogamingpc-text-bright outline-none"
+        onFocus={() => setFocused(true)}
+        style={{
+          ...noZoomInputStyle,
+          ...(big ? { fontSize: 28 } : null),
+          height,
+          paddingVertical: 0,
+          paddingHorizontal: 0,
+          includeFontPadding: false, // Android: no extra top/bottom space that clips the digits
+          textAlignVertical: 'center',
+          borderBottomWidth: 2,
+          borderBottomColor: focused ? themeColors.highlight : themeColors.textMuted,
+        }}
+        className={cn(
+          'bg-transparent text-center font-mono font-bold text-retrogamingpc-text-bright outline-none',
+          big ? 'w-[68px]' : 'w-12 text-retrogamingpc-lg',
+        )}
       />
       {stepButton(1)}
-      <Text className="font-mono text-retrogamingpc-xs text-retrogamingpc-text-muted">/ {NUMERIC_MAX}</Text>
+      <Text className={cn('font-mono text-retrogamingpc-text-muted', big ? 'text-retrogamingpc-lg' : 'text-retrogamingpc-xs')}>/{NUMERIC_MAX}</Text>
     </View>
   );
 }
