@@ -7,15 +7,7 @@ import { PlayedOnBadge } from '@/components/game/PlayedOnBadge';
 import { formatFinishedOn } from '@/components/game/ReplayButton';
 import { CoverTile } from '@/components/profile/CoverTile';
 import { Thumbnail } from '@/components/search/Thumbnail';
-import {
-  RetroGamingPCAlert,
-  RetroGamingPCBadge,
-  RetroGamingPCButton,
-  RetroGamingPCPanel,
-  RetroGamingPCRating,
-  RetroGamingPCSpinner,
-  RetroGamingPCTimeAgo,
-} from '@/components/ui';
+import { KeyboardAwareScrollView, RetroGamingPCAlert, RetroGamingPCBadge, RetroGamingPCButton, RetroGamingPCPanel, RetroGamingPCRating, RetroGamingPCSpinner, RetroGamingPCTimeAgo } from '@/components/ui';
 import { ReviewLikeControl } from '@/components/review/ReviewCard';
 import { ReviewComments } from '@/components/review/ReviewComments';
 import { MoreMenu } from '@/components/safety/MoreMenu';
@@ -80,12 +72,10 @@ export default function ReviewScreen() {
   const openAuthor = () => author && router.push(isMine ? '/profile' : { pathname: '/user/[id]', params: { id: author.id } });
 
   return (
-    <ScrollView
+    <KeyboardAwareScrollView
       ref={scrollRef}
       className="flex-1 bg-retrogamingpc-dark"
       contentContainerClassName="w-full gap-3 self-center p-3 md:max-w-[760px]"
-      automaticallyAdjustKeyboardInsets
-      keyboardShouldPersistTaps="handled"
     >
       <Stack.Screen options={{ title: `${author ? authorName : 'Player'} on ${game?.name ?? 'a game'}` }} />
 
@@ -207,6 +197,6 @@ export default function ReviewScreen() {
           <ReviewComments reviewId={data.id} viewerId={viewerId} />
         </View>
       ) : null}
-    </ScrollView>
+    </KeyboardAwareScrollView>
   );
 }

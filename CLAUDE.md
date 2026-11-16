@@ -9,7 +9,7 @@ Phone rules (keep when adding UI):
 - Text ≥ 10px via the `text-retrogamingpc-*` scale (10% larger below `md`, set in `tailwind.config.js`). No fixed px sizes.
 - Every `TextInput` gets `noZoomInputStyle` (`src/utils/platform.ts`).
 - Dialogs use `RetroGamingPCModal` (`scrollable={false}` only for bodies with their own list). Long-text writers use `RetroGamingPCSheet`; dialogs opened from it go inside it.
-- Scrolling screens with inputs: `automaticallyAdjustKeyboardInsets` + `keyboardShouldPersistTaps="handled"`.
+- Scrolling screens with inputs: `KeyboardAwareScrollView` (`src/components/ui`; iOS insets + Android edge-to-edge, which never resizes for the keyboard). Plain `automaticallyAdjustKeyboardInsets` is iOS-only.
 - Anything wider than ~300px wraps (`flex-wrap`) or scrolls sideways. Full-screen pages keep the bottom safe-area inset.
 - Never toggle classes that set CSS variables or animations (`translate-*`, `rotate-*`, `scale-*`, `shadow-*`, `transition-*`, `animate-*`) after first render; NativeWind crashes on native. Use a `style` transform.
 
@@ -38,7 +38,7 @@ An original early-2000s desktop game-client look: olive palette, beveled chrome,
   - `navigate` (blue): go somewhere.
   - `default` / `primary` (themed): everything else.
   - Status colours use the same hues: errors red, info blue, success green; badges Published solid green, Draft green outline, Now Playing blue.
-- Bevels: lighter `border-t` / `border-l`, darker `border-b` / `border-r`. Type: the device's standard sans-serif (`font-mono` = same font with tabular numbers), 14px body on desktop (`tailwind.config.js`).
+- Bevels: lighter `border-t` / `border-l`, darker `border-b` / `border-r` (the shared classes soften the dark edge to 60% and round corners slightly). Depth: `useSoftShadow()` as a `style`, never `shadow-*` classes. Type: the device's standard sans-serif (`font-mono` = same font with tabular numbers), 14px body on desktop (`tailwind.config.js`).
 - Icons: `@expo/vector-icons` (`MaterialCommunityIcons`, `Feather`).
 
 ## Code rules

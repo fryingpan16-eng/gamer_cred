@@ -92,8 +92,8 @@ function NumericControl({ current, onInput }: { current: number | null; onInput:
           placeholderTextColor={themeColors.textMuted}
           accessibilityLabel="Numeric score, 1 to 100"
           className={cn(
-            'h-7 w-16 border bg-retrogamingpc-dark text-center font-mono text-retrogamingpc-lg font-bold text-retrogamingpc-text-bright outline-none',
-            localError ? 'border-retrogamingpc-error' : 'border-t-retrogamingpc-bevel-dark border-l-retrogamingpc-bevel-dark border-b-retrogamingpc-bevel-light border-r-retrogamingpc-bevel-light',
+            'h-7 w-16 rounded border bg-retrogamingpc-dark text-center font-mono text-retrogamingpc-lg font-bold text-retrogamingpc-text-bright outline-none',
+            localError ? 'border-retrogamingpc-error' : 'border-t-retrogamingpc-bevel-dark/60 border-l-retrogamingpc-bevel-dark/60 border-b-retrogamingpc-accent border-r-retrogamingpc-accent',
           )}
         />
         <Pressable accessibilityRole="button" accessibilityLabel="Increase by 1" onPress={() => step(1)} className="retrogamingpc-bevel h-7 w-7 items-center justify-center bg-retrogamingpc-button">

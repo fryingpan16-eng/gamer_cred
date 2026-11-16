@@ -1,11 +1,11 @@
 import { Feather } from '@expo/vector-icons';
 import { Link, router } from 'expo-router';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, Text, View } from 'react-native';
 
 import { HumanCheck } from '@/components/auth/HumanCheck';
 import { GoogleSignInButton } from '@/components/GoogleSignInButton';
-import { RetroGamingPCAlert, RetroGamingPCButton, RetroGamingPCCheckbox, RetroGamingPCInput, RetroGamingPCPanel } from '@/components/ui';
+import { KeyboardAwareScrollView, RetroGamingPCAlert, RetroGamingPCButton, RetroGamingPCCheckbox, RetroGamingPCInput, RetroGamingPCPanel } from '@/components/ui';
 import { useAuthAction } from '@/hooks/useAuthAction';
 import { useHumanCheck } from '@/hooks/useHumanCheck';
 import { signInWithGoogle, signUpWithEmail } from '@/services/auth';
@@ -62,11 +62,9 @@ export default function RegisterScreen() {
 
   return (
     <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView
-        automaticallyAdjustKeyboardInsets
+      <KeyboardAwareScrollView
         className="flex-1 bg-retrogamingpc-dark"
         contentContainerClassName="flex-grow items-center justify-center p-4"
-        keyboardShouldPersistTaps="handled"
       >
         <RetroGamingPCPanel title="Create a GAMER_CRED account" className="w-full max-w-[360px]">
           <View className="gap-3">
@@ -165,7 +163,7 @@ export default function RegisterScreen() {
             </View>
           </View>
         </RetroGamingPCPanel>
-      </ScrollView>
+      </KeyboardAwareScrollView>
     </KeyboardAvoidingView>
   );
 }

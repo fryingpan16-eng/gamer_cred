@@ -1,5 +1,6 @@
-import { ScrollView, View } from 'react-native';
+import { View } from 'react-native';
 
+import { KeyboardAwareScrollView } from '@/components/ui';
 import { GuestScreen } from '@/components/auth/MembersOnly';
 import { BacklogPanel } from '@/components/backlog/BacklogPanel';
 import { DraftList } from '@/components/studio/DraftList';
@@ -19,11 +20,9 @@ export default function PostScreen() {
   const isGuest = useIsGuest();
   if (isGuest) return <GuestScreen title="Now Playing" feature="track what you're playing and write reviews" />;
   return (
-    <ScrollView
-      automaticallyAdjustKeyboardInsets
+    <KeyboardAwareScrollView
       className="flex-1 bg-retrogamingpc-dark"
       contentContainerClassName="gap-3 p-3"
-      keyboardShouldPersistTaps="handled"
     >
       <NowPlayingGrid />
       <BacklogPanel />
@@ -35,6 +34,6 @@ export default function PostScreen() {
           <DraftList />
         </View>
       </View>
-    </ScrollView>
+    </KeyboardAwareScrollView>
   );
 }

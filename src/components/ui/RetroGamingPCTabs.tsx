@@ -43,7 +43,7 @@ function TabButton<K extends string>({
       onHoverOut={() => setHovered(false)}
       className={cn(
         // Identical border widths in both states: only colors change, so no layout shift.
-        '-mb-px min-h-[32px] items-center justify-center border border-b px-3 py-1',
+        '-mb-px min-h-[32px] items-center justify-center rounded-t border border-b px-3 py-1',
         fill && 'flex-1',
         active
           ? 'border-retrogamingpc-highlight border-b-retrogamingpc-card bg-retrogamingpc-card'

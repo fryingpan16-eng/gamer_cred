@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { Pressable, View, type PressableProps } from 'react-native';
 
+import { useSoftShadow } from '@/hooks/useTheme';
 import { cn } from '@/utils/cn';
 
 export type RetroGamingPCCardProps = Omit<PressableProps, 'children' | 'style'> & {
@@ -17,9 +18,11 @@ export type RetroGamingPCCardProps = Omit<PressableProps, 'children' | 'style'> 
 export function RetroGamingPCCard({ children, selected = false, className, onPress, ...rest }: RetroGamingPCCardProps) {
   const [pressed, setPressed] = useState(false);
   const [hovered, setHovered] = useState(false);
+  // Floats slightly; pressing sinks it (no shadow). A style, so toggling it is safe on native.
+  const shadow = useSoftShadow(pressed ? 'none' : 'card');
 
   const classes = cn(
-    'p-2',
+    'rounded-md p-3',
     pressed ? 'retrogamingpc-bevel-inset bg-retrogamingpc-dark' : 'retrogamingpc-bevel',
     !pressed && (selected ? 'bg-retrogamingpc-panel' : hovered ? 'bg-retrogamingpc-panel' : 'bg-retrogamingpc-card'),
     selected && !pressed && 'border-retrogamingpc-highlight',
@@ -27,7 +30,11 @@ export function RetroGamingPCCard({ children, selected = false, className, onPre
   );
 
   if (!onPress) {
-    return <View className={classes}>{children}</View>;
+    return (
+      <View style={shadow} className={classes}>
+        {children}
+      </View>
+    );
   }
 
   return (
@@ -52,6 +59,7 @@ export function RetroGamingPCCard({ children, selected = false, className, onPre
         setHovered(false);
         rest.onHoverOut?.(e);
       }}
+      style={shadow}
       className={classes}
     >
       {children}

@@ -2,6 +2,7 @@ import { useState, type ReactNode } from 'react';
 import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, useWindowDimensions, View } from 'react-native';
 
 import { ACTION_COLORS } from '@/constants/actionColors';
+import { useSoftShadow } from '@/hooks/useTheme';
 import { cn } from '@/utils/cn';
 
 import { RetroGamingPCButton } from './RetroGamingPCButton';
@@ -44,7 +45,7 @@ export function TitlebarCloseButton({ onPress }: { onPress: () => void }) {
         borderBottomColor: pressed ? CANCEL.light : CANCEL.dark,
         borderRightColor: pressed ? CANCEL.light : CANCEL.dark,
       }}
-      className="h-[28px] w-[28px] items-center justify-center border md:h-[22px] md:w-[22px]"
+      className="h-[28px] w-[28px] items-center justify-center rounded border md:h-[22px] md:w-[22px]"
     >
       <Text className="text-retrogamingpc-base font-bold md:text-retrogamingpc-sm" style={{ color: CANCEL.label }}>
         ✕
@@ -65,6 +66,7 @@ export function RetroGamingPCModal({
   className,
 }: RetroGamingPCModalProps) {
   const { height } = useWindowDimensions();
+  const shadow = useSoftShadow('window');
   // Leave room for the title bar, footer and screen margins on short phones.
   const bodyMaxHeight = Math.max(200, height * 0.72);
   return (
@@ -81,7 +83,8 @@ export function RetroGamingPCModal({
           aria-modal
           aria-label={title}
           accessibilityViewIsModal
-          className={cn('retrogamingpc-window w-full max-w-[440px]', className)}
+          style={shadow}
+          className={cn('retrogamingpc-window w-full max-w-[460px]', className)}
         >
           <View className="retrogamingpc-titlebar">
             <Text className="flex-1 text-retrogamingpc-sm font-bold text-retrogamingpc-text-bright" numberOfLines={1}>
@@ -90,14 +93,14 @@ export function RetroGamingPCModal({
             <TitlebarCloseButton onPress={onClose} />
           </View>
           {scrollable ? (
-            <ScrollView style={{ maxHeight: bodyMaxHeight }} className="bg-retrogamingpc-card" contentContainerClassName="p-3" keyboardShouldPersistTaps="handled">
+            <ScrollView style={{ maxHeight: bodyMaxHeight }} className="bg-retrogamingpc-card" contentContainerClassName="p-4" keyboardShouldPersistTaps="handled">
               {children}
             </ScrollView>
           ) : (
-            <View className="bg-retrogamingpc-card p-3">{children}</View>
+            <View className="bg-retrogamingpc-card p-4">{children}</View>
           )}
           {footer ? (
-            <View className="flex-row justify-end gap-2 border-t border-t-retrogamingpc-accent bg-retrogamingpc-card px-3 py-2">
+            <View className="flex-row justify-end gap-2 border-t border-t-retrogamingpc-accent bg-retrogamingpc-card px-4 py-3">
               {footer}
             </View>
           ) : null}

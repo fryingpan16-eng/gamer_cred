@@ -45,7 +45,7 @@ export function TabItem({
       onHoverOut={() => setHovered(false)}
       className={cn(
         // Same 1px border in every state: active/inactive only swaps colors (no layout shift).
-        'border',
+        'rounded border',
         sidebar ? 'h-9 flex-row items-center gap-2 px-2' : 'flex-1 items-center justify-center gap-0.5',
         focused
           ? 'border-t-retrogamingpc-highlight border-l-retrogamingpc-highlight border-b-retrogamingpc-bevel-dark border-r-retrogamingpc-bevel-dark bg-retrogamingpc-card'

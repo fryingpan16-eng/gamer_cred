@@ -48,13 +48,13 @@ export function RetroGamingPCInput({
       ) : null}
       <View
         className={cn(
-          'min-h-[26px] flex-row gap-2 border bg-retrogamingpc-dark px-2',
+          'min-h-[28px] flex-row gap-2 rounded border bg-retrogamingpc-dark px-2.5',
           rest.multiline ? 'items-start py-1' : 'items-center',
           hasError
             ? 'border-retrogamingpc-error'
             : focused
               ? 'border-retrogamingpc-highlight'
-              : 'border-t-retrogamingpc-bevel-dark border-l-retrogamingpc-bevel-dark border-b-retrogamingpc-bevel-light border-r-retrogamingpc-bevel-light',
+              : 'border-t-retrogamingpc-bevel-dark/60 border-l-retrogamingpc-bevel-dark/60 border-b-retrogamingpc-accent border-r-retrogamingpc-accent',
           !editable && 'opacity-60',
         )}
       >

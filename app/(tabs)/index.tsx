@@ -1,13 +1,13 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import type { ReactNode } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { HomeFeed } from '@/components/home/HomeFeed';
 import { TrendingGames } from '@/components/home/TrendingGames';
 import { TrendingPosts } from '@/components/home/TrendingPosts';
 import { FeaturedListsPanel, ListBrowser, YourListsPanel } from '@/components/lists/HomeLists';
-import { RetroGamingPCButton, RetroGamingPCTabs, type RetroGamingPCTabItem } from '@/components/ui';
+import { KeyboardAwareScrollView, RetroGamingPCButton, RetroGamingPCTabs, type RetroGamingPCTabItem } from '@/components/ui';
 import { queryKeys } from '@/utils/queryKeys';
 import { GuestBanner, GuestScreen } from '@/components/auth/MembersOnly';
 import { useIsGuest } from '@/hooks/useAuth';
@@ -81,16 +81,14 @@ function FriendsTab() {
 /** Lists: curated lists, your lists (+ New List), and a browser for community lists. */
 function ListsTab() {
   return (
-    <ScrollView
-      automaticallyAdjustKeyboardInsets
+    <KeyboardAwareScrollView
       className="flex-1"
       contentContainerClassName="w-full gap-3 self-center p-3 md:max-w-[860px]"
-      keyboardShouldPersistTaps="handled"
     >
       <FeaturedListsPanel />
       <YourListsPanel />
       <ListBrowser />
-    </ScrollView>
+    </KeyboardAwareScrollView>
   );
 }
 

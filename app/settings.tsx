@@ -1,5 +1,5 @@
 import { Stack } from 'expo-router';
-import { ScrollView, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { AboutSetting } from '@/components/settings/AboutSetting';
 import { AccountSettings } from '@/components/settings/AccountSettings';
@@ -12,7 +12,7 @@ import { PlatformSettings } from '@/components/settings/PlatformSettings';
 import { PrivacySetting } from '@/components/settings/PrivacySetting';
 import { RatingScaleSetting } from '@/components/settings/RatingScaleSetting';
 import { ThemeSetting } from '@/components/settings/ThemeSetting';
-import { RetroGamingPCAlert, RetroGamingPCButton, RetroGamingPCPanel, RetroGamingPCSpinner } from '@/components/ui';
+import { KeyboardAwareScrollView, RetroGamingPCAlert, RetroGamingPCButton, RetroGamingPCPanel, RetroGamingPCSpinner } from '@/components/ui';
 import { useAuthStore } from '@/hooks/useAuth';
 import { useProfile } from '@/hooks/useProfile';
 import { GuestScreen } from '@/components/auth/MembersOnly';
@@ -25,11 +25,9 @@ export default function SettingsScreen() {
   if (isGuest) return <GuestScreen title="Settings" feature="set up your profile, platforms and rating style" />;
 
   return (
-    <ScrollView
-      automaticallyAdjustKeyboardInsets
+    <KeyboardAwareScrollView
       className="flex-1 bg-retrogamingpc-dark"
       contentContainerClassName="w-full gap-3 self-center p-3 md:max-w-[720px]"
-      keyboardShouldPersistTaps="handled"
     >
       <Stack.Screen options={{ title: 'Settings' }} />
       <Text className="text-retrogamingpc-sm text-retrogamingpc-text">
@@ -90,6 +88,6 @@ export default function SettingsScreen() {
           <DeleteAccountSetting username={profile.data.username} />
         </RetroGamingPCPanel>
       ) : null}
-    </ScrollView>
+    </KeyboardAwareScrollView>
   );
 }

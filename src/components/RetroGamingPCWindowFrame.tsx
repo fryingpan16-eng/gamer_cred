@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { Text, View } from 'react-native';
 
 import { useIsDesktop } from '@/hooks/useIsDesktop';
+import { useSoftShadow } from '@/hooks/useTheme';
 
 /**
  * Desktop: centers the app inside a fixed-width, beveled retro client window
@@ -12,10 +13,11 @@ import { useIsDesktop } from '@/hooks/useIsDesktop';
  */
 export function RetroGamingPCWindowFrame({ children }: { children: ReactNode }) {
   const isDesktop = useIsDesktop();
+  const shadow = useSoftShadow(isDesktop ? 'window' : 'none');
 
   return (
     <View className={isDesktop ? 'flex-1 items-center bg-retrogamingpc-bevel-dark p-6' : 'flex-1 bg-retrogamingpc-dark'}>
-      <View className={isDesktop ? 'retrogamingpc-window flex-1 w-full max-w-retrogamingpc-window' : 'flex-1 w-full'}>
+      <View style={shadow} className={isDesktop ? 'retrogamingpc-window flex-1 w-full max-w-retrogamingpc-window' : 'flex-1 w-full'}>
         {isDesktop ? (
           <View className="retrogamingpc-titlebar">
             <Text className="text-retrogamingpc-text-bright text-retrogamingpc-sm font-bold tracking-wider">GAMER_CRED</Text>

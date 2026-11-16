@@ -3,33 +3,36 @@
 @tailwind utilities;
 
 /*
- * RetroGamingPC client chrome (early-2000s desktop look).
- * Bevels: light edge on top/left, dark inset shadow on bottom/right.
- * Sunken variants invert the edges (input fields, pressed buttons).
+ * RetroGamingPC client chrome (early-2000s desktop look, lightly modernised).
+ * Bevels: light edge on top/left, dark edge on bottom/right, drawn as a soft 1px
+ * "lit edge" (the dark edge at 60%) with small rounded corners. Sunken variants
+ * invert the edges (input fields, pressed buttons). Every theme uses the same rules;
+ * only the palette variables change. Soft drop shadows come from `useSoftShadow()`
+ * (a style, never a shadow-* class: those crash NativeWind on native when toggled).
  */
 @layer components {
   .retrogamingpc-bevel {
-    @apply border border-t-retrogamingpc-bevel-light border-l-retrogamingpc-bevel-light border-b-retrogamingpc-bevel-dark border-r-retrogamingpc-bevel-dark;
+    @apply rounded border border-t-retrogamingpc-bevel-light border-l-retrogamingpc-bevel-light border-b-retrogamingpc-bevel-dark/60 border-r-retrogamingpc-bevel-dark/60;
   }
 
   .retrogamingpc-bevel-inset {
-    @apply border border-t-retrogamingpc-bevel-dark border-l-retrogamingpc-bevel-dark border-b-retrogamingpc-bevel-light border-r-retrogamingpc-bevel-light;
+    @apply rounded border border-t-retrogamingpc-bevel-dark/60 border-l-retrogamingpc-bevel-dark/60 border-b-retrogamingpc-accent border-r-retrogamingpc-accent;
   }
 
   .retrogamingpc-window {
-    @apply retrogamingpc-bevel bg-retrogamingpc-dark;
+    @apply retrogamingpc-bevel rounded-lg overflow-hidden bg-retrogamingpc-dark;
   }
 
   .retrogamingpc-titlebar {
-    @apply flex-row items-center justify-between bg-retrogamingpc-panel border-b border-b-retrogamingpc-bevel-dark px-2 py-1;
+    @apply flex-row items-center justify-between bg-retrogamingpc-panel border-b border-b-retrogamingpc-bevel-dark/60 px-3 py-1.5;
   }
 
   .retrogamingpc-panel {
-    @apply retrogamingpc-bevel bg-retrogamingpc-card p-3;
+    @apply retrogamingpc-bevel rounded-md bg-retrogamingpc-card p-4;
   }
 
   .retrogamingpc-panel-header {
-    @apply bg-retrogamingpc-panel border-b border-b-retrogamingpc-accent h-9 gap-2 px-2;
+    @apply bg-retrogamingpc-panel rounded-t-[5px] border-b border-b-retrogamingpc-accent h-10 gap-2 px-3;
   }
 
   .retrogamingpc-button {
@@ -45,11 +48,11 @@
   }
 
   .retrogamingpc-tab {
-    @apply bg-retrogamingpc-button border border-retrogamingpc-accent border-b-0 px-3 py-1;
+    @apply rounded-t bg-retrogamingpc-button border border-retrogamingpc-accent border-b-0 px-3 py-1;
   }
 
   .retrogamingpc-tab-active {
-    @apply bg-retrogamingpc-card border border-retrogamingpc-highlight border-b-0 px-3 py-1;
+    @apply rounded-t bg-retrogamingpc-card border border-retrogamingpc-highlight border-b-0 px-3 py-1;
   }
 
   .retrogamingpc-divider {

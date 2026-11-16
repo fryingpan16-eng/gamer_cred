@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ComponentRef, type ReactNode } from '
 import { Keyboard, Modal, Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useSoftShadow } from '@/hooks/useTheme';
 import { cn } from '@/utils/cn';
 import { keyboardOverlap } from '@/utils/keyboard';
 
@@ -26,6 +27,7 @@ export type RetroGamingPCSheetProps = {
  */
 export function RetroGamingPCSheet({ visible, title, onClose, headerRight, children, className }: RetroGamingPCSheetProps) {
   const insets = useSafeAreaInsets();
+  const shadow = useSoftShadow('window');
   const rootRef = useRef<ComponentRef<typeof View>>(null);
   const [overlap, setOverlap] = useState(0);
 
@@ -61,6 +63,7 @@ export function RetroGamingPCSheet({ visible, title, onClose, headerRight, child
           aria-modal
           aria-label={title}
           accessibilityViewIsModal
+          style={shadow}
           className={cn('retrogamingpc-window max-h-full w-full max-w-[680px] flex-shrink', className)}
         >
           <View className="retrogamingpc-titlebar">
@@ -72,7 +75,7 @@ export function RetroGamingPCSheet({ visible, title, onClose, headerRight, child
           </View>
           <ScrollView
             className="flex-shrink bg-retrogamingpc-card"
-            contentContainerClassName="p-3"
+            contentContainerClassName="p-4"
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="none"
           >

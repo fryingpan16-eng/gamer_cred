@@ -2,7 +2,7 @@
 
 The one list of next steps and to-dos. Claude reads this instead of re-deriving status, updates it when work lands, and reminds you of open items.
 
-_Last updated: 2026-11-15_
+_Last updated: 2026-11-16_
 
 ## Tech stack
 - Expo + React Native + Expo Router, TypeScript (strict); iOS, Android, web
@@ -35,6 +35,7 @@ _Last updated: 2026-11-15_
 - Audit pass 2 (000048): report indexes (faster account deletion), blocked authors' reviews left out of like/comment info; edited reviews refresh on Back; cancelled friend requests and uneditable comments now say so
 - Now Playing: tapping a filled cover opens the game page; Change game is in the slot's ⋯ menu
 - Bigger type (14px body on desktop, +10% on phones) in the device's standard sans-serif; `font-mono` = same font with tabular numbers. Game page cache (incl. time to beat) now 14 days
+- Modernised chrome, step 1 (all themes): small rounded corners, a softer 1px bevel (dark edge at 60%), soft drop shadows (`useSoftShadow`: buttons, cards, panels, dialogs, toasts, desktop window), roomier cards/panels/dialogs; Cloud's sunken fields and raised buttons now show every edge
 - IGDB cache: service-role only, purge keeps 60 days to match the outage fallback (000044); game records saved on the device for instant covers
 
 ## Your to-do list (only you can do these)
@@ -58,6 +59,7 @@ Done: migration 000049 pushed and `igdb-proxy` (14-day game page cache) redeploy
 
 ## Before alpha
 - Visual check of the light theme on every screen (phone + desktop)
+- Visual check of the modernised chrome on signed-in screens and on a real phone (Expo Go): shadows and rounded bevels (only Sign In was checked, in all 6 themes on web)
 - Visual check of the bigger text on every screen (phone + desktop): nothing cut off or crowded (game page already checked in code)
 - Visual check of the replay screens and the review page (action bar, ⋯ menus, comments), profile, list, friends and Now Playing ⋯ on phone and desktop
 
@@ -81,7 +83,7 @@ Needs the alpha list above, plus:
 - Ratings don't appear in the activity feed (reviews, likes, replays do)
 - Trending posts rank by game popularity, not review likes
 - "Add to list" button on game pages (today: added from the list page)
-- Light theme step 2 (maybe): rounded buttons/cards and soft shadows
+- Modernise step 2 (maybe): more breathing room screen by screen, bigger covers; then retro accents (pixel score badges, subtle desktop backdrop)
 - Comments: players can't delete their own (only edit); add "Delete own" if testers ask
 
 ## After alpha (planned)

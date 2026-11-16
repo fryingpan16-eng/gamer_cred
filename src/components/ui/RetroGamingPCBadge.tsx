@@ -36,7 +36,7 @@ export function RetroGamingPCBadge({ label, variant = 'neutral', className }: Re
   const fixed = FIXED[variant];
   return (
     <View
-      className={cn('self-start border px-1.5 py-px', !fixed && v.box, className)}
+      className={cn('self-start rounded-sm border px-1.5 py-px', !fixed && v.box, className)}
       style={fixed ? { backgroundColor: fixed.fill, borderColor: fixed.border } : undefined}
     >
       <Text

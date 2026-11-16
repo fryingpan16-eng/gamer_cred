@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
+import { useSoftShadow } from '@/hooks/useTheme';
 import { cn } from '@/utils/cn';
 
 export type RetroGamingPCPanelProps = {
@@ -20,8 +21,9 @@ export type RetroGamingPCPanelProps = {
  * shortens with "…" to leave room for the header buttons.
  */
 export function RetroGamingPCPanel({ title, headerRight, onTitlePress, titleAccessibilityLabel, children, className }: RetroGamingPCPanelProps) {
+  const shadow = useSoftShadow('card');
   return (
-    <View className={cn('retrogamingpc-bevel bg-retrogamingpc-card', className)}>
+    <View style={shadow} className={cn('retrogamingpc-bevel rounded-md bg-retrogamingpc-card', className)}>
       {title ? (
         <View className="retrogamingpc-panel-header flex-row items-center justify-between">
           {onTitlePress ? (
@@ -44,7 +46,7 @@ export function RetroGamingPCPanel({ title, headerRight, onTitlePress, titleAcce
           {headerRight ? <View className="shrink-0">{headerRight}</View> : null}
         </View>
       ) : null}
-      <View className="p-3">{children}</View>
+      <View className="p-3 md:p-4">{children}</View>
     </View>
   );
 }

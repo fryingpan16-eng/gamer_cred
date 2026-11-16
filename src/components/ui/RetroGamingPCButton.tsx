@@ -5,7 +5,7 @@ import { ActivityIndicator, Pressable, Text, View, type PressableProps } from 'r
 import { ACTION_COLORS, isActionKind, type ActionKind } from '@/constants/actionColors';
 import { cn } from '@/utils/cn';
 import { TOUCH_SLOP } from '@/utils/platform';
-import { useThemeColors } from '@/hooks/useTheme';
+import { useSoftShadow, useThemeColors } from '@/hooks/useTheme';
 
 /**
  * `default` / `primary` follow the colour theme. The action variants are fixed
@@ -48,6 +48,8 @@ export function RetroGamingPCButton({
   const disabled = !!disabledProp || loading;
   const [pressed, setPressed] = useState(false);
   const [hovered, setHovered] = useState(false);
+  // Slight lift (defines the edge on the light theme); gone while pressed or disabled.
+  const shadow = useSoftShadow(pressed || disabled ? 'none' : 'button');
   const action = isActionKind(variant) ? ACTION_COLORS[variant] : null;
   // Fixed-colour face + bevel in that hue (inverted while pressed).
   const actionStyle = action
@@ -72,7 +74,7 @@ export function RetroGamingPCButton({
       accessibilityState={{ disabled, busy: loading }}
       // The ⚠ glyph on danger buttons is decoration; screen readers hear the label.
       accessibilityLabel={label}
-      // 26px tall chrome, ~42px touch area on phones.
+      // 28px tall chrome, ~42px touch area on phones.
       hitSlop={TOUCH_SLOP}
       disabled={disabled}
       {...rest}
@@ -92,11 +94,11 @@ export function RetroGamingPCButton({
         setHovered(false);
         rest.onHoverOut?.(e);
       }}
-      style={actionStyle}
+      style={[shadow, actionStyle]}
       className={cn(
-        'min-h-[26px] items-center justify-center px-3 py-1',
+        'min-h-[28px] items-center justify-center px-3.5 py-1',
         action
-          ? 'border'
+          ? 'rounded border'
           : cn(
               pressed ? 'retrogamingpc-bevel-inset bg-retrogamingpc-dark' : 'retrogamingpc-bevel',
               !pressed && THEMED_SURFACE[variant as 'default' | 'primary'],

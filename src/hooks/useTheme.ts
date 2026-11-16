@@ -77,6 +77,26 @@ export function useDividerColor(alpha = 0.12): string {
   return useIsLightTheme() ? `rgba(0,0,0,${alpha})` : `rgba(255,255,255,${alpha})`;
 }
 
+/** How far a surface floats: buttons barely, cards just above the page, windows (dialogs, the desktop shell) highest. */
+export type ShadowLevel = 'button' | 'card' | 'window';
+
+const SHADOWS: Record<'dark' | 'light', Record<ShadowLevel, string>> = {
+  // Dark themes: a deep black shadow reads as depth on near-black surfaces.
+  dark: { button: '0px 1px 2px rgba(0, 0, 0, 0.4)', card: '0px 2px 6px rgba(0, 0, 0, 0.35)', window: '0px 10px 28px rgba(0, 0, 0, 0.55)' },
+  // Light theme: a faint cool-grey shadow (black looks dirty on white).
+  light: { button: '0px 1px 2px rgba(40, 60, 85, 0.25)', card: '0px 1px 4px rgba(40, 60, 85, 0.14)', window: '0px 8px 24px rgba(40, 60, 85, 0.22)' },
+};
+
+/**
+ * Soft drop shadow as a `style` (`boxShadow`, iOS / Android / web). Never use Tailwind
+ * `shadow-*` classes for this: they set CSS variables, which crash NativeWind on native
+ * when toggled. `none` (e.g. a pressed card) returns no shadow.
+ */
+export function useSoftShadow(level: ShadowLevel | 'none'): { boxShadow?: string } {
+  const light = useIsLightTheme();
+  return useMemo(() => (level === 'none' ? {} : { boxShadow: SHADOWS[light ? 'light' : 'dark'][level] }), [level, light]);
+}
+
 /** NativeWind `vars()` style for the themed root view. */
 export function useThemeVars() {
   const theme = useThemeStore((s) => s.theme);
