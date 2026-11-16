@@ -135,6 +135,8 @@ export type Database = {
           is_replay: boolean;
           /** When this playthrough was finished (replays; today unless backdated). */
           finished_on: string | null;
+          /** The author marked it as containing spoilers (migration 000049): feeds hide the text. */
+          has_spoilers: boolean;
         };
         Insert: {
           id?: string;
@@ -152,6 +154,7 @@ export type Database = {
           published_at?: Timestamp | null;
           is_replay?: boolean;
           finished_on?: string | null;
+          has_spoilers?: boolean;
         };
         Update: {
           id?: string;
@@ -169,6 +172,7 @@ export type Database = {
           published_at?: Timestamp | null;
           is_replay?: boolean;
           finished_on?: string | null;
+          has_spoilers?: boolean;
         };
         Relationships: [
           {
@@ -651,6 +655,8 @@ export type Database = {
           author_avatar_url: string | null;
           /** Migration 000040: each player's newest review only. */
           is_replay: boolean;
+          /** Migration 000049. */
+          has_spoilers: boolean;
         }[];
       };
       /** The author's published reviews of the review's game, oldest first (migration 000040). */
@@ -874,6 +880,8 @@ export type ActivityFeedRow = {
   preliminary_input: string | null;
   /** A replay review, or a 'replay' item (migration 000040). */
   is_replay: boolean;
+  /** A review marked as containing spoilers (migration 000049). */
+  has_spoilers: boolean;
 };
 
 type RatingScaleValue = 'numeric' | 'tier' | 'stars' | 'rounded';

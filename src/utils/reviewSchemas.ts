@@ -66,6 +66,8 @@ export const reviewFormSchema = z
     isReplay: z.boolean().default(false),
     /** YYYY-MM-DD the replay was finished; not in the future. */
     finishedOn: finishedOnSchema.nullable().default(null),
+    /** Contains spoilers: feeds hide the text until the review is opened (migration 000049). */
+    hasSpoilers: z.boolean().default(false),
   })
   // Mirrors DB check `reviews_published_has_rating`.
   .refine((r) => r.status === 'draft' || r.rating !== null, {

@@ -38,7 +38,7 @@ An original early-2000s desktop game-client look: olive palette, beveled chrome,
   - `navigate` (blue): go somewhere.
   - `default` / `primary` (themed): everything else.
   - Status colours use the same hues: errors red, info blue, success green; badges Published solid green, Draft green outline, Now Playing blue.
-- Bevels: lighter `border-t` / `border-l`, darker `border-b` / `border-r`. Type is compact with tight line heights and monospace numbers.
+- Bevels: lighter `border-t` / `border-l`, darker `border-b` / `border-r`. Type: the device's standard sans-serif (`font-mono` = same font with tabular numbers), 14px body on desktop (`tailwind.config.js`).
 - Icons: `@expo/vector-icons` (`MaterialCommunityIcons`, `Feather`).
 
 ## Code rules

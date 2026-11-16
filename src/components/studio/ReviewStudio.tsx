@@ -71,6 +71,7 @@ function ReviewEditor({ target, existing, priorReviews, quickRating, onRequestCl
   const [replayTicked, setReplayTicked] = useState(existing?.is_replay ?? false);
   const isReplay = forcedReplay || replayTicked;
   const [finishedOn, setFinishedOn] = useState(existing?.finished_on ?? localToday());
+  const [hasSpoilers, setHasSpoilers] = useState(existing?.has_spoilers ?? false);
   // undefined = untouched: an existing review keeps its platform; a new one uses your quick rating's
   // platform, else your Main platform.
   const [platformChoice, setPlatformChoice] = useState<number | null | undefined>(existing ? existing.platform_id : undefined);
@@ -85,7 +86,7 @@ function ReviewEditor({ target, existing, priorReviews, quickRating, onRequestCl
   const [confirmUnpublish, setConfirmUnpublish] = useState(false);
 
   // Unsaved changes = the form differs from what it opened with, or from the last save.
-  const snapshot = JSON.stringify([rating, content, platformId, isReplay, isReplay ? finishedOn : null]);
+  const snapshot = JSON.stringify([rating, content, platformId, isReplay, isReplay ? finishedOn : null, hasSpoilers]);
   const [savedSnapshot, setSavedSnapshot] = useState(snapshot);
   const dirty = snapshot !== savedSnapshot;
   useEffect(() => onDirtyChange(dirty), [dirty, onDirtyChange]);
@@ -105,6 +106,7 @@ function ReviewEditor({ target, existing, priorReviews, quickRating, onRequestCl
       platformId,
       isReplay,
       finishedOn: isReplay ? finishedOn : null,
+      hasSpoilers,
     });
     if (!parsed.success) {
       const next: FieldErrors = {};
@@ -180,6 +182,12 @@ function ReviewEditor({ target, existing, priorReviews, quickRating, onRequestCl
         error={fieldErrors.content}
         hint={`${content.length.toLocaleString()} / ${REVIEW_MAX_LENGTH.toLocaleString()}`}
         editable={!save.isPending}
+      />
+
+      <RetroGamingPCCheckbox
+        checked={hasSpoilers}
+        onToggle={() => setHasSpoilers((v) => !v)}
+        label="Contains spoilers (feeds hide the text until someone opens the review)"
       />
 
       <PlatformPicker value={platformId} onChange={setPlatformChoice} error={fieldErrors.platformId} />

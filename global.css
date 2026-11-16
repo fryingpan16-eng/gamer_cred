@@ -64,3 +64,10 @@
     @apply text-retrogamingpc-text-muted text-retrogamingpc-xs uppercase tracking-wider;
   }
 }
+
+/* Numbers (scores, counts, dates) keep fixed-width digits so columns line up. */
+@layer utilities {
+  .font-mono {
+    font-variant-numeric: tabular-nums;
+  }
+}

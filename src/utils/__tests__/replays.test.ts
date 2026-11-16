@@ -24,6 +24,7 @@ const review = (id: string, status: 'draft' | 'published', created: string, isRe
   published_at: status === 'published' ? created : null,
   is_replay: isReplay,
   finished_on: isReplay ? created.slice(0, 10) : null,
+  has_spoilers: false,
 });
 const target = (extra: Partial<StudioTarget> = {}): StudioTarget => ({ gameId: 1, nonce: 1, ...extra });
 

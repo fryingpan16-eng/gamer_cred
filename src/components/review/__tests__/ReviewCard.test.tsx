@@ -21,6 +21,7 @@ const review: ReviewCardData = {
   content: 'Great game',
   date: '2026-11-01T00:00:00Z',
   isReplay: false,
+  hasSpoilers: false,
 };
 
 const wrap = (ui: ReactElement) => render(<QueryClientProvider client={new QueryClient()}>{ui}</QueryClientProvider>);
@@ -48,6 +49,21 @@ describe('ReviewCard (the one review preview)', () => {
     await wrap(<ReviewCard review={{ ...review, userId: 'u-me' }} viewerId="u-me" like={{ liked: false, count: 3, comments: 0 }} />);
     expect(screen.queryByLabelText(/Like this review/)).toBeNull();
     expect(screen.getByText(/only you see this/)).toBeTruthy();
+  });
+
+  it('hides a spoiler review\'s text from others (the full review is one tap away), not from its author', async () => {
+    const spoiler = { ...review, hasSpoilers: true };
+    await wrap(<ReviewCard review={spoiler} viewerId="u-me" />);
+    expect(screen.queryByText('Great game')).toBeNull();
+    expect(screen.getByText('Contains spoilers')).toBeTruthy();
+    await fireEvent.press(screen.getByLabelText("other's review, contains spoilers. Open review"));
+    expect(router.push).toHaveBeenLastCalledWith({ pathname: '/review/[id]', params: { id: 'r1' } });
+  });
+
+  it('shows your own spoiler review\'s text to you', async () => {
+    await wrap(<ReviewCard review={{ ...review, hasSpoilers: true, userId: 'u-me' }} viewerId="u-me" />);
+    expect(screen.getByText('Great game')).toBeTruthy();
+    expect(screen.getByText('⚠ Spoilers')).toBeTruthy();
   });
 
   it('guests can read but not like', async () => {

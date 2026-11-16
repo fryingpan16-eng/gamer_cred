@@ -99,6 +99,8 @@ const CACHE_TTL_MS: Record<IgdbEntityType, number> = {
 const STALE_MAX_MS = 60 * 24 * HOUR_MS; // serve stale up to 60d if the upstream is down
 /** Individual game records (titles, covers) barely change. */
 const GAME_RECORD_TTL_MS = 7 * 24 * HOUR_MS;
+/** Full game pages (incl. time to beat, which changes slowly). */
+const GAME_DETAIL_TTL_MS = 14 * 24 * HOUR_MS;
 /** Bundle → "is a real collection" results (curation.ts) rarely change. */
 const BUNDLE_CHECK_TTL_MS = 30 * 24 * HOUR_MS;
 /** How long an isolate reuses game_overrides before re-reading the table. */
@@ -975,7 +977,7 @@ async function lookupGames(
   return { games, moved, cachedCount: fresh.size, fetchedAny: toFetch.length > 0 };
 }
 
-/** Full game page: cached 7 days as one record (IGDB detail + RAWG requirements). */
+/** Full game page: cached 14 days as one record (IGDB detail + RAWG requirements). */
 async function handleDetail(id: number, caller: Caller, movedFrom?: number): Promise<Response> {
   const db = cacheClient();
   // Another version folded into a game (000042): answer with that game's page.
@@ -996,7 +998,7 @@ async function handleDetail(id: number, caller: Caller, movedFrom?: number): Pro
     throw new HttpError(404, `Game ${id} is not in the GamerCred catalogue`);
   }
   const state = cached
-    ? cacheFreshness({ ageMs: cached.ageMs, ttlMs: GAME_RECORD_TTL_MS, refreshAfterMs: null, rulesVersion: cached.payload.rulesVersion, currentRulesVersion: rulesVersion })
+    ? cacheFreshness({ ageMs: cached.ageMs, ttlMs: GAME_DETAIL_TTL_MS, refreshAfterMs: null, rulesVersion: cached.payload.rulesVersion, currentRulesVersion: rulesVersion })
     : 'expired';
   if (cached && cachedGame && state !== 'expired') {
     const data: IgdbDetailResponse = { game: cachedGame, cached: true, fetchedAt: cached.payload.fetchedAt, ...moved };
@@ -1004,7 +1006,7 @@ async function handleDetail(id: number, caller: Caller, movedFrom?: number): Pro
   }
   // Refetching only because the IGDB rules changed? RAWG's PC requirements didn't — reuse them (saves RAWG quota).
   const reuseRequirements =
-    cached && cachedGame && cached.ageMs < GAME_RECORD_TTL_MS ? { requirements: cachedGame.systemRequirements } : undefined;
+    cached && cachedGame && cached.ageMs < GAME_DETAIL_TTL_MS ? { requirements: cachedGame.systemRequirements } : undefined;
 
   try {
     await caller.chargeUpstream();

@@ -16,7 +16,7 @@ function RequirementColumn({ title, rows }: { title: string; rows: SystemRequire
         ) : (
           rows.map((row, i) => (
             <View key={`${row.label ?? 'note'}-${i}`} className="flex-row gap-2">
-              {row.label ? <Text className="w-[84px] font-mono text-retrogamingpc-xs text-retrogamingpc-text-muted">{row.label}:</Text> : null}
+              {row.label ? <Text className="w-[104px] font-mono text-retrogamingpc-xs text-retrogamingpc-text-muted">{row.label}:</Text> : null}
               <Text className="flex-1 font-mono text-retrogamingpc-xs text-retrogamingpc-text" selectable>
                 {row.value}
               </Text>

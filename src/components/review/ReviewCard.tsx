@@ -75,6 +75,8 @@ export function ReviewCard({
   excerptLines = 4,
 }: ReviewCardProps) {
   const isMine = review.userId === viewerId;
+  // Spoilers: other players see a cover instead of the text; the full review (one tap) shows it.
+  const hideText = review.hasSpoilers && !!review.content && !isMine;
   const themeColors = useThemeColors();
   const author = review.author;
   const authorName = useShownName(author?.id, author?.username ?? '').name;
@@ -88,7 +90,7 @@ export function ReviewCard({
       className="gap-2"
       onPress={openReview}
       accessibilityRole="link"
-      accessibilityLabel={`${showAuthor && author ? `${authorName}'s review` : 'Review'}${showGame ? ` of ${gameName}` : ''}. Open review`}
+      accessibilityLabel={`${showAuthor && author ? `${authorName}'s review` : 'Review'}${showGame ? ` of ${gameName}` : ''}${review.hasSpoilers ? ', contains spoilers' : ''}. Open review`}
     >
       <View className="flex-row gap-3">
         {showAuthor && author ? (
@@ -125,9 +127,10 @@ export function ReviewCard({
             <RetroGamingPCRating rating={review.rating} size="compact" withNumeric />
           </View>
           <PlayedOnBadge platformId={review.platformId} />
-          {review.isReplay ? (
-            <View className="flex-row">
-              <RetroGamingPCBadge label="↻ Replay" />
+          {review.isReplay || review.hasSpoilers ? (
+            <View className="flex-row flex-wrap gap-1">
+              {review.isReplay ? <RetroGamingPCBadge label="↻ Replay" /> : null}
+              {review.hasSpoilers ? <RetroGamingPCBadge label="⚠ Spoilers" /> : null}
             </View>
           ) : null}
           {review.date ? <RetroGamingPCTimeAgo iso={review.date} onPress={openReview} /> : null}
@@ -144,7 +147,15 @@ export function ReviewCard({
         ) : null}
       </View>
 
-      {review.content ? (
+      {hideText ? (
+        <View className="retrogamingpc-bevel-inset flex-row items-center gap-2 bg-retrogamingpc-dark px-2.5 py-2">
+          <MaterialCommunityIcons name="eye-off-outline" size={18} color={themeColors.textMuted} />
+          <View className="flex-1">
+            <Text className="text-retrogamingpc-sm font-bold text-retrogamingpc-text-bright">Contains spoilers</Text>
+            <Text className="text-retrogamingpc-xs text-retrogamingpc-text-muted">Tap to read the review.</Text>
+          </View>
+        </View>
+      ) : review.content ? (
         <Text className="text-retrogamingpc-sm text-retrogamingpc-text" numberOfLines={excerptLines}>
           {review.content}
         </Text>

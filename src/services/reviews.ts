@@ -63,6 +63,7 @@ export async function saveReview(userId: string, values: SaveReviewInput): Promi
     platform_id: values.platformId,
     is_replay: values.isReplay,
     finished_on: values.isReplay ? values.finishedOn : null,
+    has_spoilers: values.hasSpoilers,
   };
   const { data, error } = values.reviewId
     ? await supabase.from('reviews').update(row).eq('id', values.reviewId).eq('user_id', userId).select().single()
@@ -81,7 +82,7 @@ export async function saveReview(userId: string, values: SaveReviewInput): Promi
 
 const REVIEW_DETAIL_SELECT = `
   id, user_id, game_id, rating, rating_input_scale, rating_input, platform_id, content, status,
-  published_at, updated_at, is_replay, finished_on,
+  published_at, updated_at, is_replay, finished_on, has_spoilers,
   author:profiles!reviews_user_id_fkey ( id, username, avatar_url )
 ` as const;
 

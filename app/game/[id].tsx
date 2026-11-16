@@ -38,14 +38,14 @@ function About({ summary, storyline }: { summary: string | null; storyline: stri
       <View className="gap-2">
         <Text
           numberOfLines={expanded ? undefined : ABOUT_COLLAPSED_LINES}
-          className="text-retrogamingpc-sm leading-[18px] text-retrogamingpc-text"
+          className="text-retrogamingpc-sm text-retrogamingpc-text"
         >
           {lead}
         </Text>
         {expanded && extraStory ? (
           <>
             <Text className="retrogamingpc-label">Storyline</Text>
-            <Text className="text-retrogamingpc-sm leading-[18px] text-retrogamingpc-text">{extraStory}</Text>
+            <Text className="text-retrogamingpc-sm text-retrogamingpc-text">{extraStory}</Text>
           </>
         ) : null}
         {canToggle ? (

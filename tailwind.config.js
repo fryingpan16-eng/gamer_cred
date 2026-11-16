@@ -1,3 +1,4 @@
+const { platformSelect } = require('nativewind/theme');
 const palettes = require('./src/constants/themePalettes.json');
 
 const DEFAULT_THEME = 'blue';
@@ -8,17 +9,28 @@ const toTriplet = (hex) =>
   [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)).join(' ');
 
 /**
- * Compact, high-density retro type scale (desktop/tablet sizes, px: [size, line height]).
+ * Type scale (desktop/tablet sizes, px: [size, line height]), in line with large
+ * social/video sites: 14px body, 12px metadata, 16–20px titles.
  * Below the `md` breakpoint (phones) every size is MOBILE_FONT_SCALE larger: the base
  * utilities carry the phone size and a min-width media rule restores these on wider screens.
  */
 const FONT_SIZES = {
-  'retrogamingpc-xs': [10, 12],
-  'retrogamingpc-sm': [11, 14],
-  'retrogamingpc-base': [12, 15],
-  'retrogamingpc-lg': [14, 17],
-  'retrogamingpc-xl': [18, 21],
+  'retrogamingpc-xs': [12, 16],
+  'retrogamingpc-sm': [13, 18],
+  'retrogamingpc-base': [14, 20],
+  'retrogamingpc-lg': [16, 22],
+  'retrogamingpc-xl': [20, 26],
 };
+
+/**
+ * One standard sans-serif everywhere: the device's own UI font. `font-mono` maps to
+ * it too (numbers stay aligned via tabular figures in global.css), so no Courier.
+ */
+const UI_FONT = platformSelect({
+  ios: 'System',
+  android: 'sans-serif',
+  default: 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+});
 const MOBILE_FONT_SCALE = 1.1;
 const MD_BREAKPOINT = '768px';
 const scaled = (px) => Math.round(px * MOBILE_FONT_SCALE * 10) / 10;
@@ -41,13 +53,14 @@ module.exports = {
           THEME_TOKENS.map((token) => [`retrogamingpc-${token}`, `rgb(var(--rgpc-${token}) / <alpha-value>)`]),
         ),
       },
-      // Phones get the type scale 10% larger (see FONT_SIZES); desktop keeps the compact sizes.
+      // Phones get the type scale 10% larger (see FONT_SIZES).
       fontSize: Object.fromEntries(
         Object.entries(FONT_SIZES).map(([name, [size, lineHeight]]) => [
           name,
           [`${scaled(size)}px`, { lineHeight: `${scaled(lineHeight)}px` }],
         ]),
       ),
+      fontFamily: { sans: UI_FONT, mono: UI_FONT },
       maxWidth: {
         'retrogamingpc-window': '1180px',
       },
@@ -60,7 +73,7 @@ module.exports = {
           THEME_TOKENS.map((token) => [`--rgpc-${token}`, toTriplet(palettes[DEFAULT_THEME][token])]),
         ),
       }),
-    // Desktop/tablet: back to the compact sizes (comes after the base font utilities, so it wins at ≥ md).
+    // Desktop/tablet: back to the FONT_SIZES values (comes after the base font utilities, so it wins at ≥ md).
     ({ addUtilities }) =>
       addUtilities({
         [`@media (min-width: ${MD_BREAKPOINT})`]: Object.fromEntries(

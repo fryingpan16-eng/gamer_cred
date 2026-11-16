@@ -97,7 +97,7 @@ function ActivityCard({ item, game, viewerId }: Omit<FeedItemCardProps, 'like'>)
           </View>
         )}
 
-        {item.excerpt ? (
+        {item.excerpt && !item.has_spoilers ? (
           <Text className="text-retrogamingpc-xs text-retrogamingpc-text" numberOfLines={3}>
             {item.kind === 'now_playing' ? `Notes: ${item.excerpt}` : item.excerpt}
           </Text>

@@ -110,6 +110,7 @@ export default function ReviewScreen() {
                   {isMine ? <RetroGamingPCBadge label="You" variant="nowPlaying" /> : null}
                   {data.status === 'draft' ? <RetroGamingPCBadge label="Draft" variant="draft" /> : null}
                   {data.is_replay ? <RetroGamingPCBadge label="↻ Replay" /> : null}
+                  {data.has_spoilers ? <RetroGamingPCBadge label="⚠ Spoilers" /> : null}
                 </View>
                 <RetroGamingPCTimeAgo iso={data.published_at ?? data.updated_at} onPress={openAuthor} />
               </View>

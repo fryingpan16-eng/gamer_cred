@@ -18,7 +18,7 @@ export function SystemSpecsPanel({ title, specs }: { title: string; specs: PcSpe
         ) : (
           rows.map((field) => (
             <View key={field.key} className="flex-row gap-2">
-              <Text className="w-[84px] font-mono text-retrogamingpc-xs text-retrogamingpc-text-muted">{field.label}:</Text>
+              <Text className="w-[104px] font-mono text-retrogamingpc-xs text-retrogamingpc-text-muted">{field.label}:</Text>
               <Text className="flex-1 font-mono text-retrogamingpc-xs text-retrogamingpc-text" selectable>
                 {specs[field.key]}
               </Text>

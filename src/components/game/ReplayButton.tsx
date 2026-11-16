@@ -126,7 +126,7 @@ function ReplayDialog({
       <View className="gap-3">
         {add.isError ? <RetroGamingPCAlert message={add.error.message} /> : null}
         {remove.isError ? <RetroGamingPCAlert message={remove.error.message} /> : null}
-        <Text className="text-retrogamingpc-sm leading-[19px] text-retrogamingpc-text">
+        <Text className="text-retrogamingpc-sm text-retrogamingpc-text">
           {count.plays > 1
             ? `You’ve played this ${count.plays} times (${count.replays} ${count.replays === 1 ? 'replay' : 'replays'}).`
             : 'Played it again? Log the replay here. It doesn’t change your score.'}{' '}

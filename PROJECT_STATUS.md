@@ -2,7 +2,7 @@
 
 The one list of next steps and to-dos. Claude reads this instead of re-deriving status, updates it when work lands, and reminds you of open items.
 
-_Last updated: 2026-11-11_
+_Last updated: 2026-11-15_
 
 ## Tech stack
 - Expo + React Native + Expo Router, TypeScript (strict); iOS, Android, web
@@ -14,7 +14,7 @@ _Last updated: 2026-11-11_
 - `app/(tabs)/` — Home, Search, Post (Review Studio), Stats, Profile
 - `app/game/[id].tsx`, `app/review/[id].tsx`, `app/reviews/[gameId].tsx`
 - `src/services/` (Supabase calls) · `src/hooks/` (queries) · `src/utils/queryKeys.ts`
-- `supabase/migrations/` (000001–000048) · `supabase/tests/` · `supabase/name-rules/`
+- `supabase/migrations/` (000001–000049) · `supabase/tests/` · `supabase/name-rules/`
 
 ## Completed
 - Auth, search, Review Studio, profiles, game and studio pages, feeds, trending, friends
@@ -31,8 +31,10 @@ _Last updated: 2026-11-11_
 - Settings → About: version, Terms, Privacy Policy (`/privacy`, public), Open-source licenses (`/licenses`, from `npm run licenses`), data credits. Terms now mention Cloudflare Turnstile (TERMS_VERSION 2026-11-10: everyone re-accepts once)
 - IGDB credit: "Game data from IGDB · View on IGDB ↗" at the foot of game pages; studio pages and Search credit IGDB too
 - Audit 2026-11-10 (000047): hourly caps on new reviews (30), lists (20), reports (30), friend requests (60); `game_merges` reads need a session; ratings/list pages and friendship queries reject non-UUID ids
+- Spoiler reviews (000049): "Contains spoilers" tick box in the Review Studio; cards cover the text for other players, the review page shows it with a ⚠ Spoilers badge
 - Audit pass 2 (000048): report indexes (faster account deletion), blocked authors' reviews left out of like/comment info; edited reviews refresh on Back; cancelled friend requests and uneditable comments now say so
 - Now Playing: tapping a filled cover opens the game page; Change game is in the slot's ⋯ menu
+- Bigger type (14px body on desktop, +10% on phones) in the device's standard sans-serif; `font-mono` = same font with tabular numbers. Game page cache (incl. time to beat) now 14 days
 - IGDB cache: service-role only, purge keeps 60 days to match the outage fallback (000044); game records saved on the device for instant covers
 
 ## Your to-do list (only you can do these)
@@ -43,7 +45,7 @@ _Last updated: 2026-11-11_
 - [ ] Ko-fi page (when monetization starts); tell Claude your country for "Where to buy"
 
 ## Alpha launch: web + Android APK together (next)
-Done: `eas.json` (`preview` = APK for friends, `production` = Play AAB), app name GamerCred, dark splash + placeholder pixel "GC" icon; profile pictures limited to 1 check per hour; `igdb-proxy` (how long to beat) and `avatar` deployed 2026-11-10.
+Done: migration 000049 pushed and `igdb-proxy` (14-day game page cache) redeployed 2026-11-15; `eas.json` (`preview` = APK for friends, `production` = Play AAB), app name GamerCred, dark splash + placeholder pixel "GC" icon; profile pictures limited to 1 check per hour; `igdb-proxy` (how long to beat) and `avatar` deployed 2026-11-10.
 - [ ] You: review the Privacy Policy and Terms drafts (`src/constants/legal.ts`, also at `/privacy` and `/terms`); the Privacy Policy names Resend for email, so tell Claude if you pick another provider
 - [ ] You: app logo (1024×1024 master; Claude makes the sizes) — placeholder is fine until then
 - [ ] You: choose the permanent Android package name (e.g. `com.<you>.gamercred`); Claude adds it to `app.json`
@@ -56,6 +58,7 @@ Done: `eas.json` (`preview` = APK for friends, `production` = Play AAB), app nam
 
 ## Before alpha
 - Visual check of the light theme on every screen (phone + desktop)
+- Visual check of the bigger text on every screen (phone + desktop): nothing cut off or crowded (game page already checked in code)
 - Visual check of the replay screens and the review page (action bar, ⋯ menus, comments), profile, list, friends and Now Playing ⋯ on phone and desktop
 
 ## Before closed testing (Google Play beta)

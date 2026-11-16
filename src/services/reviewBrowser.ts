@@ -27,6 +27,8 @@ export type ReviewCardData = {
   date: string | null;
   /** A later playthrough (migration 000040). */
   isReplay: boolean;
+  /** Marked as containing spoilers: the card hides the text (migration 000049). */
+  hasSpoilers: boolean;
 };
 
 export function cardFromFeedRow(row: ActivityFeedRow): ReviewCardData {
@@ -40,6 +42,7 @@ export function cardFromFeedRow(row: ActivityFeedRow): ReviewCardData {
     content: row.excerpt,
     date: row.occurred_at,
     isReplay: row.is_replay === true,
+    hasSpoilers: row.has_spoilers === true,
   };
 }
 
@@ -58,6 +61,7 @@ export function cardFromReview(
     | 'published_at'
     | 'updated_at'
     | 'is_replay'
+    | 'has_spoilers'
   >,
 ): ReviewCardData {
   return {
@@ -70,6 +74,7 @@ export function cardFromReview(
     content: r.content,
     date: r.published_at ?? r.updated_at,
     isReplay: r.is_replay,
+    hasSpoilers: r.has_spoilers,
   };
 }
 
@@ -103,6 +108,7 @@ export async function browseGameReviews(
       content: r.content,
       date: r.published_at ?? r.updated_at,
       isReplay: r.is_replay === true,
+      hasSpoilers: r.has_spoilers === true,
     })),
     nextPage: data.length === pageSize ? page + 1 : null,
   };

@@ -48,7 +48,7 @@ function ScaleValue({
 }) {
   const themeColors = useThemeColors();
   const big = emphasis === 'primary';
-  const valueClass = cn('text-retrogamingpc-text-bright', big ? HERO_SCORE.valueClass : 'font-mono font-bold text-[16px] leading-[19px]');
+  const valueClass = cn('text-retrogamingpc-text-bright', big ? HERO_SCORE.valueClass : 'font-mono text-retrogamingpc-lg font-bold');
   const unitClass = cn('font-mono text-retrogamingpc-text-muted', big ? 'text-retrogamingpc-lg' : 'text-retrogamingpc-sm');
 
   if (!rating) return <Text className={cn(valueClass, 'text-retrogamingpc-text-muted')}>--</Text>;
@@ -86,7 +86,7 @@ function ScaleValue({
             style={{ backgroundColor: def.color, borderColor: tierBorderColor(def.tier) }}
           >
             <Text
-              className={cn('font-mono font-bold', big ? 'text-[24px] leading-[28px]' : 'text-[15px] leading-[18px]')}
+              className={cn('font-mono font-bold', big ? 'text-[24px] leading-[28px]' : 'text-retrogamingpc-lg')}
               style={{ color: def.textColor }}
             >
               {def.label}
@@ -139,7 +139,7 @@ export function ScoreScales({
             className={cn('flex-row items-center gap-2 py-1.5', divided && 'border-t')}
             style={[divided ? { borderTopColor: divider } : null, primary ? { minHeight: HERO_SCORE.rowHeight } : null]}
           >
-            {primary ? null : <Text className="w-10 text-retrogamingpc-xs text-retrogamingpc-text-muted">{LABELS[scale]}</Text>}
+            {primary ? null : <Text className="w-16 text-retrogamingpc-xs text-retrogamingpc-text-muted">{LABELS[scale]}</Text>}
             <ScaleValue scale={scale} rating={rating} numericText={numericText} emphasis={primary ? 'primary' : 'secondary'} />
           </View>
         );
