@@ -50,6 +50,8 @@ export function describeAdminAction(entry: AdminActivityEntry): string {
       return 'Rejected a held profile picture';
     case 'user.remove':
       return 'Removed a player’s account';
+    case 'admin.demote':
+      return 'Removed a player’s admin role';
     case 'user.reset_display_name': {
       const old = str(entry.details.display_name);
       return old ? `Reset the display name “${old}”` : 'Reset a player’s display name';

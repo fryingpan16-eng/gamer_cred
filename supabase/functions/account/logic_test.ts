@@ -5,11 +5,12 @@ import { handleAccount, parseRequest, type AccountDeps } from './logic.ts';
 const ME = '00000000-0000-0000-0000-00000000000a';
 const BAD = '00000000-0000-0000-0000-00000000000b';
 
-function fakes(callerId: string | null, admins: string[] = []) {
+function fakes(callerId: string | null, admins: string[] = [], owner: string | null = null) {
   const calls: string[] = [];
   const deps: AccountDeps = {
     callerId,
     isAdmin: (id) => Promise.resolve(admins.includes(id)),
+    removalBlock: (caller, target) => Promise.resolve(target === owner ? 'owner' : admins.includes(target) && caller !== owner ? 'admin' : null),
     listAvatarFiles: (id) => Promise.resolve([`${id}/avatar.jpg`]),
     removeAvatarFiles: (paths) => {
       calls.push(`storage:${paths.join(',')}`);
@@ -78,4 +79,30 @@ Deno.test('a failed picture cleanup does not fail the deletion', async () => {
   self.deps.removeAvatarFiles = () => Promise.reject(new Error('storage down'));
   assertEquals((await handleAccount({ action: 'delete_self' }, self.deps)).status, 200);
   assertEquals(self.calls, [`auth:${ME}`]);
+});
+
+Deno.test('an admin can’t remove another admin; the owner can; nobody removes the owner', async () => {
+  const OWNER = '00000000-0000-0000-0000-00000000000c';
+  const byAdmin = fakes(ME, [ME, BAD, OWNER], OWNER);
+  const refused = await handleAccount({ action: 'admin_delete_user', user_id: BAD }, byAdmin.deps);
+  assertEquals(refused, { status: 403, body: { success: false, error: 'Only the app owner can remove an admin.' } });
+  assertEquals((await handleAccount({ action: 'admin_delete_user', user_id: OWNER }, byAdmin.deps)).status, 403);
+  assertEquals(byAdmin.calls, []);
+
+  const byOwner = fakes(OWNER, [ME, BAD, OWNER], OWNER);
+  assertEquals((await handleAccount({ action: 'admin_delete_user', user_id: BAD }, byOwner.deps)).status, 200);
+  assertEquals(byOwner.calls[0], `auth:${BAD}`);
+});
+
+Deno.test('a failed owner check deletes nothing', async () => {
+  const admin = fakes(ME, [ME]);
+  admin.deps.removalBlock = () => Promise.reject(new Error('db down'));
+  let threw = false;
+  try {
+    await handleAccount({ action: 'admin_delete_user', user_id: BAD }, admin.deps);
+  } catch {
+    threw = true;
+  }
+  assertEquals(threw, true);
+  assertEquals(admin.calls, []);
 });

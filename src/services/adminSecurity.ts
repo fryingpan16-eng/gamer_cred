@@ -83,3 +83,16 @@ export async function fetchAdminActivity(limit = 100): Promise<AdminActivityEntr
     details: r.details && typeof r.details === 'object' && !Array.isArray(r.details) ? (r.details as Record<string, unknown>) : {},
   }));
 }
+
+/** Whether the viewer (the verified app owner) may take this player's admin role away (migration 000050). */
+export async function fetchCanDemoteAdmin(userId: string): Promise<boolean> {
+  const { data, error } = await supabase.rpc('admin_can_demote', { p_user: userId });
+  if (error) throw new Error(error.message || 'Could not check admin status.');
+  return data === true;
+}
+
+/** Owner only: removes the admin role; the account stays. Logged in Moderation → Activity. */
+export async function demoteAdmin(userId: string): Promise<void> {
+  const { error } = await supabase.rpc('admin_demote', { p_user: userId });
+  if (error) throw new Error(error.message || 'Could not remove the admin role.');
+}

@@ -3,6 +3,7 @@ import { View } from 'react-native';
 
 import { RetroGamingPCAlert, RetroGamingPCConfirmModal } from '@/components/ui';
 import { useShownName } from '@/components/user/UserName';
+import { useCanDemoteAdmin, useDemoteAdmin } from '@/hooks/useAdminSecurity';
 import { useIsAdmin } from '@/hooks/useLists';
 import { useAdminResetDisplayName } from '@/hooks/useNames';
 import { useBlockUser } from '@/hooks/useSafety';
@@ -10,15 +11,18 @@ import { showToast } from '@/hooks/useToastStore';
 
 import { MoreMenu, type MoreMenuAction } from './MoreMenu';
 
-/** ⋯ on another player's profile: Report, Block, and (admins) Reset Display Name. */
+/** ⋯ on another player's profile: Report, Block, (admins) Reset Display Name and (the owner, on an admin) Remove Admin Role. */
 export function ProfileSafetyActions({ userId, username }: { userId: string; username: string }) {
   const block = useBlockUser();
   const isAdmin = useIsAdmin();
   const reset = useAdminResetDisplayName();
+  const canDemote = useCanDemoteAdmin(userId, isAdmin.data === true);
+  const demote = useDemoteAdmin();
   const shown = useShownName(userId, username);
   const name = shown.name;
   const [confirmBlock, setConfirmBlock] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
+  const [confirmDemote, setConfirmDemote] = useState(false);
   return (
     <View className="flex-row flex-wrap items-center gap-2">
       <MoreMenu
@@ -28,6 +32,9 @@ export function ProfileSafetyActions({ userId, username }: { userId: string; use
           { label: `Block ${name}`, variant: 'danger', onPress: () => setConfirmBlock(true) },
           ...(isAdmin.data && shown.hasDisplayName
             ? [{ label: 'Reset Display Name', variant: 'danger', onPress: () => setConfirmReset(true) } satisfies MoreMenuAction]
+            : []),
+          ...(canDemote.data
+            ? [{ label: 'Remove Admin Role', variant: 'danger', onPress: () => setConfirmDemote(true) } satisfies MoreMenuAction]
             : []),
         ]}
       />
@@ -56,7 +63,23 @@ export function ProfileSafetyActions({ userId, username }: { userId: string; use
           })
         }
       />
+      <RetroGamingPCConfirmModal
+        visible={confirmDemote}
+        title="Remove admin role?"
+        message={`${name} (@${username}) loses every admin tool straight away. Their account, reviews and lists stay. Making them an admin again takes the SQL Editor and a new authenticator approval. This is recorded in Moderation → Activity.`}
+        confirmLabel="Remove Admin Role"
+        destructive
+        busy={demote.isPending}
+        onCancel={() => setConfirmDemote(false)}
+        onConfirm={() =>
+          demote.mutate(userId, {
+            onSuccess: () => showToast(`${name} is no longer an admin.`, 'success'),
+            onSettled: () => setConfirmDemote(false),
+          })
+        }
+      />
       {reset.isError ? <RetroGamingPCAlert message={reset.error.message} /> : null}
+      {demote.isError ? <RetroGamingPCAlert message={demote.error.message} /> : null}
     </View>
   );
 }

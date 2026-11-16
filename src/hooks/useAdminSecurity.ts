@@ -1,6 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { fetchAdminActivity, fetchAdminStatus, startAuthenticatorSetup, verifyAuthenticatorCode } from '@/services/adminSecurity';
+import {
+  demoteAdmin,
+  fetchAdminActivity,
+  fetchAdminStatus,
+  fetchCanDemoteAdmin,
+  startAuthenticatorSetup,
+  verifyAuthenticatorCode,
+} from '@/services/adminSecurity';
 import { queryKeys } from '@/utils/queryKeys';
 
 import { useMemberId } from './useAuth';
@@ -35,4 +42,24 @@ export function useVerifyAdminCode() {
 
 export function useAdminActivity(enabled: boolean) {
   return useQuery({ queryKey: queryKeys.safety.adminActivity(), queryFn: () => fetchAdminActivity(), enabled, staleTime: 30_000 });
+}
+
+/** True only for the verified app owner looking at another admin (migration 000050). */
+export function useCanDemoteAdmin(userId: string, enabled: boolean) {
+  const viewerId = useMemberId();
+  return useQuery({
+    queryKey: queryKeys.safety.canDemote(viewerId ?? 'none', userId),
+    queryFn: () => fetchCanDemoteAdmin(userId),
+    enabled: enabled && viewerId !== null,
+    staleTime: 60_000,
+  });
+}
+
+/** Owner: take the admin role away (the account stays); badges and admin queries reload. */
+export function useDemoteAdmin() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (userId: string) => demoteAdmin(userId),
+    onSuccess: () => void queryClient.invalidateQueries(),
+  });
 }

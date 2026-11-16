@@ -49,6 +49,13 @@ Deno.serve(async (req) => {
         if (error) throw error;
         return data === true;
       },
+      // Fails closed: an error or an unexpected answer throws, and nothing is deleted.
+      removalBlock: async (callerId, targetId) => {
+        const { data, error } = await admin.rpc('admin_removal_block', { p_caller: callerId, p_target: targetId });
+        if (error) throw error;
+        if (data === null || data === 'owner' || data === 'admin') return data;
+        throw new Error(`Unexpected admin_removal_block answer: ${String(data)}`);
+      },
       logAdmin: async (adminId, action, targetType, targetId, details) => {
         const { error } = await admin
           .from('admin_actions')

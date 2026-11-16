@@ -36,9 +36,11 @@ _Last updated: 2026-11-16_
 - Now Playing: tapping a filled cover opens the game page; Change game is in the slot's ⋯ menu
 - Bigger type (14px body on desktop, +10% on phones) in the device's standard sans-serif; `font-mono` = same font with tabular numbers. Game page cache (incl. time to beat) now 14 days
 - Modernised chrome, step 1 (all themes): small rounded corners, a softer 1px bevel (dark edge at 60%), soft drop shadows (`useSoftShadow`: buttons, cards, panels, dialogs, toasts, desktop window), roomier cards/panels/dialogs; Cloud's sunken fields and raised buttons now show every edge
+- App owner (000050): one admin is the owner; admins can't remove each other's accounts, nobody removes the owner's, and the owner can take an admin's role away without deleting the account (profile → ⋯ → Remove Admin Role)
 - IGDB cache: service-role only, purge keeps 60 days to match the outage fallback (000044); game records saved on the device for instant covers
 
 ## Your to-do list (only you can do these)
+- [ ] Push migration 000050 (`! npx supabase db push`) and redeploy the `account` function (`! npx supabase functions deploy account`): push the migration FIRST, the function needs it
 - [ ] Phones (Expo Go): restart `npx expo start -c` and reload Expo Go to get comments + on-device game records
 - [ ] Admin: Settings → Admin Security → set up, THEN approve the authenticator in the SQL Editor (README → Admins). Unlocks admin tools and the badge.
 - [ ] Guest browsing, in this order: (1) Supabase → allow anonymous sign-ins; (2) Cloudflare Turnstile widget → `EXPO_PUBLIC_TURNSTILE_SITE_KEY` in `.env`; (3) LAST: Supabase CAPTCHA with the secret (earlier breaks every login)

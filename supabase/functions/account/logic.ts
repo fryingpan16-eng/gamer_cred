@@ -14,6 +14,11 @@ export type AccountDeps = {
   callerId: string | null;
   /** In app_admins AND this request's session is two-step verified (migration 000025). */
   isAdmin: (userId: string) => Promise<boolean>;
+  /**
+   * Why the caller may not remove the target (migration 000050): 'owner' = the target is the app
+   * owner (never removed), 'admin' = the target is an admin and the caller isn't the owner; null = allowed.
+   */
+  removalBlock: (callerId: string, targetId: string) => Promise<'owner' | 'admin' | null>;
   /** Append to the admin activity log. */
   logAdmin: (adminId: string, action: string, targetType: string, targetId: string, details?: Record<string, unknown>) => Promise<void>;
   /** Paths of every file in avatars/<userId>/. */
@@ -71,6 +76,9 @@ export async function handleAccount(req: AccountRequest | null, deps: AccountDep
   if (req.user_id === deps.callerId) {
     return { status: 400, body: { success: false, error: 'Use “Delete account” in Settings to delete your own account.' } };
   }
+  const block = await deps.removalBlock(deps.callerId, req.user_id);
+  if (block === 'owner') return { status: 403, body: { success: false, error: 'The app owner’s account can’t be removed.' } };
+  if (block === 'admin') return { status: 403, body: { success: false, error: 'Only the app owner can remove an admin.' } };
   // Delete first; only then close their reports (so a failed removal leaves them in the queue).
   await deleteEverything(req.user_id, deps);
   await deps.closeReportsAbout(req.user_id, deps.callerId);

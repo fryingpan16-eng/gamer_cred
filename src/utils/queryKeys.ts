@@ -103,6 +103,8 @@ export const queryKeys = {
     terms: (userId: string, version: string) => [...queryKeys.safety.all(), 'terms', userId, version] as const,
     /** Admin membership + two-step status for this sign-in (migration 000025). */
     adminStatus: (userId: string) => [...queryKeys.safety.all(), 'adminStatus', userId] as const,
+    /** Owner: may the viewer take this player's admin role away (migration 000050). */
+    canDemote: (viewerId: string, userId: string) => [...queryKeys.safety.all(), 'canDemote', viewerId, userId] as const,
     /** Admin activity log. */
     adminActivity: () => [...queryKeys.safety.all(), 'adminActivity'] as const,
   },

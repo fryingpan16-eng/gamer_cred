@@ -394,9 +394,9 @@ export type Database = {
 
       /** App admins (migration 000019): may pin lists to Home. Readable only for your own row. */
       app_admins: {
-        Row: { user_id: string; created_at: Timestamp; mfa_factor_id: string | null };
-        Insert: { user_id: string; created_at?: Timestamp; mfa_factor_id?: string | null };
-        Update: { user_id?: string; created_at?: Timestamp; mfa_factor_id?: string | null };
+        Row: { user_id: string; created_at: Timestamp; mfa_factor_id: string | null; is_owner: boolean };
+        Insert: { user_id: string; created_at?: Timestamp; mfa_factor_id?: string | null; is_owner?: boolean };
+        Update: { user_id?: string; created_at?: Timestamp; mfa_factor_id?: string | null; is_owner?: boolean };
         Relationships: [];
       };
 
@@ -707,6 +707,10 @@ export type Database = {
       is_app_admin_member: { Args: Record<string, never>; Returns: boolean };
       /** The owner approved (pinned) your authenticator, migration 000037. */
       admin_factor_approved: { Args: Record<string, never>; Returns: boolean };
+      /** You are the verified app owner and p_user is another admin (migration 000050). */
+      admin_can_demote: { Args: { p_user: string }; Returns: boolean };
+      /** Owner only: takes the admin role away, keeps the account (migration 000050). */
+      admin_demote: { Args: { p_user: string }; Returns: undefined };
       /** Admin activity log, newest first (verified admins only). */
       admin_activity: {
         Args: { p_limit?: number };

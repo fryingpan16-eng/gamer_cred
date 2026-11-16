@@ -177,7 +177,11 @@ select id from public.profiles where username = 'their_username';
 ```
 They then set up two-step sign-in in **Settings → Admin Security**, and you approve their authenticator (above), before any admin tool works for them.
 
-**Removing an admin:**
+**The app owner** (migration 000050) is the one admin with `app_admins.is_owner = true`.
+- Nobody can remove the owner's account through moderation, and only the owner can remove another admin's account. Admins can't remove each other.
+- Moving ownership is SQL Editor only: set `is_owner = false` on the old row and `true` on the new one, in one transaction.
+
+**Removing an admin (their account stays).** The owner opens their profile → ⋯ → **Remove Admin Role** (needs two-step sign-in; recorded in the activity log). Or in the SQL Editor:
 ```sql
 delete from public.app_admins
 where user_id = (select id from public.profiles where username = 'their_username');
@@ -334,7 +338,7 @@ Storage: a private `avatar-uploads` bucket (each user can write only their own p
 - **Replays:** `most_replayed_game`, `replay_counts` (profile Ratings panel) and `review_playthroughs` ("Review N of M"). Replay count = game-page replays + published replay reviews; plays = replays + 1.
 - **Ratings list:** `user_ratings_table` returns a player's full ratings list with game details in one call.
 - **Lists:** `add_list_item`, `move_list_item` (renumbers 1..n), `set_list_pin` (admins only) and `smart_list_games` (a smart list's games, live).
-- **Admins:** `is_app_admin` (admin with a two-step-verified session), `is_app_admin_member`, `admin_activity` and `log_admin_action`.
+- **Admins:** `is_app_admin` (admin with a two-step-verified session), `is_app_admin_member`, `admin_activity`, `log_admin_action`, and the owner's `admin_can_demote` / `admin_demote` (`admin_removal_block` is for the `account` function only).
 - **Trending:** `trending_games` and `trending_posts` (last 14 days of ratings and published reviews).
 - **Safety:** `block_user`, `unblock_user`, `my_blocked_users`, `block_state`, `admin_reports` and `admin_resolve_reports` (admins only).
 - **Profiles:** atomic helpers for favourites and platforms.
