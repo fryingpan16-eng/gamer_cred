@@ -20,9 +20,12 @@ import { useDividerColor, useThemeColors } from '@/hooks/useTheme';
 
 import { CompanyLinks } from './CompanyLinks';
 import { EntryTypeBadge } from './EntryTypeBadge';
+import { GenerationBadge } from './GenerationBadge';
 import { RemasterNote } from './RemastersPanel';
 import { SCALE_DIVIDER_ALPHA, ScoreScales, TierScoreBox } from './ScoreScales';
 import { NowPlayingButton } from './GameActions';
+import { LibraryButton } from '@/components/library/LibraryButton';
+
 import { BacklogButton } from './BacklogButton';
 import { LikeButton } from './LikeButton';
 import { ReplayButton } from './ReplayButton';
@@ -122,15 +125,18 @@ export function GameHero({ game, stats }: GameHeroProps) {
         )}
       </View>
       {isGuest ? (
-        <GuestPrompt feature="like, rate or review this game, or add it to your backlog or Now Playing" compact />
+        <GuestPrompt feature="like, rate or review this game, or add it to your library, backlog or Now Playing" compact />
       ) : (
-        // Phones: review across the top, then two even pairs. Desktop: one row, Now Playing on the right.
+        // Phones: review across the top, then even pairs (Now Playing takes the last row). Desktop: one row, Now Playing on the right.
         <View className="flex-row flex-wrap gap-2 pt-1">
           <View className="w-full md:w-auto">
             <WriteReviewButton gameId={game.id} />
           </View>
           <View className="min-w-[45%] flex-1 md:min-w-0 md:flex-none">
             <LikeButton gameId={game.id} gameName={game.name} />
+          </View>
+          <View className="min-w-[45%] flex-1 md:min-w-0 md:flex-none">
+            <LibraryButton game={game} />
           </View>
           <View className="min-w-[45%] flex-1 md:min-w-0 md:flex-none">
             <BacklogButton gameId={game.id} gameName={game.name} />
@@ -167,21 +173,32 @@ export function GameHero({ game, stats }: GameHeroProps) {
           <CoverTile game={game} gameId={game.id} />
         </View>
         <View className="flex-1 gap-1.5">
-          <Text role="heading" className="text-retrogamingpc-xl font-bold text-retrogamingpc-text-bright md:text-[24px] md:leading-[28px]">
-            {game.name}
-          </Text>
-          {game.developers.length > 0 ? (
-            <Text className="text-retrogamingpc-sm text-retrogamingpc-text">
-              <Text className="text-retrogamingpc-text-muted">Developer: </Text>
-              <CompanyLinks companies={game.developerCompanies} fallback={game.developers} />
-            </Text>
-          ) : null}
-          {game.publishers.length > 0 ? (
-            <Text className="text-retrogamingpc-sm text-retrogamingpc-text">
-              <Text className="text-retrogamingpc-text-muted">Publisher: </Text>
-              <CompanyLinks companies={game.publisherCompanies} fallback={game.publishers} />
-            </Text>
-          ) : null}
+          {/* The generation badge sits beside the title block, in the flow, so nothing runs under it. */}
+          <View className="flex-row items-start gap-2">
+            <View className="min-w-0 flex-1 gap-1.5">
+              <Text
+                role="heading"
+                className="text-retrogamingpc-xl font-bold text-retrogamingpc-text-bright md:text-[24px] md:leading-[28px]"
+              >
+                {game.name}
+              </Text>
+              {game.developers.length > 0 ? (
+                <Text className="text-retrogamingpc-sm text-retrogamingpc-text">
+                  <Text className="text-retrogamingpc-text-muted">Developer: </Text>
+                  <CompanyLinks companies={game.developerCompanies} fallback={game.developers} />
+                </Text>
+              ) : null}
+              {game.publishers.length > 0 ? (
+                <Text className="text-retrogamingpc-sm text-retrogamingpc-text">
+                  <Text className="text-retrogamingpc-text-muted">Publisher: </Text>
+                  <CompanyLinks companies={game.publisherCompanies} fallback={game.publishers} />
+                </Text>
+              ) : null}
+            </View>
+            <View className="shrink-0">
+              <GenerationBadge gameId={game.id} />
+            </View>
+          </View>
           <EntryTypeBadge game={game} />
           <RemasterNote remasters={game.remasters ?? []} />
           {release ? (

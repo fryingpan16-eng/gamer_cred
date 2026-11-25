@@ -22,6 +22,8 @@ type PlatformPickerProps = {
   compact?: boolean;
   /** Label for the null chip. Default "Not specified". */
   noneLabel?: string;
+  /** Offer only these platform ids (e.g. a game's release platforms for the Library). */
+  only?: readonly number[];
 };
 
 function Chip({
@@ -75,13 +77,16 @@ export function PlatformPicker({
   defaultId = null,
   compact = false,
   noneLabel,
+  only,
 }: PlatformPickerProps) {
   const viewerId = useAuthStore((s) => s.user?.id ?? null);
   const roster = usePlatforms(viewerId);
-  const rosterPlatforms = (roster.data ?? []).map((r) => platformInfo(r.platform_id));
+  const allowed = only ? new Set(only) : null;
+  const offered = (id: number) => !allowed || allowed.has(id);
+  const rosterPlatforms = (roster.data ?? []).filter((r) => offered(r.platform_id)).map((r) => platformInfo(r.platform_id));
   // The game's earliest platform sits with your own, so the default is one tap away.
   const owned =
-    defaultId !== null && !rosterPlatforms.some((p) => p.id === defaultId)
+    defaultId !== null && offered(defaultId) && !rosterPlatforms.some((p) => p.id === defaultId)
       ? [platformInfo(defaultId), ...rosterPlatforms]
       : rosterPlatforms;
   const ownedIds = new Set(owned.map((p) => p.id));
@@ -108,7 +113,7 @@ export function PlatformPicker({
       {expanded ? (
         <View className="gap-1 border-l-2 border-l-retrogamingpc-accent pl-2">
           {PLATFORM_FAMILIES.map((family) => {
-            const options = PLATFORMS.filter((p) => p.family === family.key && !ownedIds.has(p.id));
+            const options = PLATFORMS.filter((p) => p.family === family.key && !ownedIds.has(p.id) && offered(p.id));
             if (options.length === 0) return null;
             return (
               <View key={family.key} className="gap-1">

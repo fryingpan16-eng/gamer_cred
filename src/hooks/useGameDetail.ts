@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { fetchFriendRatingsForGame, fetchGameDetail, fetchGameReviewStats } from '@/services/games';
+import { fetchFriendRatingsForGame, fetchGameDetail, fetchGameReviewStats, fetchGenerationBadge } from '@/services/games';
 import { SearchServiceError } from '@/services/igdb';
 import { queryKeys } from '@/utils/queryKeys';
 
@@ -20,6 +20,8 @@ export function useGameDetail(gameId: number | null) {
       const response = await fetchGameDetail(gameId!, signal);
       // The detail record is a superset of the light record used by covers/slots.
       primeGameCache(queryClient, [response.game]);
+      // A fresh fetch just rewrote the game's platform / remake / remaster facts (000051): re-read the badge.
+      if (!response.cached) void queryClient.invalidateQueries({ queryKey: queryKeys.games.generationBadge(gameId!) });
       return response;
     },
     retry: (count, error) => !(error instanceof SearchServiceError && !error.retryable) && count < 2,
@@ -42,5 +44,19 @@ export function useGameReviewStats(gameId: number | null) {
     queryKey: queryKeys.games.reviewStats(gameId ?? 0),
     enabled: gameId !== null,
     queryFn: () => fetchGameReviewStats(gameId!),
+  });
+}
+
+/**
+ * Generation badge + Top 250 rank. Ranks change once a night, so an hour is plenty fresh.
+ * Waits for the game page: its fetch is what writes the platform facts the badge reads.
+ */
+export function useGenerationBadge(gameId: number | null) {
+  const detailSettled = !useGameDetail(gameId).isPending;
+  return useQuery({
+    queryKey: queryKeys.games.generationBadge(gameId ?? 0),
+    enabled: gameId !== null && detailSettled,
+    staleTime: DETAIL_STALE_MS,
+    queryFn: () => fetchGenerationBadge(gameId!),
   });
 }

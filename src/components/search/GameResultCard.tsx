@@ -1,4 +1,5 @@
 import { router } from 'expo-router';
+import type { ReactNode } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import { EntryTypeBadge } from '@/components/game/EntryTypeBadge';
@@ -13,6 +14,8 @@ type GameResultCardProps = {
   game: IgdbGameResult;
   /** Optional line under the card content, e.g. "Developed + Published" on studio pages. */
   note?: string;
+  /** A control in the card's top-right corner (Search: + Library), outside the link. */
+  action?: ReactNode;
 };
 
 /** "2019 · Kojima Productions" style line: release year, then every developer. */
@@ -37,15 +40,16 @@ export function versionLine(game: Pick<IgdbGameResult, 'versionNames'>): string 
 
 /**
  * A game in a list of results (search, studio pages): cover, title, year, studios, platforms.
- * The whole card opens the game page; rating happens there, not in lists.
+ * The whole card opens the game page; rating happens there, not in lists. An
+ * optional `action` (Search: + Library, 000052) sits in the corner, outside the link.
  */
-export function GameResultCard({ game, note }: GameResultCardProps) {
+export function GameResultCard({ game, note, action }: GameResultCardProps) {
   const meta = gameMetaLine(game);
   const extraPlatforms = game.platforms.length - MAX_PLATFORMS;
   const remastered = remasterLine(game);
   const versions = versionLine(game);
 
-  return (
+  const card = (
     <Pressable
       accessibilityRole="link"
       accessibilityLabel={`${game.name}${meta ? `, ${meta}` : ''}${remastered ? `. ${remastered}` : ''}${versions ? `. ${versions}` : ''}. Open game page`}
@@ -59,7 +63,7 @@ export function GameResultCard({ game, note }: GameResultCardProps) {
             shape="cover"
             accessibilityLabel=""
           />
-          <View className="flex-1 gap-1">
+          <View className={action ? 'flex-1 gap-1 pr-24' : 'flex-1 gap-1'}>
             <Text className="text-retrogamingpc-base font-bold text-retrogamingpc-text-bright" numberOfLines={2}>
               {game.name}
             </Text>
@@ -84,5 +88,12 @@ export function GameResultCard({ game, note }: GameResultCardProps) {
         </RetroGamingPCCard>
       )}
     </Pressable>
+  );
+  if (!action) return card;
+  return (
+    <View>
+      {card}
+      <View className="absolute right-2 top-2">{action}</View>
+    </View>
   );
 }

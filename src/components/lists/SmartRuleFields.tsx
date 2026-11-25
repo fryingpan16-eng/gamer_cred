@@ -2,6 +2,7 @@ import { Pressable, Text, View } from 'react-native';
 
 import { PlatformPicker } from '@/components/studio/PlatformPicker';
 import { RetroGamingPCInput } from '@/components/ui';
+import { GENERATION_GROUPS, type GenerationKey } from '@/constants/generations';
 import { cn } from '@/utils/cn';
 import {
   SMART_ENTRY_TYPES,
@@ -23,6 +24,7 @@ export type SmartRuleDraft = {
   yearTo: string;
   genres: string[];
   platformId: number | null;
+  generation: GenerationKey | null;
   limit: string;
 };
 
@@ -169,6 +171,20 @@ export function SmartRuleFields({
               a11y={g.value}
               selected={value.genres.includes(g.value)}
               onPress={() => set({ genres: toggle(value.genres, g.value) })}
+            />
+          ))}
+        </View>
+      </Field>
+
+      <Field label="Generation" hint="Where the game first came out. None picked = any.">
+        <View className="flex-row flex-wrap gap-1">
+          {GENERATION_GROUPS.map((g) => (
+            <Chip
+              key={g.key}
+              label={g.short}
+              a11y={g.label}
+              selected={value.generation === g.key}
+              onPress={() => set({ generation: value.generation === g.key ? null : g.key })}
             />
           ))}
         </View>

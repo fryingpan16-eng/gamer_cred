@@ -1,4 +1,5 @@
 import type { PostgrestError } from '@supabase/supabase-js';
+import { z } from 'zod';
 
 import type { FriendRatingRow } from '@/types/database.types';
 import type { IgdbDetailResponse } from '@/types/igdb';
@@ -34,6 +35,30 @@ export async function fetchFriendRatingsForGame(gameId: number): Promise<FriendR
   const { data, error } = await supabase.rpc('friend_ratings_for_game', { p_game_id: gameId });
   if (error) fail(error, "Could not load your friends' ratings.");
   return data;
+}
+
+const generationBadgeSchema = z.object({
+  /** '1'–'9', 'pc', 'arcade' or 'mobile' (src/constants/generations.ts). */
+  generation: z.string(),
+  releaseYear: z.number().nullable(),
+  /** Remakes: the group of the game it remakes. */
+  remakeOf: z.string().nullable(),
+  /** Later console generations its remasters came out on. */
+  remasteredFor: z.array(z.string()),
+  /** The seeded "Top 250" list for this group (null if the owner removed it). */
+  listId: z.string().nullable(),
+  /** Place on that list as of its last nightly refresh; null = not in it. */
+  rank: z.number().nullable(),
+});
+export type GenerationBadgeData = z.infer<typeof generationBadgeSchema>;
+
+/** The game page's generation badge (migration 000051); null when the game has no listed platform. */
+export async function fetchGenerationBadge(gameId: number): Promise<GenerationBadgeData | null> {
+  const { data, error } = await supabase.rpc('game_generation_badge', { p_game_id: gameId });
+  if (error) fail(error, 'Could not load the generation.');
+  if (data === null) return null;
+  const parsed = generationBadgeSchema.safeParse(data);
+  return parsed.success ? parsed.data : null;
 }
 
 export type GameReviewStats = { count: number; average: number | null; distribution: number[] };

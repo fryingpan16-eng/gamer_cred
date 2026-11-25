@@ -33,6 +33,8 @@ export type Database = {
           now_playing_visibility: Database['public']['Enums']['now_playing_visibility'];
           /** Who can see this player's backlog (migration 000035). */
           backlog_visibility: 'public' | 'private';
+          /** Who can see this player's Library (migration 000052; default private). */
+          library_visibility: 'public' | 'private';
           /** Changeable name, any alphabet; null = show `username` (migration 000038). */
           display_name: string | null;
           /** Server-stamped; the display name can change once a day. */
@@ -49,6 +51,7 @@ export type Database = {
           ui_theme?: Database['public']['Enums']['ui_theme'];
           now_playing_visibility?: Database['public']['Enums']['now_playing_visibility'];
           backlog_visibility?: 'public' | 'private';
+          library_visibility?: 'public' | 'private';
           display_name?: string | null;
           display_name_changed_at?: Timestamp | null;
           username_chosen?: boolean;
@@ -62,6 +65,7 @@ export type Database = {
           ui_theme?: Database['public']['Enums']['ui_theme'];
           now_playing_visibility?: Database['public']['Enums']['now_playing_visibility'];
           backlog_visibility?: 'public' | 'private';
+          library_visibility?: 'public' | 'private';
           display_name?: string | null;
           display_name_changed_at?: Timestamp | null;
           username_chosen?: boolean;
@@ -304,6 +308,37 @@ export type Database = {
         Update: { user_id?: string; game_id?: number; created_at?: Timestamp };
         Relationships: [];
       };
+      /**
+       * Games a player owns, one row per platform (migration 000052). Private unless
+       * profiles.library_visibility = 'public'; owner-only writes; added_at is server-set.
+       */
+      library_entries: {
+        Row: {
+          user_id: string;
+          game_id: number;
+          platform_id: number;
+          format: 'physical' | 'digital' | null;
+          source: string | null;
+          added_at: Timestamp;
+        };
+        Insert: {
+          user_id: string;
+          game_id: number;
+          platform_id: number;
+          format?: 'physical' | 'digital' | null;
+          source?: string | null;
+          added_at?: Timestamp;
+        };
+        Update: {
+          user_id?: string;
+          game_id?: number;
+          platform_id?: number;
+          format?: 'physical' | 'digital' | null;
+          source?: string | null;
+          added_at?: Timestamp;
+        };
+        Relationships: [];
+      };
       /** "Mark as Replayed" on the game page (migration 000040): no score or text. Add or delete only. */
       game_replays: {
         Row: { id: string; user_id: string; game_id: number; platform_id: number | null; finished_on: string; created_at: Timestamp };
@@ -414,6 +449,8 @@ export type Database = {
           pinned_rank: number | null;
           /** Smart list rule (admin-only, migration 000023); null = hand-picked games. */
           smart_rule: Json | null;
+          /** Lists the database seeds, e.g. 'generation:6' (migration 000051); set only by the database. */
+          system_key: string | null;
           created_at: Timestamp;
           updated_at: Timestamp;
         };
@@ -520,6 +557,12 @@ export type Database = {
           entry_type: string | null;
           /** IGDB franchises (migration 000029). */
           series: string[];
+          /** Generation badge inputs (migration 000051): IGDB platform ids. */
+          release_platform_ids: number[];
+          launch_platform_ids: number[];
+          remake_of: number | null;
+          remake_of_platform_ids: number[];
+          remaster_platform_ids: number[];
           updated_at: Timestamp;
         };
         Insert: {
@@ -689,6 +732,30 @@ export type Database = {
         Args: Record<string, never>;
         Returns: { genre: string; games: number; rated_games: number; average_rating: number | null }[];
       };
+      /** Your logged games per console generation / PC / arcade / mobile / 'unknown' (migration 000051). */
+      stats_generations: {
+        Args: Record<string, never>;
+        Returns: { generation: string; games: number; rated_games: number; average_rating: number | null }[];
+      };
+      /** A player's Library with title, year, platform generation and their rating (migration 000052; RLS applies). */
+      library_of: {
+        Args: { p_user_id: string };
+        Returns: {
+          game_id: number;
+          platform_id: number;
+          format: 'physical' | 'digital' | null;
+          source: string | null;
+          added_at: string;
+          name: string | null;
+          release_year: number | null;
+          generation: string | null;
+          rating: number | null;
+          rating_input_scale: Database['public']['Enums']['rating_scale'] | null;
+          rating_input: string | null;
+        }[];
+      };
+      /** The game page's generation badge (migration 000051); null = no listed platform. */
+      game_generation_badge: { Args: { p_game_id: number }; Returns: Json | null };
       stats_vs_community: { Args: { p_limit?: number }; Returns: Json };
       stats_release_years: { Args: Record<string, never>; Returns: { release_year: number | null; games: number }[] };
       stats_logged_over_time: { Args: Record<string, never>; Returns: { month: string; games: number }[] };

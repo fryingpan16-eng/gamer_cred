@@ -39,7 +39,7 @@ export type RawRemaster = {
   name?: string;
   first_release_date?: number;
   version_parent?: number | null;
-  platforms?: { abbreviation?: string; name?: string }[];
+  platforms?: { id?: number; abbreviation?: string; name?: string }[];
 };
 
 const yearOf = (seconds: number | undefined) => (typeof seconds === 'number' ? new Date(seconds * 1000).getUTCFullYear() : null);
@@ -83,7 +83,8 @@ function mapNamed(raw: readonly (RawRemaster | number)[] | undefined, keep: (r: 
     const platforms = [
       ...new Set((r.platforms ?? []).map((p) => p.abbreviation ?? p.name).filter((p): p is string => typeof p === 'string' && p !== '')),
     ];
-    list.push({ id: r.id, name: r.name.trim(), year: yearOf(r.first_release_date), platforms });
+    const platformIds = [...new Set((r.platforms ?? []).map((p) => p.id).filter((id): id is number => typeof id === 'number'))];
+    list.push({ id: r.id, name: r.name.trim(), year: yearOf(r.first_release_date), platforms, platformIds });
   }
   return list.sort((a, b) => (a.year ?? 9999) - (b.year ?? 9999) || a.name.localeCompare(b.name));
 }

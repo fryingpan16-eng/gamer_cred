@@ -136,6 +136,12 @@ export const queryKeys = {
     byUser: (userId: string) => [...queryKeys.backlog.all(), userId] as const,
   },
 
+  /** Owned games, one row per platform (migration 000052). */
+  library: {
+    all: () => [...queryKeys.all, 'library'] as const,
+    byUser: (userId: string) => [...queryKeys.library.all(), userId] as const,
+  },
+
   /** Replays (migration 000040): game-page replays, counts, a player's most replayed game. */
   replays: {
     all: () => [...queryKeys.all, 'replays'] as const,
@@ -175,6 +181,8 @@ export const queryKeys = {
     /** Friends' ratings (quick or reviewed) — same prefix, so rating / review changes refresh both. */
     friendRatings: (viewerId: string, gameId: number) => [...queryKeys.games.friendReviewsAll(), 'ratings', viewerId, gameId] as const,
     reviewStats: (gameId: number) => [...queryKeys.games.reviewStatsAll(), gameId] as const,
+    /** Generation badge + Top 250 rank (migration 000051). */
+    generationBadge: (gameId: number) => [...queryKeys.games.all(), 'generationBadge', gameId] as const,
     /** Batch lookup; ids are sorted so [2,1] and [1,2] share a cache entry. */
     lookup: (gameIds: readonly number[]) =>
       [...queryKeys.games.all(), 'lookup', [...new Set(gameIds)].sort((a, b) => a - b).join(',')] as const,

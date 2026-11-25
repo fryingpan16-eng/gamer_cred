@@ -1,6 +1,6 @@
 import { Feather } from '@expo/vector-icons';
 import { useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { FlatList, Pressable, Text, useWindowDimensions, View } from 'react-native';
 
 import { Thumbnail } from '@/components/search/Thumbnail';
@@ -34,10 +34,12 @@ type GamePickerModalProps = {
   closeLabel?: string;
   /** Shown while the search box is empty (e.g. your backlog); searching replaces it. */
   suggestions?: { title: string; gameIds: readonly number[]; emptyText: string };
+  /** Shown above the search box (e.g. the Library's "Adding on" platform). */
+  header?: ReactNode;
 };
 
 /** Search-and-pick dialog used for Now Playing slots, favourites and reviews. */
-export function GamePickerModal({ visible, title, onClose, closeLabel = 'Cancel', ...bodyProps }: GamePickerModalProps) {
+export function GamePickerModal({ visible, title, onClose, closeLabel = 'Cancel', header, ...bodyProps }: GamePickerModalProps) {
   return (
     <RetroGamingPCModal
       visible={visible}
@@ -48,7 +50,12 @@ export function GamePickerModal({ visible, title, onClose, closeLabel = 'Cancel'
       footer={<RetroGamingPCButton variant="cancel" label={closeLabel} onPress={onClose} />}
     >
       {/* Mounted only while open, so every opening starts with an empty search box. */}
-      {visible ? <PickerBody {...bodyProps} /> : null}
+      {visible ? (
+        <View className="gap-2">
+          {header}
+          <PickerBody {...bodyProps} />
+        </View>
+      ) : null}
     </RetroGamingPCModal>
   );
 }

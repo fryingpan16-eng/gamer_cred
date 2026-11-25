@@ -81,6 +81,8 @@ export type GameRemaster = {
   year: number | null;
   /** Platform abbreviations, e.g. "PS4". */
   platforms: string[];
+  /** IGDB platform ids (the game page's "Remastered for Gen 8"). Missing on records cached before 000051. */
+  platformIds?: number[];
 };
 
 /** Average play times in seconds (IGDB player submissions); a missing tier is null. */
@@ -123,6 +125,8 @@ export type IgdbGameDetail = IgdbGameResult & {
   versions?: GameRemaster[];
   /** How long to beat; null when nobody has submitted times. Missing on older cached pages. */
   timeToBeat?: GameTimeToBeat | null;
+  /** Remakes: the launch platforms of the game it remakes (000051). Missing on pages cached before that. */
+  remakeOfLaunchPlatformIds?: number[];
 };
 
 export type IgdbDetailResponse = {
@@ -237,6 +241,11 @@ export type IgdbGameResult = {
    * missing on records cached before it existed.
    */
   releasePlatformIds?: number[];
+  /**
+   * The platforms it launched on (releases within 90 days of the first). The
+   * generation badge (000051) is worked out from these. Missing on older records.
+   */
+  launchPlatformIds?: number[];
   genres: string[];
   developers: string[];
   /** Remasters of this game (not entries of their own) and their release years, ascending. */

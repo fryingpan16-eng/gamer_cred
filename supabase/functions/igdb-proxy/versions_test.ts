@@ -96,7 +96,7 @@ Deno.test('version lists and short names', () => {
     { id: 114283, name: 'Persona 5 Royal', first_release_date: unix(2019) },
     9, // unexpanded id
   ];
-  assertEquals(mapVersions(raw), [{ id: 152063, name: "Death Stranding Director's Cut", year: 2021, platforms: ['PS5', 'PC'] }]);
+  assertEquals(mapVersions(raw), [{ id: 152063, name: "Death Stranding Director's Cut", year: 2021, platforms: ['PS5', 'PC'], platformIds: [] }]);
   assertEquals(versionNames(raw, 'Death Stranding'), ["Director's Cut"]);
   assertEquals(shortVersionName("Ghost of Tsushima: Director's Cut", 'Ghost of Tsushima'), "Director's Cut");
   assertEquals(shortVersionName('Death Stranding', 'Death Stranding'), 'Death Stranding');

@@ -22,3 +22,30 @@ export function releasePlatformOrder(releaseDates: RawReleaseDate[] | undefined,
   const ordered = [...dated.map((r) => r.id), ...(platforms ?? []).map(idOf).filter((id): id is number => id !== null)];
   return [...new Set(ordered)];
 }
+
+/** Releases this close to the first one count as the same launch (staggered regions, a port weeks later). */
+export const LAUNCH_WINDOW_DAYS = 90;
+
+/**
+ * The platforms a game launched on: every platform whose first dated release
+ * is within LAUNCH_WINDOW_DAYS of the game's earliest release. With no dates
+ * at all, every listed platform. The database picks the badge generation from
+ * these (migration 000051: a console beats PC, the oldest console wins).
+ */
+export function launchPlatforms(releaseDates: RawReleaseDate[] | undefined, platforms: RawPlatformRef[] | undefined): number[] {
+  const firstDate = new Map<number, number>();
+  for (const r of releaseDates ?? []) {
+    const id = idOf(r.platform);
+    if (id === null || typeof r.date !== 'number') continue;
+    firstDate.set(id, Math.min(firstDate.get(id) ?? Number.POSITIVE_INFINITY, r.date));
+  }
+  if (firstDate.size === 0) {
+    return [...new Set((platforms ?? []).map(idOf).filter((id): id is number => id !== null))];
+  }
+  const earliest = Math.min(...firstDate.values());
+  const cutoff = earliest + LAUNCH_WINDOW_DAYS * 86_400;
+  return [...firstDate.entries()]
+    .filter(([, date]) => date <= cutoff)
+    .sort((a, b) => a[1] - b[1] || a[0] - b[0])
+    .map(([id]) => id);
+}

@@ -25,6 +25,7 @@
 import { createClient } from '@supabase/supabase-js';
 
 import { createConcurrencyLimiter } from './concurrency.ts';
+import { rateLimitVerdict } from './rate_limit.ts';
 
 import {
   COMPANY_GAMES_MAX,
@@ -66,7 +67,7 @@ import {
 import { cacheFreshness, computeRulesVersion, runInBackground, SEARCH_REFRESH_AFTER_MS } from './cache_policy.ts';
 import * as curationModule from './curation.ts';
 import { rankCompanies, rankGames } from './ranking.ts';
-import { releasePlatformOrder } from './platform_order.ts';
+import { launchPlatforms, releasePlatformOrder, type RawReleaseDate } from './platform_order.ts';
 import { chunk, companyGameIds, IGDB_PAGE_MAX, tagCompanyGames } from './company_games.ts';
 import * as rankingModule from './ranking.ts';
 import * as remastersModule from './remasters.ts';
@@ -125,6 +126,11 @@ class HttpError extends Error {
   ) {
     super(message);
   }
+}
+
+/** The caller's account was deleted (chargeUpstream's 401): never answer it from stale cache. */
+function isAccountGone(error: unknown): boolean {
+  return error instanceof HttpError && error.status === 401;
 }
 
 function respond<T>(status: number, body: ApiEnvelope<T>, extraHeaders: Record<string, string> = {}): Response {
@@ -399,7 +405,7 @@ async function searchGames(query: string, limit: number): Promise<IgdbGameResult
   return mapGames(rankGames(withAliases, query, limit));
 }
 
-type RawGameDetail = Omit<RawGame, 'involved_companies'> & {
+type RawGameDetail = Omit<RawGame, 'involved_companies' | 'parent_game'> & {
   summary?: string;
   storyline?: string;
   screenshots?: { image_id?: string }[];
@@ -414,6 +420,8 @@ type RawGameDetail = Omit<RawGame, 'involved_companies'> & {
   aggregated_rating_count?: number;
   rating?: number;
   rating_count?: number;
+  /** Remakes: the original's release data (its launch platforms feed the generation badge, 000051). */
+  parent_game?: { id: number; name?: string; release_dates?: RawReleaseDate[]; platforms?: number[] } | number | null;
 };
 
 const DETAIL_FIELDS = [
@@ -421,6 +429,7 @@ const DETAIL_FIELDS = [
   'summary,storyline,screenshots.image_id,artworks.image_id,themes.name,game_modes.name,',
   'player_perspectives.name,game_engines.name,franchises.name,',
   'release_dates.date,release_dates.human,release_dates.platform.abbreviation,release_dates.platform.name,',
+  'parent_game.release_dates.date,parent_game.release_dates.platform,parent_game.platforms,',
   `aggregated_rating,aggregated_rating_count,rating,rating_count,${REMASTER_DETAIL_FIELDS},${VERSION_DETAIL_FIELDS};`,
 ].join(' ');
 
@@ -491,6 +500,10 @@ async function fetchGameDetail(
     remasters: mapRemasters(g.remasters),
     versions: mapVersions(g.expanded_games),
     timeToBeat: null,
+    remakeOfLaunchPlatformIds:
+      g.entryType === 'remake' && g.parent_game && typeof g.parent_game === 'object'
+        ? launchPlatforms(g.parent_game.release_dates, g.parent_game.platforms)
+        : [],
   };
 
   // How long to beat is best-effort too: no times, or an IGDB error, just hides the row.
@@ -542,6 +555,7 @@ function mapGames(raw: CuratedGame<RawGame>[]): IgdbGameResult[] {
       rating: typeof g.total_rating === 'number' ? Math.round(g.total_rating) : null,
       platforms: compact((g.platforms ?? []).map((p) => p.abbreviation ?? p.name)),
       releasePlatformIds: releasePlatformOrder(g.release_dates, g.platforms),
+      launchPlatformIds: launchPlatforms(g.release_dates, g.platforms),
       genres: compact((g.genres ?? []).map((x) => x.name)),
       developers: compact((g.involved_companies ?? []).filter((ic) => ic.developer).map((ic) => ic.company?.name)),
       ...summarizeRemasters(g.remasters),
@@ -797,6 +811,7 @@ const DETAIL_ONLY_KEYS = [
   'engines', 'franchises', 'releaseDates', 'criticRating', 'criticRatingCount', 'userRating', 'userRatingCount',
   'systemRequirements', 'developerCompanies', 'publisherCompanies', 'remasters', 'versions',
   'timeToBeat',
+  'remakeOfLaunchPlatformIds',
 ] as const satisfies readonly Exclude<keyof IgdbGameDetail, keyof IgdbGameResult>[];
 // Compile-time check that the list above names every detail-only field.
 const _detailKeysComplete: Exclude<Exclude<keyof IgdbGameDetail, keyof IgdbGameResult>, (typeof DETAIL_ONLY_KEYS)[number]> extends never
@@ -858,6 +873,10 @@ async function cacheGameRecords(
       genres: game.genres,
       developers: game.developers,
       entry_type: game.entryType,
+      // Generation badge inputs (000051).
+      release_platform_ids: game.releasePlatformIds ?? [],
+      launch_platform_ids: game.launchPlatformIds ?? [],
+      remake_of: game.entryType === 'remake' ? (game.parentGame?.id ?? null) : null,
       updated_at: fetchedAt,
     })),
     { onConflict: 'igdb_id' },
@@ -941,7 +960,8 @@ async function lookupGames(
     if (!game) continue;
     const state = cacheFreshness({ ageMs, ttlMs: GAME_RECORD_TTL_MS, refreshAfterMs: null, rulesVersion: payload?.rulesVersion, currentRulesVersion: rulesVersion });
     // Records from older rules / past TTL are refetched, kept only as an outage fallback.
-    (state === 'expired' ? stale : fresh).set(game.id, game);
+    // So are records from before 000051 (no launch platforms): the backfill only guessed their generation.
+    (state === 'expired' || game.launchPlatformIds === undefined ? stale : fresh).set(game.id, game);
   }
 
   // An admin "include" override wins over a remembered miss.
@@ -961,8 +981,8 @@ async function lookupGames(
         writeMissing(db, toFetch.filter((id) => !fetched.has(id)).map(gameCacheKey)),
       ]);
     } catch (upstreamError) {
-      // Fall back to stale rows; only fail if we have nothing at all to show.
-      if (stale.size === 0 && fresh.size === 0) throw upstreamError;
+      // Fall back to stale rows; only fail if we have nothing at all to show. A gone account gets nothing.
+      if (isAccountGone(upstreamError) || (stale.size === 0 && fresh.size === 0)) throw upstreamError;
       console.warn('[igdb-proxy] lookup serving stale', upstreamError instanceof Error ? upstreamError.message : upstreamError);
       for (const [id, game] of stale) fetched.set(id, game);
     }
@@ -1000,7 +1020,9 @@ async function handleDetail(id: number, caller: Caller, movedFrom?: number): Pro
   const state = cached
     ? cacheFreshness({ ageMs: cached.ageMs, ttlMs: GAME_DETAIL_TTL_MS, refreshAfterMs: null, rulesVersion: cached.payload.rulesVersion, currentRulesVersion: rulesVersion })
     : 'expired';
-  if (cached && cachedGame && state !== 'expired') {
+  // Pages cached before 000051 lack the generation badge's remake / remaster data: refresh them once.
+  const hasGenerationData = cachedGame?.remakeOfLaunchPlatformIds !== undefined;
+  if (cached && cachedGame && state !== 'expired' && hasGenerationData) {
     const data: IgdbDetailResponse = { game: cachedGame, cached: true, fetchedAt: cached.payload.fetchedAt, ...moved };
     return respond(200, { success: true, data }, { 'X-Cache': 'HIT' });
   }
@@ -1016,7 +1038,15 @@ async function handleDetail(id: number, caller: Caller, movedFrom?: number): Pro
       // The detail record also refreshes the lightweight per-game record used by lookups (without the page-only fields).
       await cacheGameRecords(db, [gameRecordOf(game)], new Date().toISOString());
       // Series (IGDB franchises) only come with the full page; the Stats page groups liked games by them (000029).
-      const { error: seriesError } = await db.from('games').update({ series: game.franchises }).eq('igdb_id', game.id);
+      // So do the generation badge's remake / remaster notes (000051).
+      const { error: seriesError } = await db
+        .from('games')
+        .update({
+          series: game.franchises,
+          remake_of_platform_ids: game.remakeOfLaunchPlatformIds ?? [],
+          remaster_platform_ids: [...new Set(game.remasters.flatMap((r) => r.platformIds ?? []))],
+        })
+        .eq('igdb_id', game.id);
       if (seriesError) console.error('[igdb-proxy] series write failed', seriesError.message);
       return [game];
     }, { stampRules: true });
@@ -1029,7 +1059,13 @@ async function handleDetail(id: number, caller: Caller, movedFrom?: number): Pro
       return handleDetail(error.to, caller, id);
     }
     if (error instanceof MovedError) throw new HttpError(404, `Game ${id} is not in the GamerCred catalogue`);
-    if (cached && cachedGame && cached.ageMs < STALE_MAX_MS && !(error instanceof HttpError && error.status === 404)) {
+    if (
+      cached &&
+      cachedGame &&
+      cached.ageMs < STALE_MAX_MS &&
+      !(error instanceof HttpError && error.status === 404) &&
+      !isAccountGone(error)
+    ) {
       const data: IgdbDetailResponse = { game: cachedGame, cached: true, fetchedAt: cached.payload.fetchedAt, ...moved };
       return respond(200, { success: true, data }, { 'X-Cache': 'STALE' });
     }
@@ -1077,7 +1113,13 @@ async function handleCompany(id: number, caller: Caller): Promise<Response> {
     }, { stampRules: true });
     return reply(payload.results[0] as IgdbCompanyDetail, false, payload.fetchedAt, cached ? 'REFRESH' : 'MISS');
   } catch (error) {
-    if (cached && cachedCompany && cached.ageMs < STALE_MAX_MS && !(error instanceof HttpError && error.status === 404)) {
+    if (
+      cached &&
+      cachedCompany &&
+      cached.ageMs < STALE_MAX_MS &&
+      !(error instanceof HttpError && error.status === 404) &&
+      !isAccountGone(error)
+    ) {
       return reply(cachedCompany, true, cached.payload.fetchedAt, 'STALE');
     }
     if (error instanceof HttpError && error.status === 404) await writeMissing(db, [cacheKey]);
@@ -1126,8 +1168,11 @@ async function requireCaller(req: Request): Promise<Caller> {
       p_limit: limit,
       p_window_seconds: windowSeconds,
     });
-    if (limitError) console.error('[igdb-proxy] rate limit check failed', bucket, limitError.message);
-    return { allowed: allowed !== false, failed: !!limitError };
+    const verdict = rateLimitVerdict(allowed, limitError);
+    if (limitError && !verdict.accountGone) console.error('[igdb-proxy] rate limit check failed', bucket, limitError.message);
+    // getClaims only checks the signature: a deleted account's unexpired token gets here.
+    if (verdict.accountGone) throw new HttpError(401, 'Sign in to search the game database.');
+    return verdict;
   };
 
   // A counter hiccup shouldn't take search down for everyone: log it and let the call through.
@@ -1213,7 +1258,7 @@ async function handle(req: Request): Promise<Response> {
     return respond(200, { success: true, data: build(payload, false) }, { 'X-Cache': cached ? 'REFRESH' : 'MISS' });
   } catch (error) {
     // Upstream trouble: fall back to stale cache rather than failing the search.
-    if (cached && cached.ageMs < STALE_MAX_MS) {
+    if (cached && cached.ageMs < STALE_MAX_MS && !isAccountGone(error)) {
       console.warn('[igdb-proxy] serving stale cache', error instanceof Error ? error.message : error);
       return respond(200, { success: true, data: build(cached.payload, true) }, { 'X-Cache': 'STALE' });
     }

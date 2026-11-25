@@ -19,6 +19,11 @@ describe('smartRuleSchema', () => {
     // Rules saved before likes existed rank by average.
     const { rankBy: _omit, ...old } = DEFAULT_SMART_RULE;
     expect(parseSmartRule(old)?.rankBy).toBe('average');
+    // Rules saved before generations (000051) have none; seeded lists carry one.
+    const { generation: _gen, ...beforeGenerations } = DEFAULT_SMART_RULE;
+    expect(parseSmartRule(beforeGenerations)?.generation).toBeNull();
+    expect(parseSmartRule({ ...DEFAULT_SMART_RULE, entryTypes: ['game', 'remake'], generation: '6', limit: 250 })?.generation).toBe('6');
+    expect(parseSmartRule({ ...DEFAULT_SMART_RULE, generation: '10' })).toBeNull();
   });
 });
 
@@ -38,6 +43,9 @@ describe('describeSmartRule', () => {
       }),
     ).toBe('Top 100 RPG games · S tier · the 2000s · played on Switch');
     expect(describeSmartRule({ ...DEFAULT_SMART_RULE, yearFrom: 2015, yearTo: null })).toBe('Top 500 games · 2015 onward');
+    expect(describeSmartRule({ ...DEFAULT_SMART_RULE, entryTypes: ['game', 'remake'], generation: '6', limit: 250 })).toBe(
+      'Top 250 games & remakes · Gen 6',
+    );
     expect(describeSmartRule({ ...DEFAULT_SMART_RULE, rankBy: 'likes', entryTypes: ['expansion'], limit: 100 })).toBe(
       'Most liked 100 expansions',
     );

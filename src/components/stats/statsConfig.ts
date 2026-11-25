@@ -1,5 +1,6 @@
 import type { ComponentType } from 'react';
 
+import { GenerationScoresStat, GenerationsStat } from './GenerationsStat';
 import { GenresStat } from './GenresStat';
 import { LikedStat } from './LikedStat';
 import { LoggedOverTimeStat } from './LoggedOverTimeStat';
@@ -63,6 +64,18 @@ export const STATS: readonly StatDefinition[] = [
     component: VsCommunityStat,
   },
   { id: 'era', title: 'Release Era', description: 'Which era of games you play.', component: ReleaseEraStat },
+  {
+    id: 'generations',
+    title: 'Games by Generation',
+    description: 'Which console generation your games first came out in (or PC, arcade, mobile).',
+    component: GenerationsStat,
+  },
+  {
+    id: 'generation-scores',
+    title: 'Scores by Generation',
+    description: 'Your average score for each generation’s games.',
+    component: GenerationScoresStat,
+  },
   {
     id: 'replays',
     title: 'Replays',

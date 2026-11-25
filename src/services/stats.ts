@@ -53,6 +53,18 @@ export async function fetchGenreStats() {
   }));
 }
 
+/** Your logged games per console generation / PC / arcade / mobile (migration 000051). */
+export async function fetchGenerationStats() {
+  const { data, error } = await supabase.rpc('stats_generations');
+  if (error) fail(error);
+  return data.map((r) => ({
+    generation: r.generation,
+    games: Number(r.games),
+    rated_games: Number(r.rated_games),
+    average_rating: num(r.average_rating),
+  }));
+}
+
 const hotTakeSchema = z.object({
   game_id: z.coerce.number(),
   name: z.string(),

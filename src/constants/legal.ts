@@ -13,7 +13,7 @@ export const SUPPORT_EMAIL = 'jjlabber16@gmail.com';
 export const TERMS_VERSION = '2026-11-10';
 
 /** Effective date of the Privacy Policy (shown on /privacy). */
-export const PRIVACY_VERSION = '2026-11-10';
+export const PRIVACY_VERSION = '2026-11-25';
 
 /** How quickly reports are reviewed (Apple expects action within 24 hours). */
 export const REPORT_RESPONSE_HOURS = 24;
@@ -95,7 +95,7 @@ export const PRIVACY_SECTIONS: readonly LegalSection[] = [
     title: 'What we collect',
     paragraphs: [
       'Account: your email address, password (stored only as a secure hash by our database provider), username and display name. If you sign in with Google, we receive your email address from Google.',
-      'What you add: your profile picture, ratings, reviews and drafts, comments, likes, lists, backlog, Now Playing, replays, favourites, platforms and PC specs, friends, blocks, reports you make, and your settings (theme, rating scale, privacy).',
+      'What you add: your profile picture, ratings, reviews and drafts, comments, likes, lists, backlog, your Library (games you own, with platform and format), Now Playing, replays, favourites, platforms and PC specs, friends, blocks, reports you make, and your settings (theme, rating scale, privacy).',
       'Safety and security: when you accepted the terms, counters that limit how often actions can be repeated, and records of moderation decisions.',
       'We don’t collect your location, contacts, or device advertising ID.',
     ],
@@ -103,7 +103,7 @@ export const PRIVACY_SECTIONS: readonly LegalSection[] = [
   {
     title: 'What other players can see',
     paragraphs: [
-      'Your username, display name, profile picture, ratings, published reviews, comments, public lists and activity are visible to other signed-in players (and guests), except players you block or who block you. Your Now Playing and backlog follow your choices in Settings → Privacy. Drafts, private lists, blocks, reports and your email address are never shown to other players.',
+      'Your username, display name, profile picture, ratings, published reviews, comments, public lists and activity are visible to other signed-in players (and guests), except players you block or who block you. Your Now Playing and backlog follow your choices in Settings → Privacy. Your Library is private unless you make it public (Settings → Privacy, or the Library page). Drafts, private lists, blocks, reports and your email address are never shown to other players.',
       'Likes on reviews and comments are private: only the writer sees how many they got.',
     ],
   },

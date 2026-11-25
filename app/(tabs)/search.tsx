@@ -9,6 +9,7 @@ import { CreatorResultCard } from '@/components/search/CreatorResultCard';
 import { IgdbAttribution } from '@/components/search/IgdbAttribution';
 import { RawgAttribution } from '@/components/search/RawgAttribution';
 import { GameResultCard } from '@/components/search/GameResultCard';
+import { LibraryButton } from '@/components/library/LibraryButton';
 import { SearchResultList } from '@/components/search/SearchResultList';
 import { UserResultCard } from '@/components/search/UserResultCard';
 import { RetroGamingPCAlert, RetroGamingPCInput, RetroGamingPCTabs, type RetroGamingPCTabItem } from '@/components/ui';
@@ -73,7 +74,7 @@ function GameResults({ term, typing }: ResultsProps) {
       loadingLabel="Searching IGDB…"
       statusNote={query.data?.cached ? 'cached' : undefined}
       keyExtractor={(g) => String(g.id)}
-      renderItem={(g) => <GameResultCard game={g} />}
+      renderItem={(g) => <GameResultCard game={g} action={<LibraryButton game={g} compact />} />}
       footer={<IgdbAttribution />}
     />
   );

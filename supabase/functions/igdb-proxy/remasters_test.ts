@@ -9,7 +9,7 @@ const unix = (year: number) => Date.UTC(year, 5, 1) / 1000;
 Deno.test('mapRemasters: named remasters, oldest first, editions and duplicates dropped', () => {
   assertEquals(
     mapRemasters([
-      { id: 3, name: 'Shadow of the Colossus HD', first_release_date: unix(2011), platforms: [{ abbreviation: 'PS3' }] },
+      { id: 3, name: 'Shadow of the Colossus HD', first_release_date: unix(2011), platforms: [{ id: 9, abbreviation: 'PS3' }] },
       { id: 4, name: 'Remaster: Deluxe Edition', version_parent: 3, first_release_date: unix(2012) },
       { id: 5, name: ' Shadow of the Colossus HD ', first_release_date: unix(2013) },
       { id: 6, name: 'Undated Remaster', platforms: [{ name: 'Switch Thing' }, { abbreviation: 'NSW' }, { abbreviation: 'NSW' }] },
@@ -17,8 +17,8 @@ Deno.test('mapRemasters: named remasters, oldest first, editions and duplicates 
       { id: 8 }, // no name
     ]),
     [
-      { id: 3, name: 'Shadow of the Colossus HD', year: 2011, platforms: ['PS3'] },
-      { id: 6, name: 'Undated Remaster', year: null, platforms: ['Switch Thing', 'NSW'] },
+      { id: 3, name: 'Shadow of the Colossus HD', year: 2011, platforms: ['PS3'], platformIds: [9] },
+      { id: 6, name: 'Undated Remaster', year: null, platforms: ['Switch Thing', 'NSW'], platformIds: [] },
     ],
   );
   assertEquals(mapRemasters(undefined), []);

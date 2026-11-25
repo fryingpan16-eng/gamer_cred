@@ -2,7 +2,7 @@
 
 The one list of next steps and to-dos. Claude reads this instead of re-deriving status, updates it when work lands, and reminds you of open items.
 
-_Last updated: 2026-11-16_
+_Last updated: 2026-11-25_
 
 ## Tech stack
 - Expo + React Native + Expo Router, TypeScript (strict); iOS, Android, web
@@ -14,7 +14,7 @@ _Last updated: 2026-11-16_
 - `app/(tabs)/` — Home, Search, Post (Review Studio), Stats, Profile
 - `app/game/[id].tsx`, `app/review/[id].tsx`, `app/reviews/[gameId].tsx`
 - `src/services/` (Supabase calls) · `src/hooks/` (queries) · `src/utils/queryKeys.ts`
-- `supabase/migrations/` (000001–000049) · `supabase/tests/` · `supabase/name-rules/`
+- `supabase/migrations/` (000001–000052) · `supabase/tests/` · `supabase/name-rules/`
 
 ## Completed
 - Auth, search, Review Studio, profiles, game and studio pages, feeds, trending, friends
@@ -37,10 +37,15 @@ _Last updated: 2026-11-16_
 - Bigger type (14px body on desktop, +10% on phones) in the device's standard sans-serif; `font-mono` = same font with tabular numbers. Game page cache (incl. time to beat) now 14 days
 - Modernised chrome, step 1 (all themes): small rounded corners, a softer 1px bevel (dark edge at 60%), soft drop shadows (`useSoftShadow`: buttons, cards, panels, dialogs, toasts, desktop window), roomier cards/panels/dialogs; Cloud's sunken fields and raised buttons now show every edge
 - App owner (000050): one admin is the owner; admins can't remove each other's accounts, nobody removes the owner's, and the owner can take an admin's role away without deleting the account (profile → ⋯ → Remove Admin Role)
+- Console generations (000051): a badge in the top-right of the game page's main card ("Gen 6", or "PC" / "Arcade" / "Mobile" over the release year) from where the game first launched (a console beats PC on a shared launch, the oldest console wins; Switch = Gen 8; old computers and browser games = PC; remasters show the original's generation, remakes their own). Corner tab = the game's place in its Top 250 (from last night's list). Tap opens the list; long-press (hover on web) shows details ("Remastered for Gen 8", "Remake of a Gen 1 game"). Twelve "Top 250" smart lists seeded for the app owner (games + remakes, rating bar measured inside each generation); smart lists can filter by generation. Stats → Games by Generation and Scores by Generation. Platform table: `public.platform_generations` (one row per IGDB platform)
+- Library (000052): games you own, one copy per platform with optional Physical / Digital; private by default (🔒 / 🔓 on the Library page, profile card and Settings → Privacy; private = no rows, counts or preview for anyone else). + Library on game pages and Search results (platforms limited to the game's IGDB platforms), + Add games multi-add (one platform for a batch, then tap games), Library page with title search, platform / generation (of the owned platform) / format filters and date / title / year sort, owner's rating on each game. Separate from ratings and Backlog. Privacy Policy updated (PRIVACY_VERSION 2026-11-25)
 - IGDB cache: service-role only, purge keeps 60 days to match the outage fallback (000044); game records saved on the device for instant covers
 
 ## Your to-do list (only you can do these)
 - [ ] Push migration 000050 (`! npx supabase db push`) and redeploy the `account` function (`! npx supabase functions deploy account`): push the migration FIRST, the function needs it
+- [ ] Generations: push migration 000051 (same `db push`), THEN redeploy `igdb-proxy` (`! npx supabase functions deploy igdb-proxy`). Each game page refreshes its cached record once to pick up remake/remaster data.
+- [ ] Generations: check the IGDB platform ids once: `! cd supabase/functions/igdb-proxy && IGDB_CLIENT_ID=... IGDB_CLIENT_SECRET=... node tools/platform-generations-verify.mjs` and tell Claude about any line marked `!! NOT ON IGDB` or with the wrong name
+- [ ] Library: push migration 000052 (same `db push`, after 000051). No function redeploy needed. Until it's pushed, the Library card, page and + Library buttons show load errors.
 - [ ] Phones (Expo Go): restart `npx expo start -c` and reload Expo Go to get comments + on-device game records
 - [ ] Admin: Settings → Admin Security → set up, THEN approve the authenticator in the SQL Editor (README → Admins). Unlocks admin tools and the badge.
 - [ ] Guest browsing, in this order: (1) Supabase → allow anonymous sign-ins; (2) Cloudflare Turnstile widget → `EXPO_PUBLIC_TURNSTILE_SITE_KEY` in `.env`; (3) LAST: Supabase CAPTCHA with the secret (earlier breaks every login)
@@ -63,6 +68,7 @@ Done: migration 000049 pushed and `igdb-proxy` (14-day game page cache) redeploy
 - Visual check of the light theme on every screen (phone + desktop)
 - Visual check of the modernised chrome on signed-in screens and on a real phone (Expo Go): shadows and rounded bevels (only Sign In was checked, in all 6 themes on web)
 - Visual check of the bigger text on every screen (phone + desktop): nothing cut off or crowded (game page already checked in code)
+- Visual check of the Library: game page button row (6 buttons on phones), + Library on Search cards (title room), the Library page filters on a narrow phone, and the multi-add picker's platform header (picker list gets shorter)
 - Visual check of the replay screens and the review page (action bar, ⋯ menus, comments), profile, list, friends and Now Playing ⋯ on phone and desktop
 
 ## Before closed testing (Google Play beta)
@@ -92,6 +98,14 @@ Needs the alpha list above, plus:
 - **Where to buy:** plain-text store chips filtered to the game's platforms; locale region with a Settings override; affiliate codes later with a "may earn a commission" note
 - **Support:** web-only Ko-fi "Buy the dev a tea"; cosmetic supporter tier (badge, card trim, themes, banner); never pay-to-rank
 - Tasteful "Sponsored" feed cards only at real scale
+- **Steam library import** (decided 2026-11-25: after alpha; roadmap B). The Library (000052) is ready for it: `library_entries.source` = 'steam', and server-side writes skip the hourly cap.
+  - Ownership check: Steam OpenID sign-in → SteamID, through a new Edge Function (never trust a typed SteamID)
+  - Matching: Steam app id → IGDB game via IGDB `external_games` (through `igdb-proxy`, rate limited); skip DLC, soundtracks, tools and editions; fold remasters/versions into their original; platform = PC (Windows)
+  - The player's Steam profile must have game details set to public (not the default): explain this in the import screen
+  - Import screen: preview the matched games, untick any you don't want, re-import without duplicates (upsert on user + game + platform)
+  - You: Steam Web API key (`npx supabase secrets set ...`), read Valve's API terms; credit Steam in plain text, no logos
+  - Privacy Policy: add Valve/Steam as a provider and bump PRIVACY_VERSION
+  - Signal to move it earlier: alpha testers find adding big PC collections by hand too slow
 
 ## Roadmap after alpha (reshuffle freely)
 - **A — learn and polish:** tester feedback; crash reporting + privacy-friendly analytics; notifications (friend requests, likes, featured lists); "Download my data"

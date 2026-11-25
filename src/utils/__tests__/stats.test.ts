@@ -2,6 +2,8 @@ import {
   distributionsByScale,
   eraBars,
   gamerProfileSummary,
+  generationAverageBars,
+  generationCountBars,
   genreAverageBars,
   nameCountBars,
   platformBars,
@@ -151,5 +153,35 @@ describe('gamer profile summary', () => {
 
   it('is empty when nothing is logged', () => {
     expect(gamerProfileSummary({ histogram: [], platforms: [], genres: [], genreAverages: [], decades: [], studios: [] })).toEqual([]);
+  });
+});
+
+describe('generation bars', () => {
+  const rows = [
+    { generation: 'unknown', games: 1, rated_games: 0, average_rating: null },
+    { generation: 'pc', games: 3, rated_games: 2, average_rating: 70 },
+    { generation: '8', games: 2, rated_games: 2, average_rating: 91.25 },
+    { generation: '6', games: 5, rated_games: 0, average_rating: null },
+  ];
+
+  it('counts in generation order, Unknown last', () => {
+    const bars = generationCountBars(rows);
+    expect(bars.map((b) => [b.label, b.value])).toEqual([
+      ['Gen 6', 5],
+      ['Gen 8', 2],
+      ['PC', 3],
+      [UNKNOWN_LABEL, 1],
+    ]);
+    expect(bars[0]!.detail).toBe('6th Generation (1998–2013)');
+  });
+
+  it('averages only rated generations, with the tier', () => {
+    const bars = generationAverageBars(rows);
+    expect(bars.map((b) => [b.label, b.value])).toEqual([
+      ['Gen 8', 91.3],
+      ['PC', 70],
+    ]);
+    expect(bars[0]!.detail).toBe('8th Generation (2012–2020s) · A+ · 2 rated');
+    expect(bars[0]!.color).toBeDefined();
   });
 });

@@ -3,6 +3,7 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import {
   fetchReplayStats,
   fetchDeveloperStats,
+  fetchGenerationStats,
   fetchGenreStats,
   fetchLikedStats,
   fetchLoggedOverTime,
@@ -35,6 +36,8 @@ export const usePlatformStats = () => useStatQuery('platforms', fetchPlatformSta
 /** `limit` null = the complete list of studios. */
 export const useDeveloperStats = (limit: number | null) => useStatQuery('developers', () => fetchDeveloperStats(limit), [limit]);
 export const useGenreStats = () => useStatQuery('genres', fetchGenreStats);
+/** Games and average score per console generation (migration 000051). */
+export const useGenerationStats = () => useStatQuery('generations', fetchGenerationStats);
 export const useVsCommunity = (limit = 5) => useStatQuery('vsCommunity', () => fetchVsCommunity(limit), [limit]);
 export const useReleaseYearStats = () => useStatQuery('releaseYears', fetchReleaseYearStats);
 export const useLoggedOverTime = () => useStatQuery('loggedOverTime', fetchLoggedOverTime);

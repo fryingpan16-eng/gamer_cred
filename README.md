@@ -92,6 +92,7 @@ Every chart shows the exact value when you tap a bar, and has a table view that 
 - **↻ Most replayed:** the game you've played the most times, once you've replayed anything.
 - **♥ Liked Games:** the latest 8 liked covers, with **View all** for the full list (newest first, with a name filter).
 - **Backlog:** the same layout; hidden from others when private.
+- **Library:** the games you own (count + newest covers, **View all** for the Library page). Private by default; on someone else's profile the card only appears when they made it public. See [Library](#library).
 - **Ratings:** your most recent ratings, with **↻×N** on games played more than once. Tap **Ratings ▸** for a spreadsheet of every game you've rated.
   - It has sortable columns, search, and filters for tier, score range, platform, genre and whether you've reviewed the game.
   - Only you and your friends can sort and filter it.
@@ -105,8 +106,17 @@ Every chart shows the exact value when you tap a bar, and has a table view that 
 - **Your rating:** the same layout as an interactive control, plus your "played on" platform, a **Write a review** button and **Add to Now Playing**.
 - **♥ Like:** one tap to show interest without rating or reviewing; the Gamer Cred box shows how many players like the game. Liking never creates a rating.
 - **↻ Replayed** button (Mark as Replayed, migration 000040): log another playthrough with a date finished (today, or backdated) and platform; no score or text, and your score doesn't change. The button shows **↻ Played ×N** once you've replayed it, and its dialog lists your replays (delete game-page ones with ✕). Replaying takes the game off your backlog. Unlimited in principle (capped at 1,000 per game). Public like ratings: Friends' Ratings shows ↻×N and friends see "replayed" in their feed.
+- **+ Library / ✓ In Library:** tick the platforms you own the game on (only platforms IGDB lists for it, including its remasters' and other versions'), each with an optional Physical / Digital. See [Library](#library).
 - Both score boxes are coloured by the tier of their score.
 - **Friends' Ratings** (above the screenshots), About, Screenshots, Community Reviews, game facts, and PC system requirements (from RAWG).
+
+### Library
+Migration 000052. The games a player **owns**, one copy per platform (the same game can be owned on several). Separate from ratings and the backlog: owning a game never rates it or touches the backlog, and rating it never adds it.
+- **Adding:** **+ Library** on game pages and on Search results (the one control on a search card; the rest of the card still opens the game page), or **+ Add games** on the Library page / profile card for quick multi-add: pick a platform (and format) once, then tap game after game. A game not released on that platform asks which platform instead.
+- **Library page** (`app/library/[userId].tsx`): cover grid with title search, filters for platform, console generation (Gen 1–9 of the platform you own it on, so handhelds count and PC / arcade / mobile don't), format, and sort by date added, title or release year. Each game shows the owner's rating (an intentional exception to "lists show no scores"). Owners get **Edit** per game.
+- **Privacy:** private by default (**🔒 Private, only you can see this** / **🔓 Public, anyone can see your Library**) on the Library page, the profile card and Settings → Privacy. Private means nothing reaches others: no rows, counts or preview (RLS on `library_entries`); blocked players never see it. Future Stats over the library must be `security invoker` so the same rule applies.
+- **Data for Stats later:** rows hold IGDB ids only; `library_of()` joins `games` (title, year, developers) and `platform_generations`, so library size by platform, generation or studio is one `group by`.
+- Code: `services/library.ts`, `hooks/useLibrary.ts`, `utils/library.ts` (grouping, filters, sort; unit-tested), `components/library/`.
 
 ### Reviews
 One system, reached from everywhere:
@@ -326,6 +336,7 @@ Every table has row-level security with explicit read and write policies.
 | `game_likes` | ♥ likes: one per player per game. Public to signed-in players, owner-only writes, members only. |
 | `game_replays` | Game-page replays: date finished + platform, no score or text. Public to signed-in players, hidden when blocked, owner add/delete only, members only. |
 | `game_backlog` | Want-to-play backlog, newest first. Readable when public (or yours); owner-only writes, members only. |
+| `library_entries` | Games a player owns, one row per (user, game, platform), optional `format` (physical/digital) and `source` ('manual'; later imports). Private unless `profiles.library_visibility = 'public'`; owner-only writes, members only, 1,000 adds/hour. |
 | `review_likes` | ♥ on reviews. Private: you read only your own; authors see their own counts via `review_like_info`. |
 | `igdb_cache` | The proxy's response cache (`cache_key`, `data` JSONB, `updated_at`) |
 | `game_overrides` | Manual include/exclude overrides for catalogue curation |
@@ -378,6 +389,7 @@ Storage: a private `avatar-uploads` bucket (each user can write only their own p
 | 000038 | Permanent names and display names, name rules, official badge, admin display-name reset |
 | 000039 | Name-rule data (reserved names, blocked words, allowed everyday words), generated from `supabase/name-rules/` |
 | 000040 | Replays: several reviews per game (one draft), replay reviews, `game_replays`, replay counts in Friends' Ratings / ratings list / feed, Stats → Replays |
+| 000052 | Library (`library_entries`, `profiles.library_visibility` default private, `library_of()`; merged game ids carry over) |
 
 ### avatar Edge Function
 - `submit` screens an uploaded picture with Google Cloud Vision SafeSearch, then publishes, rejects or holds it.

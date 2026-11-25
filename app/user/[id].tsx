@@ -4,6 +4,7 @@ import { ScrollView, View } from 'react-native';
 import { FavoritesShowcase } from '@/components/profile/FavoritesShowcase';
 import { LikedGamesShowcase } from '@/components/profile/LikedGamesShowcase';
 import { BacklogShowcase } from '@/components/backlog/BacklogShowcase';
+import { LibraryShowcase } from '@/components/library/LibraryShowcase';
 import { FriendButton } from '@/components/profile/FriendButton';
 import { NowPlayingShowcase } from '@/components/profile/NowPlayingShowcase';
 import { ProfileHeader } from '@/components/profile/ProfileHeader';
@@ -105,6 +106,7 @@ export default function UserProfileScreen() {
           <NowPlayingShowcase userId={player.id} isOwner={false} visibility={player.now_playing_visibility} />
           <FavoritesShowcase userId={player.id} editable={false} />
           <LikedGamesShowcase userId={player.id} isOwner={false} />
+          <LibraryShowcase profile={player} isOwner={false} />
           {isDesktop ? <BacklogShowcase profile={player} isOwner={false} /> : null}
         </View>
         <View className="gap-3 md:flex-[2]">

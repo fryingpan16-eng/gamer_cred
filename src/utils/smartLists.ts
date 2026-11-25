@@ -4,6 +4,7 @@
  */
 import { z } from 'zod';
 
+import { GENERATION_GROUPS, generationGroup, type GenerationKey } from '@/constants/generations';
 import { platformInfo } from '@/constants/platforms';
 
 export const SMART_LIST_MAX = 500;
@@ -72,6 +73,11 @@ export const smartRuleSchema = z
     yearTo: year,
     genres: z.array(z.enum(GENRE_VALUES)),
     platformId: z.number().int().nullable(),
+    /** Console generation / PC / arcade / mobile of the game (000051); null = any. Older rules have none. */
+    generation: z
+      .enum(GENERATION_GROUPS.map((g) => g.key) as [GenerationKey, ...GenerationKey[]])
+      .nullable()
+      .default(null),
     limit: z.number().int().min(1, 'Show at least 1 game.').max(SMART_LIST_MAX, `Smart lists show up to ${SMART_LIST_MAX} games.`),
   })
   .refine((r) => r.yearFrom === null || r.yearTo === null || r.yearFrom <= r.yearTo, {
@@ -89,6 +95,7 @@ export const DEFAULT_SMART_RULE: SmartRule = {
   yearTo: null,
   genres: [],
   platformId: null,
+  generation: null,
   limit: SMART_LIST_MAX,
 };
 
@@ -139,6 +146,7 @@ export function describeSmartRule(rule: SmartRule): string {
     head,
     rule.tiers.length > 0 ? `${rule.tiers.join(' / ')} tier` : null,
     yearsText(rule.yearFrom, rule.yearTo),
+    rule.generation !== null ? (generationGroup(rule.generation)?.short ?? null) : null,
     rule.platformId !== null && rule.rankBy !== 'likes' ? `played on ${platformInfo(rule.platformId).short}` : null,
   ];
   return parts.filter(Boolean).join(' · ');

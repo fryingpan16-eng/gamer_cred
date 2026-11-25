@@ -87,6 +87,7 @@ function invalidateAfterRating(queryClient: QueryClient, userId: string | null, 
   void queryClient.invalidateQueries({ queryKey: queryKeys.reviews.byUser(userId) });
   // Their public ratings list (and the full table, same prefix).
   void queryClient.invalidateQueries({ queryKey: queryKeys.ratings.ofUser(userId) });
+  void queryClient.invalidateQueries({ queryKey: queryKeys.library.byUser(userId) }); // Library entries show your rating (000052)
 }
 
 const sameRating = (a: GameRatingEntry | null, b: GameRatingEntry | null) =>

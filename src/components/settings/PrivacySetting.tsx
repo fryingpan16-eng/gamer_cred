@@ -9,6 +9,8 @@ import {
 } from '@/constants/privacy';
 import { useAuthStore } from '@/hooks/useAuth';
 import { useUpdateBacklogVisibility } from '@/hooks/useBacklog';
+import { useUpdateLibraryVisibility } from '@/hooks/useLibrary';
+import { LIBRARY_PRIVATE_TEXT, LIBRARY_PUBLIC_TEXT } from '@/components/library/LibraryPrivacyToggle';
 import { useUpdateNowPlayingVisibility } from '@/hooks/useProfile';
 import type { BacklogVisibility } from '@/services/backlog';
 
@@ -32,6 +34,8 @@ export function PrivacySetting() {
   const update = useUpdateNowPlayingVisibility();
   const backlogVisibility = useAuthStore((s) => s.profile?.backlog_visibility ?? 'public');
   const backlog = useUpdateBacklogVisibility();
+  const libraryVisibility = useAuthStore((s) => s.profile?.library_visibility ?? 'private');
+  const library = useUpdateLibraryVisibility();
 
   return (
     <View className="gap-1.5">
@@ -57,6 +61,20 @@ export function PrivacySetting() {
         {backlogVisibility === 'public' ? 'Signed-in players can see your backlog on your profile.' : 'Only you can see your backlog.'}
       </Text>
       {backlog.isError ? <RetroGamingPCAlert message={backlog.error.message} /> : null}
+
+      <View className="mt-2 flex-row items-center justify-between gap-2">
+        <Text className="retrogamingpc-label">Who can see my Library</Text>
+        <RetroGamingPCSaveStatus {...saveStatusOf(library)} />
+      </View>
+      <RetroGamingPCTabs
+        items={BACKLOG_TABS}
+        value={libraryVisibility}
+        onChange={(v) => v !== libraryVisibility && library.mutate(v)}
+        fill
+      />
+      <Text className="text-retrogamingpc-xs text-retrogamingpc-text">
+        {libraryVisibility === 'public' ? LIBRARY_PUBLIC_TEXT : LIBRARY_PRIVATE_TEXT}.
+      </Text>
     </View>
   );
 }

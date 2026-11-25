@@ -4,6 +4,7 @@
  * (≤ 100 histogram rows, ~decades, months) and derive the other rating scales
  * with the one rubric (src/constants/ratingRubric.ts).
  */
+import { generationGroup, generationSortIndex, generationTitle } from '@/constants/generations';
 import { platformInfo } from '@/constants/platforms';
 import {
   NOT_GOOD,
@@ -353,4 +354,37 @@ export function replayYearBars(rows: readonly { year: number; replays: number }[
   return [...rows]
     .sort((a, b) => a.year - b.year)
     .map((r) => ({ key: String(r.year), label: String(r.year), value: r.replays, detail: `${r.replays} replay${r.replays === 1 ? '' : 's'}` }));
+}
+
+export type GenerationStatRow = { generation: string; games: number; rated_games: number; average_rating: number | null };
+
+/** Generation bars in generation order (Gen 1 → 9, PC, Arcade, Mobile), Unknown last. */
+function generationBars(rows: readonly GenerationStatRow[], toBar: (r: GenerationStatRow) => Omit<BarDatum, 'key' | 'label'> | null): BarDatum[] {
+  return [...rows]
+    .sort((a, b) => generationSortIndex(a.generation) - generationSortIndex(b.generation))
+    .flatMap((r) => {
+      const bar = toBar(r);
+      if (!bar) return [];
+      const group = generationGroup(r.generation);
+      const title = group ? generationTitle(group) : UNKNOWN_LABEL;
+      return [{ key: `gen${r.generation}`, label: group?.short ?? UNKNOWN_LABEL, ...bar, detail: bar.detail ? `${title} · ${bar.detail}` : title }];
+    });
+}
+
+/** Stats → Games by generation (migration 000051). */
+export function generationCountBars(rows: readonly GenerationStatRow[]): BarDatum[] {
+  return generationBars(rows, (r) => (r.games > 0 ? { value: r.games } : null));
+}
+
+/** Stats → Average score by generation: rated games only, bars in the tier colour. */
+export function generationAverageBars(rows: readonly GenerationStatRow[]): BarDatum[] {
+  return generationBars(rows, (r) => {
+    if (r.average_rating === null || r.rated_games === 0) return null;
+    const avg = Number(r.average_rating);
+    return {
+      value: Math.round(avg * 10) / 10,
+      detail: `${numericToTier(Math.min(100, Math.max(1, Math.round(avg))))} · ${r.rated_games} rated`,
+      color: tierColors(avg).color,
+    };
+  });
 }
